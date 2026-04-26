@@ -1,0 +1,20 @@
+{
+  "name": "ws-backend",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun src/index.ts",
+    "lint": "bunx eslint --fix",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "@types/bun": "latest",
+    "eslint": "^10.2.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
