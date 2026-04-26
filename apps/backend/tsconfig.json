@@ -1,0 +1,9 @@
+{
+  "extends": "@workspace/typescript-config/base.json",
+  "compilerOptions": {
+    "rootDirs": ["src", "routes"],
+    "outDir": "./dist"
+  },
+  "include": ["src", "routes"],
+  "exclude": ["dist", "node_modules", ".turbo", "eslint.config.js"]
+}
