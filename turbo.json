@@ -5,7 +5,8 @@
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
     "NODE_ENV",
-    "BETTER_AUTH_URL"
+    "BETTER_AUTH_URL",
+    "RESEND_API_KEY"
   ],
   "tasks": {
     "build": {
