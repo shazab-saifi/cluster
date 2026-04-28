@@ -13,15 +13,17 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String           @id @default(uuid())
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean          @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   sessions      Session[]
   accounts      Account[]
+  memberships   NetworkMembers[]
+  messages      Message[]
 
   @@unique([email])
   @@map("user")
@@ -73,4 +75,63 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Network {
+  id       String           @id @default(uuid())
+  name     String           @unique
+  image    String?
+  members  NetworkMembers[]
+  channels Channel[]
+
+  @@map("network")
+}
+
+model NetworkMembers {
+  id        String      @id @default(uuid())
+  userId    String
+  networkId String
+  role      NetworkRole
+  type      NetworkType @default(PUBLIC)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  network   Network     @relation(fields: [networkId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, networkId])
+  @@map("network_members")
+}
+
+enum NetworkRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum NetworkType {
+  PUBLIC
+  PRIVATE
+}
+
+model Channel {
+  id        String    @id @default(uuid())
+  name      String
+  networkId String
+  network   Network   @relation(fields: [networkId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("channel")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  message   String
+  channelId String
+  senderId  String
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("message")
 }
