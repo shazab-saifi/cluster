@@ -25,6 +25,7 @@ model User {
   memberships   NetworkMembers[]
   messages      Message[]
 
+  @@index([name])
   @@unique([email])
   @@map("user")
 }
@@ -84,6 +85,7 @@ model Network {
   members  NetworkMembers[]
   channels Channel[]
 
+  @@index([name])
   @@map("network")
 }
 
@@ -120,6 +122,7 @@ model Channel {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  @@unique([networkId, name])
   @@map("channel")
 }
 
@@ -133,5 +136,6 @@ model Message {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([message])
   @@map("message")
 }
