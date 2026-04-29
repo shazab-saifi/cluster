@@ -1,2 +1,2 @@
-export { mainRouter } from "./main";
-export { userRouter } from "./user";
+export { usersRouter } from "./users";
+export { meRouter } from "./me";

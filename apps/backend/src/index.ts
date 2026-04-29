@@ -1,5 +1,5 @@
 import express from "express";
-import { mainRouter } from "../routes";
+import { mainRouter } from "../routes/main";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "../lib/auth";
 import cors from "cors";
