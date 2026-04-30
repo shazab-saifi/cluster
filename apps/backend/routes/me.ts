@@ -1,5 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import { prisma } from "@workspace/db";
+import { meInfoUpdateSchema } from "@zod-schemas/me.schema";
 
 export const meRouter: Router = express.Router();
 
@@ -38,25 +39,19 @@ meRouter.patch("/", async (req: Request, res: Response) => {
     return res.status(401).json("Unauthorized!");
   }
 
-  const { name, image } = req.body;
+  const body = meInfoUpdateSchema.safeParse(req.body);
+
+  if (!body.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid Inputs", issues: body.error.issues });
+  }
+
+  const { name, image } = body.data;
   const data: any = {};
 
-  if (name !== undefined) {
-    if (name.trim() === "") {
-      return res
-        .status(400)
-        .json({ error: "Field name cannot be empty string!" });
-    }
-    data.name = name;
-  }
-
-  if (image !== undefined) {
-    if (name.trim() === "") {
-      return res
-        .status(400)
-        .json({ error: "Field image cannot be empty string!" });
-    }
-  }
+  if (name !== undefined) data.name = name;
+  if (image !== undefined) data.image = image;
 
   try {
     const updateData = await prisma.user.update({

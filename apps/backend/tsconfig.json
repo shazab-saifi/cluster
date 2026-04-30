@@ -1,9 +1,17 @@
 {
   "extends": "@workspace/typescript-config/base.json",
   "compilerOptions": {
-    "rootDirs": ["src", "routes", "lib"],
+    "baseUrl": ".",
+    "paths": {
+      "@src": ["src/index.ts"],
+      "@src/*": ["src/*"],
+      "@routes": ["routes/index.ts"],
+      "@routes/*": ["routes/*"],
+      "@lib/*": ["lib/*"],
+      "@zod-schemas/*": ["zod-schemas/*"]
+    },
     "outDir": "./dist"
   },
-  "include": ["src", "routes", "lib"],
+  "include": ["src", "routes", "lib", "zod-schemas"],
   "exclude": ["dist", "node_modules", ".turbo", "eslint.config.js"]
 }

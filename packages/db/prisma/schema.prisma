@@ -84,6 +84,7 @@ model Network {
   image    String?
   members  NetworkMembers[]
   channels Channel[]
+  type     NetworkType @default(PUBLIC)
 
   @@index([name])
   @@map("network")
@@ -94,7 +95,6 @@ model NetworkMembers {
   userId    String
   networkId String
   role      NetworkRole
-  type      NetworkType @default(PUBLIC)
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   network   Network     @relation(fields: [networkId], references: [id], onDelete: Cascade)
 
