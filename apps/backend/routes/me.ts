@@ -1,5 +1,5 @@
 import express, { Request, Response, Router } from "express";
-import { prisma } from "@workspace/db";
+import { Prisma, prisma } from "@workspace/db";
 import { meInfoUpdateSchema } from "@zod-schemas/me.schema";
 
 export const meRouter: Router = express.Router();
@@ -7,9 +7,7 @@ export const meRouter: Router = express.Router();
 meRouter.get("/", async (req: Request, res: Response) => {
   const user = req.user;
 
-  if (!user) {
-    return res.status(401).json("Unauthorized!");
-  }
+  if (!user) return res.status(401).json("Unauthorized!");
 
   try {
     const userData = await prisma.user.findUnique({
@@ -35,9 +33,7 @@ meRouter.get("/", async (req: Request, res: Response) => {
 meRouter.patch("/", async (req: Request, res: Response) => {
   const user = req.user;
 
-  if (!user) {
-    return res.status(401).json("Unauthorized!");
-  }
+  if (!user) return res.status(401).json("Unauthorized!");
 
   const body = meInfoUpdateSchema.safeParse(req.body);
 
@@ -62,6 +58,13 @@ meRouter.patch("/", async (req: Request, res: Response) => {
     res.json(updateData);
   } catch (error) {
     console.error(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return res
+          .status(404)
+          .json({ error: "A user cannot be found with this id!" });
+      }
+    }
     res
       .status(500)
       .json({ error: "Internal server error, Please try again later!" });

@@ -5,3 +5,5 @@ export const networkCreateSchema = z.object({
   image: z.string().max(1000).optional(),
   type: z.enum(["PUBLIC", "PRIVATE"]),
 });
+
+export const networkInfoUpdateSchema = networkCreateSchema.partial();
