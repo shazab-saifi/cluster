@@ -1,5 +1,5 @@
 import { prisma } from "@workspace/db";
-import { AppError } from "../errors";
+import { NotFoundError } from "../errors";
 
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
@@ -13,11 +13,28 @@ export async function getMe(userId: string) {
   });
 
   if (!user) {
-    throw new AppError("User not found.", {
-      code: "USER_NOT_FOUND",
-      statusCode: 404,
-      suggestion: "Verify the authenticated user still exists and try again.",
-    });
+    throw new NotFoundError(
+      "User not found.",
+      "Verify the authenticated user still exists and try again."
+    );
+  }
+
+  return user;
+}
+
+export async function updateMe(userId: string, data: any) {
+  const user = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data,
+  });
+
+  if (!user) {
+    throw new NotFoundError(
+      "User not found.",
+      "Verify the authenticated user still exists and try again."
+    );
   }
 
   return user;

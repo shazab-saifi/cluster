@@ -27,6 +27,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "eslint": "^10.2.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0"
   }

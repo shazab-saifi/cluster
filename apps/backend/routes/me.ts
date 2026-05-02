@@ -1,72 +1,61 @@
 import express, { Request, Response, Router } from "express";
-import { Prisma, prisma } from "@workspace/db";
+import {
+  sendErrorResponse,
+  UnauthorizedError,
+  ValidationError,
+} from "@workspace/core/errors";
 import { meInfoUpdateSchema } from "@zod-schemas/me.schema";
+import * as meService from "@workspace/core/services/me-service";
 
 export const meRouter: Router = express.Router();
 
 meRouter.get("/", async (req: Request, res: Response) => {
-  const user = req.user;
-
-  if (!user) return res.status(401).json("Unauthorized!");
-
   try {
-    const userData = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        memberships: {
-          include: {
-            network: true,
-          },
-        },
-      },
-    });
+    const user = req.user;
+
+    if (!user) {
+      throw new UnauthorizedError();
+    }
+
+    const userData = await meService.getMe(user.id);
 
     res.json({ userData });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "Internal server error, Please try again later!" });
+    return sendErrorResponse(res, error, {
+      path: req.originalUrl,
+    });
   }
 });
 
 meRouter.patch("/", async (req: Request, res: Response) => {
-  const user = req.user;
-
-  if (!user) return res.status(401).json("Unauthorized!");
-
-  const body = meInfoUpdateSchema.safeParse(req.body);
-
-  if (!body.success) {
-    return res
-      .status(400)
-      .json({ error: "Invalid Inputs", issues: body.error.issues });
-  }
-
-  const { name, image } = body.data;
-  const data: any = {};
-
-  if (name !== undefined) data.name = name;
-  if (image !== undefined) data.image = image;
-
   try {
-    const updateData = await prisma.user.update({
-      where: { id: user.id },
-      data: data,
-    });
+    const user = req.user;
+
+    if (!user) {
+      throw new UnauthorizedError();
+    }
+
+    const body = meInfoUpdateSchema.safeParse(req.body);
+
+    if (!body.success) {
+      throw new ValidationError(
+        "Invalid Inputs",
+        body.error.issues[0]?.message ?? "Check the request body and try again."
+      );
+    }
+
+    const { name, image } = body.data;
+    const data: any = {};
+
+    if (name !== undefined) data.name = name;
+    if (image !== undefined) data.image = image;
+
+    const updateData = await meService.updateMe(user.id, data);
 
     res.json(updateData);
   } catch (error) {
-    console.error(error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return res
-          .status(404)
-          .json({ error: "A user cannot be found with this id!" });
-      }
-    }
-    res
-      .status(500)
-      .json({ error: "Internal server error, Please try again later!" });
+    return sendErrorResponse(res, error, {
+      path: req.originalUrl,
+    });
   }
 });

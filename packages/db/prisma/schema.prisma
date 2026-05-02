@@ -23,6 +23,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   memberships   NetworkMembers[]
+  networks      Network[]
   messages      Message[]
 
   @@index([name])
@@ -82,9 +83,11 @@ model Network {
   id       String           @id @default(uuid())
   name     String           @unique
   image    String?
+  ownerId  String
   members  NetworkMembers[]
   channels Channel[]
   type     NetworkType @default(PUBLIC)
+  owner    User @relation(fields: [ownerId], references: [id])
 
   @@index([name])
   @@map("network")
