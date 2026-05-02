@@ -1,0 +1,120 @@
+import { Prisma } from "@workspace/db";
+import { randomUUID } from "node:crypto";
+import { AppError, type ErrorType } from "./app-error";
+
+interface ResponseLike {
+  status(code: number): ResponseLike;
+  json(body: unknown): unknown;
+}
+
+interface SendErrorResponseOptions {
+  path?: string;
+  requestId?: string;
+}
+
+function formatTarget(target: unknown) {
+  if (Array.isArray(target)) {
+    return target.join(", ");
+  }
+
+  if (typeof target === "string") {
+    return target;
+  }
+
+  return "The provided value";
+}
+
+export function mapPrismaError(error: Prisma.PrismaClientKnownRequestError) {
+  switch (error.code) {
+    case "P2002":
+      return new AppError(
+        `${formatTarget(error.meta?.target)} must be unique.`,
+        {
+          code: "UNIQUE_CONSTRAINT_VIOLATION",
+          statusCode: 409,
+          suggestion: "Use a different value and try again.",
+        }
+      );
+    case "P2003":
+      return new AppError(
+        "The requested record references invalid related data.",
+        {
+          code: "FOREIGN_KEY_CONSTRAINT_VIOLATION",
+          statusCode: 409,
+          suggestion: "Verify the related record exists before retrying.",
+        }
+      );
+    case "P2011":
+      return new AppError("A required value is missing.", {
+        code: "NULL_CONSTRAINT_VIOLATION",
+        statusCode: 400,
+        suggestion: "Provide all required fields and try again.",
+      });
+    case "P2025":
+      return new AppError("The requested record was not found.", {
+        code: "RECORD_NOT_FOUND",
+        statusCode: 404,
+        suggestion: "Verify the resource identifier and try again.",
+      });
+    default:
+      return new AppError("Database request failed.", {
+        code: "DATABASE_ERROR",
+        statusCode: 500,
+        suggestion: "Please try again later.",
+      });
+  }
+}
+
+export function normalizeError(error: unknown) {
+  if (error instanceof AppError) {
+    return error;
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return mapPrismaError(error);
+  }
+
+  if (error instanceof Error) {
+    return new AppError(error.message || "Internal server error.", {
+      code: "INTERNAL_SERVER_ERROR",
+      statusCode: 500,
+      suggestion: "Please try again later.",
+    });
+  }
+
+  return new AppError("Internal server error.", {
+    code: "INTERNAL_SERVER_ERROR",
+    statusCode: 500,
+    suggestion: "Please try again later.",
+  });
+}
+
+export function buildErrorPayload(
+  error: AppError,
+  path = "unknown"
+): ErrorType {
+  return {
+    code: error.code,
+    message: error.message,
+    timestamp: new Date().toISOString(),
+    path,
+    suggestion: error.suggestion,
+  };
+}
+
+export function sendErrorResponse(
+  response: ResponseLike,
+  error: unknown,
+  { path, requestId }: SendErrorResponseOptions = {}
+) {
+  const normalizedError = normalizeError(error);
+  const payload = buildErrorPayload(normalizedError, path);
+
+  return response.status(normalizedError.statusCode).json({
+    success: false,
+    status: normalizedError.status,
+    statusCode: normalizedError.statusCode,
+    error: payload,
+    requestId: requestId ?? randomUUID(),
+  });
+}

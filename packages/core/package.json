@@ -1,19 +1,25 @@
 {
-  "name": "core",
+  "name": "@workspace/core",
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "exports": {
+    "./errors": "./errors/index.ts",
+    "./services/me-service": "./services/me-service.ts"
+  },
   "scripts": {
     "lint": "bunx eslint --fix"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@workspace/typescript-config": "workspace:*"
+    "@workspace/typescript-config": "workspace:*",
+    "@workspace/eslint-config": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "eslint": "^10.2.1"
+    "eslint": "^10.2.1",
+    "@workspace/db": "workspace:*"
   }
 }
