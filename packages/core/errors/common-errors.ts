@@ -55,3 +55,17 @@ export class NotFoundError extends AppError {
     this.name = "NotFoundError";
   }
 }
+
+export class ForbiddenError extends AppError {
+  constructor(
+    message = "Admin level perimission required.",
+    suggestion = "Only admin can take this action."
+  ) {
+    super(message, {
+      code: "INSUFFICIENT_PERMISSIONS",
+      statusCode: 403,
+      suggestion,
+    });
+    this.name = "ForbiddenError";
+  }
+}

@@ -7,11 +7,13 @@ import {
 import {
   networkCreateSchema,
   networkInfoUpdateSchema,
-} from "@zod-schemas/network.schema";
+} from "@zod-schemas/networks.schema";
 import express, { Request, Response, Router } from "express";
-import * as networkServices from "@workspace/core/services/network-services";
+import * as networksServices from "@workspace/core/services/networks-services";
+import { channelRouter } from "./channels";
 
 export const networkRouter: Router = express.Router();
+networkRouter.use("/:networkId/channels", channelRouter);
 
 networkRouter.post("/", async (req: Request, res: Response) => {
   try {
@@ -32,7 +34,7 @@ networkRouter.post("/", async (req: Request, res: Response) => {
 
     const { name, type, image } = data;
 
-    const network = await networkServices.createNetwork(user.id, {
+    const network = await networksServices.createNetwork(user.id, {
       name,
       type,
       image,
@@ -63,7 +65,9 @@ networkRouter.get("/search", async (req: Request, res: Response) => {
   }
 
   try {
-    const searcheResult = await networkServices.searchNetworks(query as string);
+    const searcheResult = await networksServices.searchNetworks(
+      query as string
+    );
 
     res.json(searcheResult);
   } catch (error) {
@@ -110,7 +114,7 @@ networkRouter.patch("/:id", async (req: Request, res: Response) => {
     if (data.name !== undefined) newData.name = data.name;
     if (data.type !== undefined) newData.type = data.type;
 
-    const updatedData = await networkServices.updateNetworkInfo(
+    const updatedData = await networksServices.updateNetworkInfo(
       id as string,
       user.id,
       newData

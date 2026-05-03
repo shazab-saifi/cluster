@@ -6,7 +6,8 @@
   "exports": {
     "./errors": "./errors/index.ts",
     "./services/me-services": "./services/me-services.ts",
-    "./services/network-services": "./services/network-services.ts"
+    "./services/networks-services": "./services/networks-services.ts",
+    "./services/channels-services": "./services/channels-services.ts"
   },
   "scripts": {
     "lint": "bunx eslint --fix"
