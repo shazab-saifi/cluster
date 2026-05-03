@@ -4,12 +4,13 @@ import {
   UnauthorizedError,
   ValidationError,
 } from "@workspace/core/errors";
-import { prisma } from "@workspace/db";
 import {
   networkCreateSchema,
   networkInfoUpdateSchema,
 } from "@zod-schemas/network.schema";
 import express, { Request, Response, Router } from "express";
+import * as networkServices from "@workspace/core/services/network-services";
+
 export const networkRouter: Router = express.Router();
 
 networkRouter.post("/", async (req: Request, res: Response) => {
@@ -31,27 +32,19 @@ networkRouter.post("/", async (req: Request, res: Response) => {
 
     const { name, type, image } = data;
 
-    const network = await prisma.network.create({
-      data: {
-        name,
-        type,
-        image,
-        ownerId: user.id,
-        channels: {
-          create: {
-            name: "general",
-          },
-        },
-        members: {
-          create: {
-            userId: user.id,
-            role: "ADMIN",
-          },
-        },
-      },
+    const network = await networkServices.createNetwork(user.id, {
+      name,
+      type,
+      image,
+      ownerId: user.id,
+      channels: { name: "general" },
+      members: { userId: user.id, role: "ADMIN" },
     });
 
-    res.json({ msg: "Network created successfully", network });
+    res.json({
+      msg: "Network created successfully",
+      network,
+    });
   } catch (error) {
     return sendErrorResponse(res, error, {
       path: req.originalUrl,
@@ -63,25 +56,14 @@ networkRouter.get("/search", async (req: Request, res: Response) => {
   const query = req.query.q;
 
   if (!query) {
-    return sendErrorResponse(
-      res,
-      new BadRequestError(
-        "No 'q' query was provided in the URI!",
-        "Provide the q query parameter and try again."
-      ),
-      {
-        path: req.originalUrl,
-      }
+    throw new BadRequestError(
+      "No 'q' query was provided in the URI!",
+      "Provide the q query parameter and try again."
     );
   }
 
   try {
-    const searcheResult = await prisma.$queryRaw`
-        SELECT *, similarity(name, ${query}) AS score
-        FROM "network"
-        WHERE similarity(name, ${query}) > 0.1
-        ORDER BY score DESC;
-      `;
+    const searcheResult = await networkServices.searchNetworks(query as string);
 
     res.json(searcheResult);
   } catch (error) {
@@ -95,6 +77,13 @@ networkRouter.patch("/:id", async (req: Request, res: Response) => {
   try {
     const user = req.user;
     const id = req.params.id;
+
+    if (!id) {
+      throw new BadRequestError(
+        "No 'id' param was sent in the URI.",
+        "Provide the id param and try again"
+      );
+    }
 
     if (!user) {
       throw new UnauthorizedError();
@@ -111,16 +100,21 @@ networkRouter.patch("/:id", async (req: Request, res: Response) => {
       );
     }
 
-    const newData: any = {};
+    const newData: {
+      image?: string;
+      name?: string;
+      type?: "PRIVATE" | "PUBLIC";
+    } = {};
 
     if (data.image !== undefined) newData.image = data.image;
     if (data.name !== undefined) newData.name = data.name;
-    if (data.type !== undefined) newData.type = data.type.toUpperCase();
+    if (data.type !== undefined) newData.type = data.type;
 
-    const updatedData = await prisma.network.update({
-      where: { id: id as string },
-      data: newData,
-    });
+    const updatedData = await networkServices.updateNetworkInfo(
+      id as string,
+      user.id,
+      newData
+    );
 
     res.json(updatedData);
   } catch (error) {

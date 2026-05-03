@@ -81,7 +81,7 @@ model Verification {
 
 model Network {
   id       String           @id @default(uuid())
-  name     String           @unique
+  name     String           
   image    String?
   ownerId  String
   members  NetworkMembers[]
@@ -89,6 +89,7 @@ model Network {
   type     NetworkType @default(PUBLIC)
   owner    User @relation(fields: [ownerId], references: [id])
 
+  @@unique([id, ownerId])
   @@index([name])
   @@map("network")
 }

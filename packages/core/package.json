@@ -5,7 +5,8 @@
   "private": true,
   "exports": {
     "./errors": "./errors/index.ts",
-    "./services/me-service": "./services/me-service.ts"
+    "./services/me-services": "./services/me-services.ts",
+    "./services/network-services": "./services/network-services.ts"
   },
   "scripts": {
     "lint": "bunx eslint --fix"

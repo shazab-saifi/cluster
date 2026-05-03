@@ -5,7 +5,7 @@ import {
   ValidationError,
 } from "@workspace/core/errors";
 import { meInfoUpdateSchema } from "@zod-schemas/me.schema";
-import * as meService from "@workspace/core/services/me-service";
+import * as meService from "@workspace/core/services/me-services";
 
 export const meRouter: Router = express.Router();
 
@@ -45,7 +45,7 @@ meRouter.patch("/", async (req: Request, res: Response) => {
     }
 
     const { name, image } = body.data;
-    const data: any = {};
+    const data: { name?: string; image?: string } = {};
 
     if (name !== undefined) data.name = name;
     if (image !== undefined) data.image = image;
