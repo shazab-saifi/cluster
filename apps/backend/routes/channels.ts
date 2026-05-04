@@ -11,7 +11,6 @@ export const channelsRouter: Router = express.Router({ mergeParams: true });
 channelsRouter.post("/", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const { networkId } = req.params;
-
   const { success, error, data } = channelCreateSchema.safeParse(req.body);
 
   if (!success) {
@@ -75,6 +74,26 @@ channelsRouter.patch("/:channelId", async (req: Request, res: Response) => {
     );
 
     res.json(updatedInfo);
+  } catch (error) {
+    sendErrorResponse(res, error, { path: req.originalUrl });
+  }
+});
+
+channelsRouter.delete("/:channelId", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const { networkId, channelId } = req.params;
+
+  try {
+    const deletedChannel = await channelsServices.deleteChannel(
+      networkId as string,
+      channelId as string,
+      userId
+    );
+
+    res.json({
+      msg: `Channel with id ${channelId} deleted successfully.`,
+      deletedChannel,
+    });
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }

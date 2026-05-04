@@ -108,22 +108,59 @@ export async function updateChannelInfo(
   userId: string,
   data: { name: string }
 ) {
-  await assertUser({
-    userId,
-    networkId,
-    message: "You don't have the permissions to update this channel's info.",
-    suggestion: "Seek permission from network's administrator or owner.",
-    isCheckPermissions: true,
-    channelId,
-  });
+  return await prisma.$transaction(
+    async (tx) => {
+      await assertUser({
+        userId,
+        networkId,
+        message:
+          "You don't have the permissions to update this channel's info.",
+        suggestion: "Seek permission from network's administrator or owner.",
+        isCheckPermissions: true,
+        channelId,
+        tx,
+      });
 
-  return await prisma.channel.update({
-    where: {
-      networkId,
-      id: channelId,
+      return await tx.channel.update({
+        where: {
+          networkId,
+          id: channelId,
+        },
+        data: {
+          name: data.name,
+        },
+      });
     },
-    data: {
-      name: data.name,
+    {
+      maxWait: 5000,
+      timeout: 10000,
+    }
+  );
+}
+
+export async function deleteChannel(
+  networkId: string,
+  channelId: string,
+  userId: string
+) {
+  return await prisma.$transaction(
+    async (tx) => {
+      await assertUser({
+        userId,
+        networkId,
+        message:
+          "You don't have the permissions to delete this channel's info.",
+        suggestion: "Seek permission from network's administrator or owner.",
+        isCheckPermissions: true,
+        tx,
+        channelId,
+      });
+
+      return await tx.channel.delete({ where: { id: channelId } });
     },
-  });
+    {
+      maxWait: 5000,
+      timeout: 10000,
+    }
+  );
 }
