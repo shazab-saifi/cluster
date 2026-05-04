@@ -52,7 +52,7 @@ networkRouter.post("/", async (req: Request, res: Response) => {
 networkRouter.get("/search", async (req: Request, res: Response) => {
   const query = req.query.q;
 
-  if (!query) {
+  if (typeof query !== "string" || query.trim() === "") {
     throw new BadRequestError(
       "No 'q' query was provided in the URI!",
       "Provide the q query parameter and try again."
@@ -75,13 +75,6 @@ networkRouter.get("/search", async (req: Request, res: Response) => {
 networkRouter.patch("/:id", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const id = req.params.id;
-
-  if (!id) {
-    throw new BadRequestError(
-      "No 'id' param was sent in the URI.",
-      "Provide the id param and try again"
-    );
-  }
 
   const { success, error, data } = networkInfoUpdateSchema.safeParse(req.body);
 

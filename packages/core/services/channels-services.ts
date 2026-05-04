@@ -1,5 +1,5 @@
 import { Prisma, prisma } from "@workspace/db";
-import { ForbiddenError } from "../errors";
+import { ForbiddenError, NotFoundError } from "../errors";
 
 type AssertUserParams = {
   userId: string;
@@ -7,7 +7,8 @@ type AssertUserParams = {
   message?: string;
   suggestion?: string;
   tx?: Prisma.TransactionClient;
-  isCheckMembership?: boolean;
+  isCheckPermissions?: boolean;
+  channelId?: string;
 };
 
 async function assertUser({
@@ -16,19 +17,37 @@ async function assertUser({
   message,
   suggestion,
   tx,
-  isCheckMembership,
+  isCheckPermissions,
+  channelId,
 }: AssertUserParams) {
   const operator = tx ? tx : prisma;
+
+  const existingNetwork = await operator.network.findUnique({
+    where: { id: networkId },
+  });
+
+  if (!existingNetwork) {
+    throw new NotFoundError(`Counld not find network with id ${networkId}`);
+  }
+
+  if (channelId) {
+    const existingChannel = await operator.channel.findFirst({
+      where: {
+        id: channelId,
+        networkId,
+      },
+    });
+
+    if (!existingChannel) {
+      throw new NotFoundError(`Counld not find channel with id ${channelId}`);
+    }
+  }
 
   const isAllowed = await operator.networkMembers.findFirst({
     where: {
       networkId: networkId,
       userId,
-      role: {
-        in: isCheckMembership
-          ? ["ADMIN", "OWNER", "MODERATOR", "MEMBER"]
-          : ["ADMIN", "OWNER"],
-      },
+      ...(isCheckPermissions && { role: { in: ["ADMIN", "OWNER"] } }),
     },
   });
 
@@ -49,6 +68,7 @@ export async function createChannel(
           "Administration level perimissions are required to create a channel.",
         suggestion: "You don't have admin level perimissions.",
         tx,
+        isCheckPermissions: true,
       });
 
       return await tx.channel.create({
@@ -73,12 +93,37 @@ export async function getChannels(networkId: string, userId: string) {
       "You need to be a member of this network to be able fetch its channels.",
     suggestion:
       "You don't have the permissions to fetch channels of this network.",
-    isCheckMembership: true,
   });
 
   return await prisma.channel.findMany({
     where: {
       networkId,
+    },
+  });
+}
+
+export async function updateChannelInfo(
+  networkId: string,
+  channelId: string,
+  userId: string,
+  data: { name: string }
+) {
+  await assertUser({
+    userId,
+    networkId,
+    message: "You don't have the permissions to update this channel's info.",
+    suggestion: "Seek permission from network's administrator or owner.",
+    isCheckPermissions: true,
+    channelId,
+  });
+
+  return await prisma.channel.update({
+    where: {
+      networkId,
+      id: channelId,
+    },
+    data: {
+      name: data.name,
     },
   });
 }

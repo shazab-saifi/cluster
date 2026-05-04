@@ -1,9 +1,5 @@
 import express, { Request, Response, Router } from "express";
-import {
-  sendErrorResponse,
-  UnauthorizedError,
-  ValidationError,
-} from "@workspace/core/errors";
+import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
 import { meInfoUpdateSchema } from "@zod-schemas/me.schema";
 import * as meService from "@workspace/core/services/me-services";
 
