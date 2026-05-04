@@ -1,7 +1,6 @@
 import {
   BadRequestError,
   sendErrorResponse,
-  UnauthorizedError,
   ValidationError,
 } from "@workspace/core/errors";
 import {
@@ -10,37 +9,33 @@ import {
 } from "@zod-schemas/networks.schema";
 import express, { Request, Response, Router } from "express";
 import * as networksServices from "@workspace/core/services/networks-services";
-import { channelRouter } from "./channels";
+import { channelsRouter } from "./channels";
 
 export const networkRouter: Router = express.Router();
-networkRouter.use("/:networkId/channels", channelRouter);
+networkRouter.use("/:networkId/channels", channelsRouter);
 
 networkRouter.post("/", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+
+  const { success, data, error } = networkCreateSchema.safeParse(req.body);
+
+  if (!success) {
+    throw new ValidationError(
+      "Invalid Inputs",
+      error.issues[0]?.message ?? "Check the request body and try again."
+    );
+  }
+
   try {
-    const user = req.user;
-
-    if (!user) {
-      throw new UnauthorizedError();
-    }
-
-    const { success, data, error } = networkCreateSchema.safeParse(req.body);
-
-    if (!success) {
-      throw new ValidationError(
-        "Invalid Inputs",
-        error.issues[0]?.message ?? "Check the request body and try again."
-      );
-    }
-
     const { name, type, image } = data;
 
-    const network = await networksServices.createNetwork(user.id, {
+    const network = await networksServices.createNetwork(userId, {
       name,
       type,
       image,
-      ownerId: user.id,
+      ownerId: userId,
       channels: { name: "general" },
-      members: { userId: user.id, role: "ADMIN" },
+      members: { userId, role: "OWNER" },
     });
 
     res.json({
@@ -78,45 +73,39 @@ networkRouter.get("/search", async (req: Request, res: Response) => {
 });
 
 networkRouter.patch("/:id", async (req: Request, res: Response) => {
-  try {
-    const user = req.user;
-    const id = req.params.id;
+  const userId = req.user?.id as string;
+  const id = req.params.id;
 
-    if (!id) {
-      throw new BadRequestError(
-        "No 'id' param was sent in the URI.",
-        "Provide the id param and try again"
-      );
-    }
-
-    if (!user) {
-      throw new UnauthorizedError();
-    }
-
-    const { success, error, data } = networkInfoUpdateSchema.safeParse(
-      req.body
+  if (!id) {
+    throw new BadRequestError(
+      "No 'id' param was sent in the URI.",
+      "Provide the id param and try again"
     );
+  }
 
-    if (!success) {
-      throw new ValidationError(
-        "Invalid Inputs!",
-        error.issues[0]?.message ?? "Check the request body and try again."
-      );
-    }
+  const { success, error, data } = networkInfoUpdateSchema.safeParse(req.body);
 
-    const newData: {
-      image?: string;
-      name?: string;
-      type?: "PRIVATE" | "PUBLIC";
-    } = {};
+  if (!success) {
+    throw new ValidationError(
+      "Invalid Inputs!",
+      error.issues[0]?.message ?? "Check the request body and try again."
+    );
+  }
 
-    if (data.image !== undefined) newData.image = data.image;
-    if (data.name !== undefined) newData.name = data.name;
-    if (data.type !== undefined) newData.type = data.type;
+  const newData: {
+    image?: string;
+    name?: string;
+    type?: "PRIVATE" | "PUBLIC";
+  } = {};
 
+  if (data.image !== undefined) newData.image = data.image;
+  if (data.name !== undefined) newData.name = data.name;
+  if (data.type !== undefined) newData.type = data.type;
+
+  try {
     const updatedData = await networksServices.updateNetworkInfo(
       id as string,
-      user.id,
+      userId,
       newData
     );
 

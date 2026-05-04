@@ -3,6 +3,7 @@ import { auth } from "./auth";
 import { fromNodeHeaders } from "better-auth/node";
 import "express";
 import { Session, User } from "better-auth";
+import { sendErrorResponse, UnauthorizedError } from "@workspace/core/errors";
 
 declare module "express" {
   interface Request {
@@ -21,8 +22,8 @@ export async function authMiddleware(
       headers: fromNodeHeaders(req.headers),
     });
 
-    if (!session) {
-      return res.status(401).json({ error: "Unauthorized" });
+    if (!session || !session.user || !session.session) {
+      throw new UnauthorizedError();
     }
 
     req.user = session.user;
@@ -31,8 +32,6 @@ export async function authMiddleware(
     next();
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: "Internal server error, Please try agains later!" });
+    sendErrorResponse(res, error, { path: req.originalUrl });
   }
 }

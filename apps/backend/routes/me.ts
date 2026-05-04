@@ -11,13 +11,9 @@ export const meRouter: Router = express.Router();
 
 meRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const user = req.user;
+    const userId = req.user?.id as string;
 
-    if (!user) {
-      throw new UnauthorizedError();
-    }
-
-    const userData = await meService.getMe(user.id);
+    const userData = await meService.getMe(userId);
 
     res.json({ userData });
   } catch (error) {
@@ -29,11 +25,7 @@ meRouter.get("/", async (req: Request, res: Response) => {
 
 meRouter.patch("/", async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-
-    if (!user) {
-      throw new UnauthorizedError();
-    }
+    const userId = req.user?.id as string;
 
     const body = meInfoUpdateSchema.safeParse(req.body);
 
@@ -50,7 +42,7 @@ meRouter.patch("/", async (req: Request, res: Response) => {
     if (name !== undefined) data.name = name;
     if (image !== undefined) data.image = image;
 
-    const updateData = await meService.updateMe(user.id, data);
+    const updateData = await meService.updateMe(userId, data);
 
     res.json(updateData);
   } catch (error) {

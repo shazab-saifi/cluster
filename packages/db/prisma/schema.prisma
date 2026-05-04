@@ -107,6 +107,7 @@ model NetworkMembers {
 }
 
 enum NetworkRole {
+  OWNER
   ADMIN
   MODERATOR
   MEMBER

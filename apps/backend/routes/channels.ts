@@ -1,22 +1,17 @@
 import {
   BadRequestError,
   sendErrorResponse,
-  UnauthorizedError,
   ValidationError,
 } from "@workspace/core/errors";
 import express, { Request, Response, Router } from "express";
 import * as channelsServices from "@workspace/core/services/channels-services";
 import { channelCreateSchema } from "@zod-schemas/channels.schema";
 
-export const channelRouter: Router = express.Router({ mergeParams: true });
+export const channelsRouter: Router = express.Router({ mergeParams: true });
 
-channelRouter.post("/", async (req: Request, res: Response) => {
-  const user = req.user;
+channelsRouter.post("/", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
   const { networkId } = req.params;
-
-  if (!user) {
-    throw new UnauthorizedError();
-  }
 
   if (!networkId) {
     throw new BadRequestError(
@@ -37,11 +32,36 @@ channelRouter.post("/", async (req: Request, res: Response) => {
   try {
     const channel = await channelsServices.createChannel(
       networkId as string,
-      user.id,
+      userId,
       data.name
     );
 
     res.json(channel);
+  } catch (error) {
+    sendErrorResponse(res, error, {
+      path: req.originalUrl,
+    });
+  }
+});
+
+channelsRouter.get("/", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const { networkId } = req.params;
+
+  if (!networkId) {
+    throw new BadRequestError(
+      "No 'networkId' param was sent in the URI.",
+      "Provide the networkId param and try again"
+    );
+  }
+
+  try {
+    const channels = await channelsServices.getChannels(
+      networkId as string,
+      userId
+    );
+
+    res.json(channels);
   } catch (error) {
     sendErrorResponse(res, error, {
       path: req.originalUrl,

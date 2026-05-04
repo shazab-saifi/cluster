@@ -1,4 +1,4 @@
-import { prisma } from "@workspace/db";
+import { NetworkRole, prisma } from "@workspace/db";
 
 export interface NetworkCreateType {
   name: string;
@@ -10,7 +10,7 @@ export interface NetworkCreateType {
   };
   members: {
     userId: string;
-    role: "ADMIN" | "MODERATOR" | "MEMBER";
+    role: NetworkRole;
   };
 }
 
