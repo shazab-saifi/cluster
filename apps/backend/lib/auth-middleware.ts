@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { auth } from "./auth";
-import { fromNodeHeaders } from "better-auth/node";
 import "express";
-import { Session, User } from "better-auth";
 import { sendErrorResponse, UnauthorizedError } from "@workspace/core/errors";
+import {
+  getSessionFromHeaders,
+  type Session,
+  type User,
+} from "@workspace/auth";
 
 declare module "express" {
   interface Request {
@@ -18,9 +20,7 @@ export async function authMiddleware(
   next: NextFunction
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    });
+    const session = await getSessionFromHeaders(req.headers);
 
     if (!session || !session.user || !session.session) {
       throw new UnauthorizedError();

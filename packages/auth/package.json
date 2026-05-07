@@ -1,0 +1,25 @@
+{
+  "name": "@workspace/auth",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./helpers": "./src/helpers",
+    "./auth": "./src/auth"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10.3.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*",
+    "better-auth": "^1.6.9",
+    "resend": "^6.12.3"
+  }
+}
