@@ -1,5 +1,11 @@
 import { Prisma, prisma } from "@workspace/db";
 import { ForbiddenError, NotFoundError } from "../errors";
+import {
+  channelExists,
+  hasAdminPermissions,
+  isMember,
+  networkExists,
+} from "./validation";
 
 type AssertUserParams = {
   userId: string;
@@ -20,36 +26,29 @@ async function assertUser({
   isCheckPermissions,
   channelId,
 }: AssertUserParams) {
-  const operator = tx ? tx : prisma;
+  const dbClient = tx ? tx : prisma;
 
-  const existingNetwork = await operator.network.findUnique({
-    where: { id: networkId },
-  });
+  const existingNetwork = await networkExists(networkId, dbClient);
 
   if (!existingNetwork) {
     throw new NotFoundError(`Counld not find network with id ${networkId}`);
   }
 
   if (channelId) {
-    const existingChannel = await operator.channel.findFirst({
-      where: {
-        id: channelId,
-        networkId,
-      },
-    });
+    const existingChannel = await channelExists(channelId, networkId, dbClient);
 
     if (!existingChannel) {
       throw new NotFoundError(`Counld not find channel with id ${channelId}`);
     }
   }
 
-  const isAllowed = await operator.networkMembers.findFirst({
-    where: {
-      networkId: networkId,
-      userId,
-      ...(isCheckPermissions && { role: { in: ["ADMIN", "OWNER"] } }),
-    },
-  });
+  let isAllowed;
+
+  if (isCheckPermissions) {
+    isAllowed = await hasAdminPermissions(networkId, userId, dbClient);
+  } else {
+    isAllowed = await isMember(networkId, userId, dbClient);
+  }
 
   if (!isAllowed) throw new ForbiddenError(message, suggestion);
 }
