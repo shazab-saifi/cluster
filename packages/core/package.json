@@ -7,7 +7,8 @@
     "./errors": "./errors/index.ts",
     "./services/me-services": "./services/me-services.ts",
     "./services/networks-services": "./services/networks-services.ts",
-    "./services/channels-services": "./services/channels-services.ts"
+    "./services/channels-services": "./services/channels-services.ts",
+    "./services/messages-services": "./services/messages-services.ts"
   },
   "scripts": {
     "lint": "bunx eslint --fix"
