@@ -1,56 +1,43 @@
-import { Prisma, prisma } from "@workspace/db";
+import { Prisma, prisma, PrismaClient } from "@workspace/db";
 import { ForbiddenError, NotFoundError } from "../errors";
-import {
-  channelExists,
-  hasAdminPermissions,
-  isMember,
-  networkExists,
-} from "./validation";
+import { isNetworkMember } from "./validation";
 
-type AssertUserParams = {
-  userId: string;
-  networkId: string;
-  message?: string;
-  suggestion?: string;
-  tx?: Prisma.TransactionClient;
-  isCheckPermissions?: boolean;
-  channelId?: string;
-};
+type dbClient = PrismaClient | Prisma.TransactionClient;
 
-async function assertUser({
-  userId,
-  networkId,
-  message,
-  suggestion,
-  tx,
-  isCheckPermissions,
-  channelId,
-}: AssertUserParams) {
-  const dbClient = tx ? tx : prisma;
+async function assertAdminChannelAccess(
+  db: dbClient,
+  networkId: string,
+  userId: string,
+  channelId?: string
+) {
+  const network = await db.network.findFirst({
+    where: {
+      id: networkId,
+      members: {
+        some: {
+          userId,
+          ...{ role: { in: ["ADMIN", "OWNER"] } },
+        },
+      },
+    },
+    ...(channelId && {
+      include: {
+        channels: {
+          where: {
+            id: channelId,
+          },
+        },
+      },
+    }),
+  });
 
-  const existingNetwork = await networkExists(networkId, dbClient);
-
-  if (!existingNetwork) {
-    throw new NotFoundError(`Counld not find network with id ${networkId}`);
+  if (!network) {
+    throw new NotFoundError(
+      "Either resouce does not exists or you don't have the permission to make this request"
+    );
   }
 
-  if (channelId) {
-    const existingChannel = await channelExists(channelId, networkId, dbClient);
-
-    if (!existingChannel) {
-      throw new NotFoundError(`Counld not find channel with id ${channelId}`);
-    }
-  }
-
-  let isAllowed;
-
-  if (isCheckPermissions) {
-    isAllowed = await hasAdminPermissions(networkId, userId, dbClient);
-  } else {
-    isAllowed = await isMember(networkId, userId, dbClient);
-  }
-
-  if (!isAllowed) throw new ForbiddenError(message, suggestion);
+  return network;
 }
 
 export async function createChannel(
@@ -60,15 +47,7 @@ export async function createChannel(
 ) {
   return await prisma.$transaction(
     async (tx) => {
-      await assertUser({
-        userId,
-        networkId,
-        message:
-          "Administration level perimissions are required to create a channel.",
-        suggestion: "You don't have admin level perimissions.",
-        tx,
-        isCheckPermissions: true,
-      });
+      await assertAdminChannelAccess(tx, networkId, userId);
 
       return await tx.channel.create({
         data: {
@@ -85,14 +64,11 @@ export async function createChannel(
 }
 
 export async function getChannels(networkId: string, userId: string) {
-  await assertUser({
-    userId,
-    networkId,
-    message:
-      "You need to be a member of this network to be able fetch its channels.",
-    suggestion:
-      "You don't have the permissions to fetch channels of this network.",
-  });
+  const isMember = await isNetworkMember(networkId, userId, prisma);
+
+  if (!isMember) {
+    throw new ForbiddenError("Only network member can access its channels");
+  }
 
   return await prisma.channel.findMany({
     where: {
@@ -109,16 +85,7 @@ export async function updateChannelInfo(
 ) {
   return await prisma.$transaction(
     async (tx) => {
-      await assertUser({
-        userId,
-        networkId,
-        message:
-          "You don't have the permissions to update this channel's info.",
-        suggestion: "Seek permission from network's administrator or owner.",
-        isCheckPermissions: true,
-        channelId,
-        tx,
-      });
+      await assertAdminChannelAccess(tx, networkId, userId, channelId);
 
       return await tx.channel.update({
         where: {
@@ -144,16 +111,7 @@ export async function deleteChannel(
 ) {
   return await prisma.$transaction(
     async (tx) => {
-      await assertUser({
-        userId,
-        networkId,
-        message:
-          "You don't have the permissions to delete this channel's info.",
-        suggestion: "Seek permission from network's administrator or owner.",
-        isCheckPermissions: true,
-        tx,
-        channelId,
-      });
+      await assertAdminChannelAccess(tx, networkId, userId, channelId);
 
       return await tx.channel.delete({ where: { id: channelId } });
     },

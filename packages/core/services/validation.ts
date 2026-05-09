@@ -1,6 +1,13 @@
 import { Prisma, PrismaClient } from "@workspace/db";
 
-type DbClient = PrismaClient | Prisma.TransactionClient;
+export type DbClient = PrismaClient | Prisma.TransactionClient;
+
+export function getDbClient(
+  tx?: Prisma.TransactionClient,
+  client?: PrismaClient
+) {
+  return tx ?? client;
+}
 
 export async function networkExists(networkId: string, client: DbClient) {
   return await client.network.findUnique({ where: { id: networkId } });
@@ -16,21 +23,35 @@ export async function channelExists(
   });
 }
 
-export async function hasAdminPermissions(
+export async function getAdminChannelAccess(
   networkId: string,
   userId: string,
-  client: DbClient
+  client: DbClient,
+  channelId?: string
 ) {
-  return client.networkMembers.findFirst({
+  return await client.network.findFirst({
     where: {
-      networkId: networkId,
-      userId,
-      ...{ role: { in: ["ADMIN", "OWNER"] } },
+      id: networkId,
+      members: {
+        some: {
+          userId,
+          ...{ role: { in: ["ADMIN", "OWNER"] } },
+        },
+      },
     },
+    ...(channelId && {
+      include: {
+        channels: {
+          where: {
+            id: channelId,
+          },
+        },
+      },
+    }),
   });
 }
 
-export async function isMember(
+export async function isNetworkMember(
   networkId: string,
   userId: string,
   client: DbClient
@@ -50,9 +71,9 @@ export async function hasOwnerPermissions(
 ) {
   return client.networkMembers.findFirst({
     where: {
-      networkId: networkId,
+      networkId,
       userId,
-      role: { in: ["ADMIN", "OWNER"] },
+      role: "OWNER",
     },
   });
 }
