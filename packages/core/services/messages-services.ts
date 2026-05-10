@@ -14,11 +14,7 @@ async function assertCanManageMessage(userId: string, messageId: string) {
   }
 }
 
-export async function createMessage(
-  channelId: string,
-  userId: string,
-  message: string
-) {
+async function assertHasMembership(channelId: string, userId: string) {
   const channel = await prisma.channel.findFirst({
     where: {
       id: channelId,
@@ -35,6 +31,14 @@ export async function createMessage(
   if (!channel) {
     throw new NotFoundError("Could not find channel");
   }
+}
+
+export async function createMessage(
+  channelId: string,
+  userId: string,
+  message: string
+) {
+  await assertHasMembership(channelId, userId);
 
   return await prisma.message.create({
     data: {
@@ -43,6 +47,31 @@ export async function createMessage(
       message,
     },
   });
+}
+
+export async function getMessages(
+  channelId: string,
+  userId: string,
+  cursor?: string
+) {
+  await assertHasMembership(channelId, userId);
+
+  const messages = await prisma.message.findMany({
+    where: {
+      channelId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : 0,
+    take: 50,
+  });
+
+  const nextCursor =
+    messages.length === 50 ? messages[messages.length - 1]?.id : null;
+
+  return { messages, nextCursor };
 }
 
 export async function updateMessage(

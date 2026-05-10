@@ -142,5 +142,6 @@ model Message {
   updatedAt DateTime @updatedAt
 
   @@index([message])
+  @@index([channelId, createdAt(sort: Desc)])
   @@map("message")
 }
