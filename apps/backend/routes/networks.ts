@@ -7,6 +7,7 @@ import {
   networkCreateSchema,
   networkInfoUpdateSchema,
 } from "@zod-schemas/networks.schema";
+import { uuidSchema } from "@zod-schemas/index";
 import express, { Request, Response, Router } from "express";
 import * as networksServices from "@workspace/core/services/networks-services";
 import { channelsRouter } from "./channels";
@@ -74,9 +75,16 @@ networkRouter.get("/search", async (req: Request, res: Response) => {
 
 networkRouter.patch("/:id", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const id = req.params.id;
+  const idParsed = uuidSchema.safeParse(req.params.id);
 
   const { success, error, data } = networkInfoUpdateSchema.safeParse(req.body);
+
+  if (!idParsed.success) {
+    throw new ValidationError(
+      "Invalid network id",
+      idParsed.error.issues[0]?.message ?? "Param id should be a valid uuid"
+    );
+  }
 
   if (!success) {
     throw new ValidationError(
@@ -97,7 +105,7 @@ networkRouter.patch("/:id", async (req: Request, res: Response) => {
 
   try {
     const updatedData = await networksServices.updateNetworkInfo(
-      id as string,
+      idParsed.data,
       userId,
       newData
     );

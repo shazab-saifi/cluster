@@ -7,15 +7,14 @@ import { messageCreateSchema } from "@zod-schemas/messages.schema";
 export const messagesRouter: Router = express.Router({ mergeParams: true });
 
 messagesRouter.post("/", async (req: Request, res: Response) => {
-  const { channelId } = req.params;
-  const uuidParsed = uuidSchema.safeParse(channelId);
+  const channelIdParsed = uuidSchema.safeParse(req.params.channelId);
   const bodyParsed = messageCreateSchema.safeParse(req.body);
   const userId = req.user?.id as string;
 
-  if (!uuidParsed.success) {
+  if (!channelIdParsed.success) {
     throw new ValidationError(
       "Invalid channel id",
-      uuidParsed.error.issues[0]?.message ??
+      channelIdParsed.error.issues[0]?.message ??
         "Param channelId should be a valid uuid"
     );
   }
@@ -30,7 +29,7 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
 
   try {
     const message = await messagesServices.createMessage(
-      uuidParsed.data,
+      channelIdParsed.data,
       userId,
       bodyParsed.data.message
     );
@@ -40,3 +39,5 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }
 });
+
+messagesRouter.patch("/:messageId", async (req: Request, res: Response) => {});

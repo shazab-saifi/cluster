@@ -1,4 +1,5 @@
 import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
+import { uuidSchema } from "@zod-schemas/index";
 import express, { Request, Response, Router } from "express";
 import * as channelsServices from "@workspace/core/services/channels-services";
 import {
@@ -10,8 +11,16 @@ export const channelsRouter: Router = express.Router({ mergeParams: true });
 
 channelsRouter.post("/", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const { networkId } = req.params;
+  const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
   const { success, error, data } = channelCreateSchema.safeParse(req.body);
+
+  if (!networkIdParsed.success) {
+    throw new ValidationError(
+      "Invalid network id",
+      networkIdParsed.error.issues[0]?.message ??
+        "Param networkId should be a valid uuid"
+    );
+  }
 
   if (!success) {
     throw new ValidationError(
@@ -22,7 +31,7 @@ channelsRouter.post("/", async (req: Request, res: Response) => {
 
   try {
     const channel = await channelsServices.createChannel(
-      networkId as string,
+      networkIdParsed.data,
       userId,
       data.name
     );
@@ -37,11 +46,19 @@ channelsRouter.post("/", async (req: Request, res: Response) => {
 
 channelsRouter.get("/", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const { networkId } = req.params;
+  const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+
+  if (!networkIdParsed.success) {
+    throw new ValidationError(
+      "Invalid network id",
+      networkIdParsed.error.issues[0]?.message ??
+        "Param networkId should be a valid uuid"
+    );
+  }
 
   try {
     const channels = await channelsServices.getChannels(
-      networkId as string,
+      networkIdParsed.data,
       userId
     );
 
@@ -55,8 +72,25 @@ channelsRouter.get("/", async (req: Request, res: Response) => {
 
 channelsRouter.patch("/:channelId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const { networkId, channelId } = req.params;
+  const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+  const channelIdParsed = uuidSchema.safeParse(req.params.channelId);
   const { success, error, data } = channelInfoUpdateSchema.safeParse(req.body);
+
+  if (!networkIdParsed.success) {
+    throw new ValidationError(
+      "Invalid network id",
+      networkIdParsed.error.issues[0]?.message ??
+        "Param networkId should be a valid uuid"
+    );
+  }
+
+  if (!channelIdParsed.success) {
+    throw new ValidationError(
+      "Invalid channel id",
+      channelIdParsed.error.issues[0]?.message ??
+        "Param channelId should be a valid uuid"
+    );
+  }
 
   if (!success) {
     throw new ValidationError(
@@ -67,8 +101,8 @@ channelsRouter.patch("/:channelId", async (req: Request, res: Response) => {
 
   try {
     const updatedInfo = await channelsServices.updateChannelInfo(
-      networkId as string,
-      channelId as string,
+      networkIdParsed.data,
+      channelIdParsed.data,
       userId,
       data
     );
@@ -81,17 +115,34 @@ channelsRouter.patch("/:channelId", async (req: Request, res: Response) => {
 
 channelsRouter.delete("/:channelId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const { networkId, channelId } = req.params;
+  const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+  const channelIdParsed = uuidSchema.safeParse(req.params.channelId);
+
+  if (!networkIdParsed.success) {
+    throw new ValidationError(
+      "Invalid network id",
+      networkIdParsed.error.issues[0]?.message ??
+        "Param networkId should be a valid uuid"
+    );
+  }
+
+  if (!channelIdParsed.success) {
+    throw new ValidationError(
+      "Invalid channel id",
+      channelIdParsed.error.issues[0]?.message ??
+        "Param channelId should be a valid uuid"
+    );
+  }
 
   try {
     const deletedChannel = await channelsServices.deleteChannel(
-      networkId as string,
-      channelId as string,
+      networkIdParsed.data,
+      channelIdParsed.data,
       userId
     );
 
     res.json({
-      msg: `Channel with id ${channelId} deleted successfully.`,
+      msg: `Channel with id ${channelIdParsed.data} deleted successfully.`,
       deletedChannel,
     });
   } catch (error) {
