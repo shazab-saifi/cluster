@@ -19,16 +19,14 @@ async function assertAdminChannelAccess(
           ...{ role: { in: ["ADMIN", "OWNER"] } },
         },
       },
-    },
-    ...(channelId && {
-      include: {
+      ...(channelId && {
         channels: {
-          where: {
+          some: {
             id: channelId,
           },
         },
-      },
-    }),
+      }),
+    },
   });
 
   if (!network) {
