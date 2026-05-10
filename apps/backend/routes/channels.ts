@@ -145,7 +145,7 @@ channelsRouter.delete("/:channelId", async (req: Request, res: Response) => {
     );
 
     res.json({
-      msg: `Channel with id ${channelIdParsed.data} deleted successfully.`,
+      msg: "Channel Deleted Successfully!",
       deletedChannel,
     });
   } catch (error) {

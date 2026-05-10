@@ -16,7 +16,7 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
 
   if (!channelIdParsed.success) {
     throw new ValidationError(
-      "Invalid channel id",
+      "Invalid Params",
       channelIdParsed.error.issues[0]?.message ??
         "Param channelId should be a valid uuid"
     );
@@ -50,7 +50,7 @@ messagesRouter.patch("/:id", async (req: Request, res: Response) => {
 
   if (!idParsed.success) {
     throw new ValidationError(
-      "Invalid Inputs",
+      "Invalid Params",
       idParsed.error.issues[0]?.message ??
         "Check the request body and try again."
     );
@@ -75,6 +75,30 @@ messagesRouter.patch("/:id", async (req: Request, res: Response) => {
     );
 
     res.json(updatedMessage);
+  } catch (error) {
+    sendErrorResponse(res, error, { path: req.originalUrl });
+  }
+});
+
+messagesRouter.delete("/:id", async (req: Request, res: Response) => {
+  const idParsed = uuidSchema.safeParse(req.params.id);
+  const userId = req.user?.id as string;
+
+  if (!idParsed.success) {
+    throw new ValidationError(
+      "Invalid Params",
+      idParsed.error.issues[0]?.message ??
+        "Check the request body and try again."
+    );
+  }
+
+  try {
+    const deletedMsg = await messagesServices.deleteMessage(
+      idParsed.data,
+      userId
+    );
+
+    res.json({ msg: "Channel Deleted Successfully!", deletedMsg });
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }
