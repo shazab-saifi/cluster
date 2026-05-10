@@ -1,4 +1,8 @@
-import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
+import {
+  BadRequestError,
+  sendErrorResponse,
+  ValidationError,
+} from "@workspace/core/errors";
 import { uuidSchema } from "@zod-schemas/index";
 import express, { Request, Response, Router } from "express";
 import * as messagesServices from "@workspace/core/services/messages-services";
@@ -38,6 +42,39 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
     );
 
     res.json(message);
+  } catch (error) {
+    sendErrorResponse(res, error, { path: req.originalUrl });
+  }
+});
+
+messagesRouter.get("/", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const channelIdParsed = uuidSchema.safeParse(req.params.channelId);
+  const cursor = req.query.cursor;
+
+  if (!channelIdParsed.success) {
+    throw new ValidationError(
+      "Invalid Params",
+      channelIdParsed.error.issues[0]?.message ??
+        "Param channelId should be a valid uuid"
+    );
+  }
+
+  if (typeof cursor !== "string" || cursor.trim() === "") {
+    throw new BadRequestError(
+      "No 'q' query was provided in the URI!",
+      "Provide the q query parameter and try again."
+    );
+  }
+
+  try {
+    const { messages, nextCursor } = await messagesServices.getMessages(
+      channelIdParsed.data,
+      userId,
+      cursor
+    );
+
+    res.json({ messages, nextCursor });
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }
