@@ -4,4 +4,4 @@ export const channelCreateSchema = z.object({
   name: z.string().min(3).max(255),
 });
 
-export const channelInfoUpdateSchema = channelCreateSchema;
+export const channelInfoUpdateSchema = channelCreateSchema.partial();

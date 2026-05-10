@@ -99,12 +99,15 @@ channelsRouter.patch("/:channelId", async (req: Request, res: Response) => {
     );
   }
 
+  const newData: { name: string } = { name: "" };
+  if (data.name !== undefined) newData.name = data.name;
+
   try {
     const updatedInfo = await channelsServices.updateChannelInfo(
       networkIdParsed.data,
       channelIdParsed.data,
       userId,
-      data
+      newData
     );
 
     res.json(updatedInfo);
