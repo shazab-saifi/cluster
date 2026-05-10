@@ -1,11 +1,11 @@
 import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
-import { uuidSchema } from "@zod-schemas/index";
-import express, { Request, Response, Router } from "express";
-import * as channelsServices from "@workspace/core/services/channels-services";
 import {
+  uuidSchema,
   channelCreateSchema,
   channelInfoUpdateSchema,
-} from "@zod-schemas/channels.schema";
+} from "@lib/zod.schemas";
+import express, { Request, Response, Router } from "express";
+import * as channelsServices from "@workspace/core/services/channels-services";
 
 export const channelsRouter: Router = express.Router({ mergeParams: true });
 

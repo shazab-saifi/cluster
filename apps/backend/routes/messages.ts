@@ -3,13 +3,13 @@ import {
   sendErrorResponse,
   ValidationError,
 } from "@workspace/core/errors";
-import { uuidSchema } from "@zod-schemas/index";
-import express, { Request, Response, Router } from "express";
-import * as messagesServices from "@workspace/core/services/messages-services";
 import {
+  uuidSchema,
   messageCreateSchema,
   messageUpdateSchema,
-} from "@zod-schemas/messages.schema";
+} from "@lib/zod.schemas";
+import express, { Request, Response, Router } from "express";
+import * as messagesServices from "@workspace/core/services/messages-services";
 
 export const messagesRouter: Router = express.Router({ mergeParams: true });
 

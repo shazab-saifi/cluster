@@ -6,8 +6,8 @@ import {
 import {
   networkCreateSchema,
   networkInfoUpdateSchema,
-} from "@zod-schemas/networks.schema";
-import { uuidSchema } from "@zod-schemas/index";
+  uuidSchema,
+} from "@lib/zod.schemas";
 import express, { Request, Response, Router } from "express";
 import * as networksServices from "@workspace/core/services/networks-services";
 import { channelsRouter } from "./channels";

@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
-import { meInfoUpdateSchema } from "@zod-schemas/me.schema";
+import { meInfoUpdateSchema } from "@lib/zod.schemas";
 import * as meService from "@workspace/core/services/me-services";
 
 export const meRouter: Router = express.Router();

@@ -7,11 +7,10 @@
       "@src/*": ["src/*"],
       "@routes": ["routes/index.ts"],
       "@routes/*": ["routes/*"],
-      "@lib/*": ["lib/*"],
-      "@zod-schemas/*": ["zod-schemas/*"]
+      "@lib/*": ["lib/*"]
     },
     "outDir": "./dist"
   },
-  "include": ["src", "routes", "lib", "zod-schemas"],
+  "include": ["src", "routes", "lib"],
   "exclude": ["dist", "node_modules", ".turbo", "eslint.config.js"]
 }
