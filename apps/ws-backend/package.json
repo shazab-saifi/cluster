@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun src/index.ts",
+    "dev": "bun --watch src/index.ts",
     "lint": "bunx eslint --fix",
     "check-types": "tsc --noEmit"
   },
@@ -21,6 +21,7 @@
     "@types/ws": "^8.18.1",
     "@workspace/auth": "workspace:*",
     "@workspace/core": "workspace:*",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "zod": "^4.4.3"
   }
 }

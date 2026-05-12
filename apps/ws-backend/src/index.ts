@@ -1,39 +1,179 @@
 import http from "http";
 import { getSessionFromHeaders } from "@workspace/auth";
-import { UnauthorizedError } from "@workspace/core/errors";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
+import {
+  BadRequestError,
+  buildErrorPayload,
+  normalizeError,
+  NotFoundError,
+  UnauthorizedError,
+} from "@workspace/core/errors";
+import { assertHasMembership } from "@workspace/core/services/validation";
+import { InputPayloadUnion } from "./zod.schemas";
+
+type AuthenticatedRequest = http.IncomingMessage & {
+  userId: string;
+};
 
 const server = http.createServer();
 const wss = new WebSocketServer({ noServer: true });
 
+function rejectUpgrade(
+  socket: Pick<NodeJS.WritableStream, "end">,
+  statusCode: number,
+  statusText: string
+) {
+  socket.end(
+    [`HTTP/1.1 ${statusCode} ${statusText}`, "Connection: close", "", ""].join(
+      "\r\n"
+    )
+  );
+}
+
 server.on("upgrade", async (req, socket, head) => {
   try {
-    socket.on("error", console.error);
     const session = await getSessionFromHeaders(req.headers);
 
-    if (!session || !session.user || !session.session) {
-      socket.destroy();
-      throw new UnauthorizedError();
+    if (!session?.user || !session?.session) {
+      rejectUpgrade(socket, 401, "Unauthorized");
+      return;
     }
 
-    socket.removeListener("error", console.error);
+    const authenticatedReq = req as AuthenticatedRequest;
+    authenticatedReq.userId = session.user.id;
 
     wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit("connection", ws, req);
+      wss.emit("connection", ws, authenticatedReq);
     });
   } catch (error) {
-    console.error(error);
+    const appError = normalizeError(error);
+    console.error("websocket upgrade failed", appError);
+
+    if (appError instanceof UnauthorizedError || appError.statusCode === 401) {
+      rejectUpgrade(socket, 401, "Unauthorized");
+      return;
+    }
+
+    rejectUpgrade(socket, 500, "Internal Server Error");
   }
 });
 
-wss.on("connection", async (ws) => {
+type SocketData = {
+  userId: string;
+  channels: Set<string>;
+};
+
+const socketData = new WeakMap<WebSocket, SocketData>();
+const channelsSockets = new Map<string, Set<WebSocket>>();
+
+async function joinChannel(ws: WebSocket, channelId: string) {
+  const socket = socketData.get(ws);
+
+  if (!socket) {
+    throw new BadRequestError("Socket is not initialized");
+  }
+
+  await assertHasMembership(channelId, socket.userId);
+
+  if (socket.channels.has(channelId)) {
+    throw new BadRequestError("You're already part of this channel");
+  }
+
+  if (!channelsSockets.get(channelId)) {
+    channelsSockets.set(channelId, new Set());
+  }
+
+  channelsSockets.get(channelId)?.add(ws);
+  socket.channels.add(channelId);
+}
+
+function braodcastMessage(channelId: string, ws: WebSocket, data: unknown) {
+  const socket = channelsSockets.get(channelId);
+
+  if (!socket) {
+    throw new NotFoundError("Channel not found");
+  }
+
+  if (socket.has(ws)) {
+    socket.forEach((userSoc) => {
+      userSoc.send(JSON.stringify(data));
+    });
+  } else {
+    throw new BadRequestError("You need to first join this channel.");
+  }
+}
+
+wss.on("connection", async (ws, req) => {
+  const userId = (req as AuthenticatedRequest).userId;
+  socketData.set(ws, {
+    userId,
+    channels: new Set(),
+  });
+
   ws.on("error", console.error);
 
-  ws.on("message", (message) => {
-    console.log(message.toString());
-    wss.clients.forEach((c) => {
-      c.send(message.toString());
+  ws.on("close", () => {
+    const socket = socketData.get(ws);
+
+    if (!socket) {
+      return;
+    }
+
+    socket.channels.forEach((channelId) => {
+      const sockets = channelsSockets.get(channelId);
+
+      if (!sockets) {
+        return;
+      }
+
+      sockets.delete(ws);
+
+      if (sockets.size === 0) {
+        channelsSockets.delete(channelId);
+      }
     });
+
+    socketData.delete(ws);
+  });
+
+  ws.on("message", async (raw) => {
+    try {
+      const request = JSON.parse(raw.toString());
+      const { success, error, data } = InputPayloadUnion.safeParse(request);
+
+      if (!success) {
+        throw new BadRequestError("Invalid Inputs", error.issues[0]?.message);
+      }
+
+      const channelId = data?.payload.channelId;
+
+      switch (data.type) {
+        case "JOIN_CHANNEL":
+          await joinChannel(ws, channelId);
+
+          ws.send(
+            JSON.stringify({
+              status: "success",
+              msg: "Joined Channel Successfully",
+            })
+          );
+          break;
+        case "SEND_MESSAGE":
+          braodcastMessage(channelId, ws, data.payload.content);
+          break;
+        default:
+          throw new BadRequestError();
+      }
+    } catch (error) {
+      const appError = normalizeError(error);
+
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          error: buildErrorPayload(appError, "/ws/message"),
+        })
+      );
+    }
   });
 });
 
