@@ -1,5 +1,6 @@
 import { prisma } from "@workspace/db";
 import { NotFoundError } from "../errors";
+import { assertHasMembership } from "./validation";
 
 async function assertCanManageMessage(userId: string, messageId: string) {
   const message = await prisma.message.findFirst({
@@ -11,25 +12,6 @@ async function assertCanManageMessage(userId: string, messageId: string) {
 
   if (!message) {
     throw new NotFoundError("Could not find message");
-  }
-}
-
-async function assertHasMembership(channelId: string, userId: string) {
-  const channel = await prisma.channel.findFirst({
-    where: {
-      id: channelId,
-      network: {
-        members: {
-          some: {
-            userId,
-          },
-        },
-      },
-    },
-  });
-
-  if (!channel) {
-    throw new NotFoundError("Could not find channel");
   }
 }
 

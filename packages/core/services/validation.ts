@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient } from "@workspace/db";
+import { prisma, Prisma, PrismaClient } from "@workspace/db";
+import { NotFoundError } from "../errors";
 
 export type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -23,40 +24,33 @@ export async function channelExists(
   });
 }
 
-export async function getAdminChannelAccess(
-  networkId: string,
-  userId: string,
-  client: DbClient,
-  channelId?: string
-) {
-  return await client.network.findFirst({
+export async function assertHasMembership(channelId: string, userId: string) {
+  const channel = await prisma.channel.findFirst({
     where: {
-      id: networkId,
-      members: {
-        some: {
-          userId,
-          ...{ role: { in: ["ADMIN", "OWNER"] } },
-        },
-      },
-    },
-    ...(channelId && {
-      include: {
-        channels: {
-          where: {
-            id: channelId,
+      id: channelId,
+      network: {
+        members: {
+          some: {
+            userId,
           },
         },
       },
-    }),
+    },
   });
+
+  if (!channel) {
+    throw new NotFoundError("Could not find channel");
+  }
+
+  return channel;
 }
 
 export async function isNetworkMember(
   networkId: string,
   userId: string,
-  client: DbClient
+  client?: DbClient
 ) {
-  return client.networkMembers.findFirst({
+  return (client ? client : prisma).networkMembers.findFirst({
     where: {
       networkId: networkId,
       userId,

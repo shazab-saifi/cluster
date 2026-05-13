@@ -10,6 +10,7 @@ import {
 } from "@workspace/core/errors";
 import { assertHasMembership } from "@workspace/core/services/validation";
 import { InputPayloadUnion } from "./zod.schemas";
+import { publisher, subscriber } from "@workspace/redis";
 
 type AuthenticatedRequest = http.IncomingMessage & {
   userId: string;
@@ -65,6 +66,7 @@ type SocketData = {
 
 const socketData = new WeakMap<WebSocket, SocketData>();
 const channelsSockets = new Map<string, Set<WebSocket>>();
+const subscribedChannels = new Set<string>();
 
 async function joinChannel(ws: WebSocket, channelId: string) {
   const socket = socketData.get(ws);
@@ -81,13 +83,52 @@ async function joinChannel(ws: WebSocket, channelId: string) {
 
   if (!channelsSockets.get(channelId)) {
     channelsSockets.set(channelId, new Set());
+    await subscribeToPublisher(channelId);
   }
 
   channelsSockets.get(channelId)?.add(ws);
   socket.channels.add(channelId);
 }
 
-function braodcastMessage(channelId: string, ws: WebSocket, data: unknown) {
+async function subscribeToPublisher(channelId: string) {
+  if (subscribedChannels.has(channelId)) return;
+
+  await subscriber.subscribe(`${channelId}`, (data) => {
+    const socket = channelsSockets.get(channelId);
+    if (!socket) return;
+    for (const ws of socket) {
+      ws.send(data);
+    }
+  });
+
+  subscribedChannels.add(channelId);
+}
+
+async function unsubscribeFromPublisher(channelId: string) {
+  if (!subscribedChannels.has(channelId)) return;
+
+  await subscriber.unsubscribe(`${channelId}`);
+  subscribedChannels.delete(channelId);
+}
+
+async function removeSocketFromChannel(ws: WebSocket, channelId: string) {
+  const sockets = channelsSockets.get(channelId);
+
+  if (!sockets) {
+    return;
+  }
+
+  sockets.delete(ws);
+
+  if (sockets.size > 0) {
+    return;
+  }
+
+  channelsSockets.delete(channelId);
+  await unsubscribeFromPublisher(channelId);
+}
+
+function publishMessage(channelId: string, ws: WebSocket, data: unknown) {
   const socket = channelsSockets.get(channelId);
 
   if (!socket) {
@@ -95,9 +136,7 @@ function braodcastMessage(channelId: string, ws: WebSocket, data: unknown) {
   }
 
   if (socket.has(ws)) {
-    socket.forEach((userSoc) => {
-      userSoc.send(JSON.stringify(data));
-    });
+    publisher.publish(`${channelId}`, JSON.stringify(data));
   } else {
     throw new BadRequestError("You need to first join this channel.");
   }
@@ -112,26 +151,22 @@ wss.on("connection", async (ws, req) => {
 
   ws.on("error", console.error);
 
-  ws.on("close", () => {
+  ws.on("close", async () => {
     const socket = socketData.get(ws);
 
     if (!socket) {
       return;
     }
 
-    socket.channels.forEach((channelId) => {
-      const sockets = channelsSockets.get(channelId);
-
-      if (!sockets) {
-        return;
-      }
-
-      sockets.delete(ws);
-
-      if (sockets.size === 0) {
-        channelsSockets.delete(channelId);
-      }
-    });
+    try {
+      await Promise.all(
+        [...socket.channels].map((channelId) =>
+          removeSocketFromChannel(ws, channelId)
+        )
+      );
+    } catch (error) {
+      console.error("websocket close cleanup failed", error);
+    }
 
     socketData.delete(ws);
   });
@@ -159,7 +194,7 @@ wss.on("connection", async (ws, req) => {
           );
           break;
         case "SEND_MESSAGE":
-          braodcastMessage(channelId, ws, data.payload.content);
+          publishMessage(channelId, ws, data.payload.content);
           break;
         default:
           throw new BadRequestError();

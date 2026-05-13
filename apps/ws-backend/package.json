@@ -21,6 +21,7 @@
     "@types/ws": "^8.18.1",
     "@workspace/auth": "workspace:*",
     "@workspace/core": "workspace:*",
+    "@workspace/redis": "workspace:*",
     "ws": "^8.20.0",
     "zod": "^4.4.3"
   }
