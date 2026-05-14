@@ -103,7 +103,16 @@ wss.on("connection", (ws, req) => {
           );
           break;
         case "SEND_MESSAGE":
-          await publishMessage(channelId, data.payload.content, ws);
+          await publisher.publish(
+            `${channelId}`,
+            JSON.stringify({
+              type: "NEW_MESSAGE",
+              payload: {
+                channelId,
+                content: data.payload.content,
+              },
+            })
+          );
           break;
         default:
           throw new BadRequestError();
@@ -148,24 +157,6 @@ async function subscribeToPublishers(channelId: string) {
   });
 
   subscribedChannels.add(channelId);
-}
-
-async function publishMessage(
-  channelId: string,
-  content: string,
-  ws: WebSocket
-) {
-  const channel = channels.get(channelId);
-
-  if (!channel) {
-    throw new NotFoundError("Channel not found");
-  }
-
-  if (channel.has(ws)) {
-    await publisher.publish(`${channelId}`, content);
-  } else {
-    throw new BadRequestError("You need to first join this channel.");
-  }
 }
 
 async function removeSocketFromChannel(channelId: string, ws: WebSocket) {
