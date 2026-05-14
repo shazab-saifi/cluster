@@ -17,3 +17,4 @@ export const InputPayloadUnion = z.discriminatedUnion("type", [
 ]);
 
 export type InputPayload = z.infer<typeof InputPayloadUnion>;
+export type MessagePayload = Extract<InputPayload, { type: "SEND_MESSAGE" }>;
