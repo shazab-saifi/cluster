@@ -1,0 +1,22 @@
+{
+  "name": "msg-flush-worker",
+  "module": "src/worker.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch src/worker.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10.3.0"
+  },
+  "dependencies": {
+    "@workspace/redis": "workspace:*",
+    "@workspace/db": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

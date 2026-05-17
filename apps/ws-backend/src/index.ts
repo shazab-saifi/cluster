@@ -3,14 +3,13 @@ import {
   BadRequestError,
   buildErrorPayload,
   normalizeError,
-  NotFoundError,
   UnauthorizedError,
 } from "@workspace/core/errors";
 import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { InputPayloadUnion } from "./zod.schemas";
 import { assertHasMembership } from "@workspace/core/services/validation";
-import { publisher, subscriber } from "@workspace/redis";
+import { publisher, redisClient, subscriber } from "@workspace/redis";
 
 const server = http.createServer();
 const wss = new WebSocketServer({ noServer: true });
@@ -109,9 +108,28 @@ wss.on("connection", (ws, req) => {
               type: "NEW_MESSAGE",
               payload: {
                 channelId,
+                senderId: req.userId,
                 content: data.payload.content,
               },
             })
+          );
+
+          await redisClient.xAdd(
+            "chat-stream",
+            "*",
+            {
+              type: "NEW_MESSAGE",
+              channelId,
+              senderId: req.userId as string,
+              content: data.payload.content,
+            },
+            {
+              TRIM: {
+                strategy: "MAXLEN",
+                strategyModifier: "~",
+                threshold: 10000,
+              },
+            }
           );
           break;
         default:
