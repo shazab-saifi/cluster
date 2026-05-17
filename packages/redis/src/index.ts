@@ -1,22 +1,31 @@
 import { createClient, RedisClientType } from "redis";
 
+if (!process.env.REDIS_URL) {
+  throw new Error("REDIS_URL environment variable is not set");
+}
+
 export const redisClient: RedisClientType = createClient({
-  url: "redis://localhost:6379",
+  url: process.env.REDIS_URL,
 });
+
 export const subscriber: RedisClientType = redisClient.duplicate();
 subscriber.on("error", () => console.error);
-
-try {
-  await subscriber.connect();
-} catch (error) {
-  console.log("Subscriber error while connecting: ", error);
-}
 
 export const publisher: RedisClientType = redisClient.duplicate();
 publisher.on("error", () => console.error);
 
 try {
-  await publisher.connect();
+  await Promise.all([
+    redisClient.connect(),
+    subscriber.connect(),
+    publisher.connect(),
+  ]);
 } catch (error) {
-  console.log("Publisher error while connecting: ", error);
+  console.error("Failed to connect Redis clients:", error);
+  process.exit(1);
 }
+
+process.on("SIGINT", async () => {
+  await Promise.all([redisClient.quit(), subscriber.quit(), publisher.quit()]);
+  process.exit(0);
+});
