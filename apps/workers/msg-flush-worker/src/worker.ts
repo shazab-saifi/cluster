@@ -3,7 +3,13 @@ import { redisClient } from "@workspace/redis";
 import os from "os";
 
 let batchStartedAt: number | null = null;
-let buffer: { senderId: string; channelId: string; message: string }[] = [];
+let buffer: {
+  id: string;
+  senderId: string;
+  channelId: string;
+  message: string;
+}[] = [];
+
 let messageIds: string[] = [];
 
 async function batchMessage() {
@@ -20,6 +26,7 @@ async function batchMessage() {
 
       if (response && response[0] && buffer.length < 100) {
         const mapMessages = response[0].messages.map((message) => ({
+          id: message.id,
           senderId: message.message.senderId as string,
           channelId: message.message.channelId as string,
           message: message.message.content as string,
@@ -34,6 +41,7 @@ async function batchMessage() {
         const ids = response[0].messages.map((message) => {
           return message.id;
         });
+
         messageIds.push(...ids);
       }
 
@@ -41,13 +49,12 @@ async function batchMessage() {
         batchStartedAt !== null && Date.now() - batchStartedAt >= 5000;
 
       if (buffer.length > 0 && (intervalElapsed || buffer.length >= 100)) {
-        await prisma.message.createManyAndReturn({
+        await prisma.message.createMany({
           data: buffer,
           skipDuplicates: true,
         });
 
         await redisClient.xAck("chat-stream", "chat-workers", messageIds);
-
         buffer = [];
         messageIds = [];
         batchStartedAt = null;
@@ -64,9 +71,18 @@ async function ensureConsumerGroup() {
       MKSTREAM: true,
     });
   } catch (err) {
-    console.error(err);
+    const message = err instanceof Error ? err.message : String(err);
+
+    if (!message.includes("BUSYGROUP")) {
+      throw err;
+    }
   }
 }
 
-await ensureConsumerGroup();
-await batchMessage();
+try {
+  await ensureConsumerGroup();
+  await batchMessage();
+} catch (error) {
+  console.error("flush worker startup failed", error);
+  process.exit(1);
+}
