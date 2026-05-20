@@ -8,13 +8,16 @@
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "worker:build": "bun run --cwd apps/workers/msg-flush-worker worker:build",
+    "recovery:build": "bun run --cwd apps/workers/msg-flush-worker recovery:build"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "turbo": "2.9.14",
     "typescript": "5.9.3"
   },
   "packageManager": "bun@1.3.6",

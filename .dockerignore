@@ -1,0 +1,8 @@
+dist
+node_modules
+.husky
+.turbo
+.vscode
+.env
+.env.local
+.next

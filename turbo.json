@@ -35,6 +35,12 @@
     },
     "db:deploy": {
       "cache": false
+    },
+    "worker:build": {
+      "dependsOn": ["^worker:build"]
+    },
+    "recovery:build": {
+      "dependsOn": ["^recovery:build"]
     }
   }
 }
