@@ -1,6 +1,6 @@
 import express from "express";
 import { mainRouter } from "routes/main";
-import { toNodeHandler } from "better-auth/node";
+import { toNodeHandler } from "@workspace/auth";
 import { auth } from "@workspace/auth";
 import cors from "cors";
 

@@ -12,6 +12,7 @@ RUN turbo prune msg-flush-worker --docker
 
 FROM base AS builder
 COPY --from=prepare /app/out/json .
+COPY --from=prepare /app/out/bun.lock ./bun.lock
 RUN bun install --frozen-lockfile
 
 COPY --from=prepare /app/out/full .
