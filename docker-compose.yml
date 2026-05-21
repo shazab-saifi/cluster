@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=cluster_db
+      - POSTGRES_DB=database
+    volumes:
+      - pg_data:/var/lib/postgres/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  backend:
+    build:
+      context: .
+      target: dev
+      dockerfile: ./apps/backend/Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./apps/backend/.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ws-backend:
+    build:
+      context: .
+      target: dev
+      dockerfile: ./apps/ws-backend/Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./apps/ws-backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      target: dev
+      dockerfile: ./apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/web/.env
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  flush-worker:
+    build:
+      context: .
+      target: dev
+      dockerfile: ./apps/workers/msg-flush-worker/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:cluster-db@postgres:5432/database
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  redis_data:
