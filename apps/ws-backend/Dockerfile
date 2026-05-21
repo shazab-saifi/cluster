@@ -15,7 +15,7 @@ COPY --from=prepare /app/out/full .
 RUN bunx turbo run db:generate --filter=@workspace/db
 
 FROM install AS dev
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 CMD [ "bun", "run", "dev" ]
 
 FROM install AS builder
