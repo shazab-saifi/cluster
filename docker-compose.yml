@@ -72,6 +72,23 @@ services:
       - "3000:3000"
     env_file:
       - ./apps/web/.env
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/web
+          target: /app/apps/web
+          initial_sync: true
+          ignore:
+            - node_modules/
+            - .turbo/
+            - .next/
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./bun.lock
+        - action: rebuild
+          path: ./apps/web/package.json
+
     depends_on:
       backend:
         condition: service_healthy
