@@ -8,7 +8,6 @@ export const meRouter: Router = express.Router();
 meRouter.get("/", async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id as string;
-
     const userData = await meService.getMe(userId);
 
     res.json({ userData });
@@ -32,11 +31,18 @@ meRouter.patch("/", async (req: Request, res: Response) => {
       );
     }
 
-    const { name, image } = body.data;
-    const data: { name?: string; image?: string } = {};
+    const { name, image, bio, username } = body.data;
+    const data: {
+      name?: string;
+      image?: string;
+      bio?: string;
+      username?: string;
+    } = {};
 
     if (name !== undefined) data.name = name;
     if (image !== undefined) data.image = image;
+    if (bio !== undefined) data.bio = bio;
+    if (username != undefined) data.username = username;
 
     const updateData = await meService.updateMe(userId, data);
 
