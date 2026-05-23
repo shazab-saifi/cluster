@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "worker:dev": "bun run --watch src/worker.ts",
+    "dev": "bun run --watch src/worker.ts",
     "recovery:dev": "bun run --watch src/recovery-worker.ts",
     "worker:build": "bun build src/worker.ts --outdir ./dist --target node",
     "recovery:build": "bun build src/recovery-worker.ts --outdir ./dist --target node"

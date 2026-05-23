@@ -41,6 +41,10 @@
     },
     "recovery:build": {
       "dependsOn": ["^recovery:build"]
+    },
+    "worker:dev": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
