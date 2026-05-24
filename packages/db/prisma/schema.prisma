@@ -22,6 +22,8 @@ model User {
   memberships            NetworkMembers[]
   networks               Network[]
   messages               Message[]
+  sentFriendships        Friendship[]     @relation("sender")
+  receivedFriendships    Friendship[]     @relation("receiver")
   conversationsAsUserOne DMConversation[] @relation("userOne")
   conversationsAsUserTwo DMConversation[] @relation("userTwo")
 
@@ -160,4 +162,23 @@ model DMConversation {
 
   @@unique([userOneId, userTwoId])
   @@map("dm_conversation")
+}
+
+model Friendship {
+  id         String           @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  sender     User             @relation("sender", fields: [senderId], references: [id])
+  receiver   User             @relation("receiver", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
 }
