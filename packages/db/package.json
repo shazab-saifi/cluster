@@ -9,7 +9,8 @@
   "scripts": {
     "db:generate": "bunx --bun prisma generate",
     "db:migrate": "bunx --bun prisma migrate dev",
-    "db:deploy": "bunx --bun prisma migrate deploy"
+    "db:deploy": "bunx --bun prisma migrate deploy",
+    "db:seed": "bun --env-file=.env --bun prisma db seed"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
