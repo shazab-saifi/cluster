@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -13,20 +8,22 @@ datasource db {
 }
 
 model User {
-  id            String           @id @default(uuid())
-  name          String
-  username      String?          @unique
-  email         String
-  emailVerified Boolean          @default(false)
-  image         String?
-  bio           String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  memberships   NetworkMembers[]
-  networks      Network[]
-  messages      Message[]
+  id                     String           @id @default(uuid())
+  name                   String
+  username               String?          @unique
+  email                  String
+  emailVerified          Boolean          @default(false)
+  image                  String?
+  bio                    String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  sessions               Session[]
+  accounts               Account[]
+  memberships            NetworkMembers[]
+  networks               Network[]
+  messages               Message[]
+  conversationsAsUserOne DMConversation[] @relation("userOne")
+  conversationsAsUserTwo DMConversation[] @relation("userTwo")
 
   @@index([name])
   @@unique([email])
@@ -88,8 +85,8 @@ model Network {
   ownerId  String
   members  NetworkMembers[]
   channels Channel[]
-  type     NetworkType @default(PUBLIC)
-  owner    User @relation(fields: [ownerId], references: [id])
+  type     NetworkType      @default(PUBLIC)
+  owner    User             @relation(fields: [ownerId], references: [id])
 
   @@unique([id, ownerId])
   @@index([name])
@@ -134,16 +131,33 @@ model Channel {
 }
 
 model Message {
-  id        String   @id
-  message   String
-  channelId String
-  senderId  String
-  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String          @id
+  message        String
+  channelId      String?
+  conversationId String?
+  senderId       String
+  channel        Channel?        @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation   DMConversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([message])
   @@index([channelId, createdAt(sort: Desc)])
+  @@index([conversationId, createdAt(sort: Desc)])
   @@map("message")
+}
+
+model DMConversation {
+  id        String    @id @default(uuid())
+  userOneId String
+  userTwoId String
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  userOne   User      @relation("userOne", fields: [userOneId], references: [id])
+  userTwo   User      @relation("userTwo", fields: [userTwoId], references: [id])
+
+  @@unique([userOneId, userTwoId])
+  @@map("dm_conversation")
 }
