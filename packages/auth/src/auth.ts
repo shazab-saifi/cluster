@@ -28,12 +28,14 @@ export const auth = betterAuth({
     magicLink({
       expiresIn: 300,
       sendMagicLink: async ({ email, url }) => {
-        await resend.emails.send({
-          from: "Acme <onboarding@resend.dev>",
+        const { error } = await resend.emails.send({
+          from: "Cluster <onboarding@shazab.site>",
           to: email,
           subject: "Your Cluster Sign-In Link",
           html: `<a href="${url}">Sign in</a>`,
         });
+
+        console.error(error);
       },
     }),
   ],

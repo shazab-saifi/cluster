@@ -5,3 +5,13 @@ export async function getAllFriends(userId: string) {
     where: { senderId: userId, receiverId: userId, status: "ACCEPTED" },
   });
 }
+
+export async function sendFriendRequest(userId: string, friendId: string) {
+  return await prisma.friendship.create({
+    data: {
+      senderId: userId,
+      receiverId: friendId,
+      status: "PENDING",
+    },
+  });
+}
