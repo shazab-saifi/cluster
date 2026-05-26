@@ -3,8 +3,7 @@
 /** @type {import("eslint").Linter.Config} */
 export default [
   {
-    root: true,
-    ignorePatterns: [
+    ignores: [
       "**/node_modules/**",
       "**/.next/**",
       "**/dist/**",
