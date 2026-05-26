@@ -29,9 +29,9 @@ export const GoogleAuthButton = () => {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="secondary"
       size="lg"
-      className="w-full py-6"
+      className="w-full bg-neutral-950"
       onClick={handleGoogleSignIn}
     >
       <Image
