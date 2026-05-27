@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-
 import { authClient } from "@/lib/auth-client";
-
 import { ActiveNow } from "./active-now";
-import { getMe } from "./api";
+import { getMe, getNetworkDetails } from "./api";
+import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
@@ -15,7 +14,9 @@ import { NetworkStrip } from "./network-strip";
 import { getNetworkList } from "./utils";
 
 export function Dashboard() {
+  const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
+  const [activeNetworkId, setActiveNetworkId] = React.useState<string>();
   const { data: session } = authClient.useSession();
   const { data, isLoading, error } = useQuery({
     queryKey: ["me"],
@@ -24,7 +25,19 @@ export function Dashboard() {
 
   const user = data?.userData;
   const networks = React.useMemo(() => getNetworkList(user), [user]);
-  const activeNetwork = networks[0];
+  const activeNetwork = networks.find(
+    (network) => network.id === activeNetworkId
+  );
+  const selectedNetwork = activeNetwork ?? networks[0];
+  const {
+    data: networkDetails,
+    isLoading: isNetworkDetailsLoading,
+    error: networkDetailsError,
+  } = useQuery({
+    queryKey: ["network", selectedNetwork?.id],
+    queryFn: () => getNetworkDetails(selectedNetwork?.id ?? ""),
+    enabled: Boolean(selectedNetwork?.id),
+  });
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -34,15 +47,19 @@ export function Dashboard() {
     <main className="flex h-svh overflow-hidden bg-background text-foreground">
       <NetworkStrip
         networks={networks}
-        activeNetwork={activeNetwork}
+        activeNetwork={selectedNetwork}
         isLoading={isLoading}
+        onSelectNetwork={(network) => setActiveNetworkId(network.id)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
       />
       <DashboardSidebar
-        networks={networks}
-        activeNetwork={activeNetwork}
+        activeNetwork={selectedNetwork}
+        channels={networkDetails?.channels ?? []}
+        isChannelsLoading={isNetworkDetailsLoading}
+        hasChannelsError={Boolean(networkDetailsError)}
         user={user}
         sessionUser={session?.user}
+        onCreateChannel={() => setIsCreateChannelOpen(true)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
       />
 
@@ -55,12 +72,17 @@ export function Dashboard() {
             isLoading={isLoading}
             hasError={Boolean(error)}
           />
-          <ActiveNow activeNetwork={activeNetwork} />
+          <ActiveNow activeNetwork={selectedNetwork} />
         </div>
       </section>
       <CreateNetworkDialog
         open={isCreateNetworkOpen}
         onOpenChange={setIsCreateNetworkOpen}
+      />
+      <CreateChannelDialog
+        network={selectedNetwork}
+        open={isCreateChannelOpen}
+        onOpenChange={setIsCreateChannelOpen}
       />
     </main>
   );

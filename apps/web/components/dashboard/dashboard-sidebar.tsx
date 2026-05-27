@@ -1,29 +1,43 @@
-import { Crown, HelpCircle, Inbox, Plus, Users } from "lucide-react";
+import {
+  AlertCircle,
+  Hash,
+  HelpCircle,
+  Inbox,
+  LoaderCircle,
+  Plus,
+  Users,
+} from "lucide-react";
 
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 
-import type { DashboardUser, NetworkListItem } from "./types";
+import type { Channel, DashboardUser, NetworkListItem } from "./types";
 import { getInitials } from "./utils";
 import { UserFooter } from "./user-footer";
 
 type DashboardSidebarProps = {
-  networks: NetworkListItem[];
   activeNetwork?: NetworkListItem;
+  channels: Channel[];
+  isChannelsLoading: boolean;
+  hasChannelsError: boolean;
   user?: DashboardUser;
   sessionUser?: {
     name?: string | null;
     image?: string | null;
   };
+  onCreateChannel: () => void;
   onCreateNetwork: () => void;
 };
 
 export function DashboardSidebar({
-  networks,
   activeNetwork,
+  channels,
+  isChannelsLoading,
+  hasChannelsError,
   user,
   sessionUser,
+  onCreateChannel,
   onCreateNetwork,
 }: DashboardSidebarProps) {
   return (
@@ -62,7 +76,54 @@ export function DashboardSidebar({
         </Button>
 
         <div className="mt-4 flex items-center justify-between px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          <span>Networks</span>
+          <span className="min-w-0 truncate">
+            {activeNetwork ? activeNetwork.name : "Channels"}
+          </span>
+          <button
+            type="button"
+            aria-label="Create channel"
+            title="Create channel"
+            className="rounded p-0.5 transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            disabled={!activeNetwork}
+            onClick={onCreateChannel}
+          >
+            <Plus className="size-4" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-1">
+          {isChannelsLoading && (
+            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
+              <LoaderCircle className="size-4 animate-spin" />
+              Loading channels
+            </div>
+          )}
+          {hasChannelsError && (
+            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
+              <AlertCircle className="size-4" />
+              Channels unavailable
+            </div>
+          )}
+          {!isChannelsLoading &&
+            !hasChannelsError &&
+            channels.map((channel) => (
+              <button
+                key={channel.id}
+                type="button"
+                className="flex h-10 items-center gap-3 rounded-lg px-2 text-left text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <Hash className="size-4 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{channel.name}</span>
+              </button>
+            ))}
+          {!isChannelsLoading && !hasChannelsError && channels.length === 0 && (
+            <div className="rounded-lg px-2 py-3 text-sm text-muted-foreground">
+              No channels yet
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto flex items-center justify-between px-2 pt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <span>Network</span>
           <button
             type="button"
             aria-label="Create network"
@@ -73,33 +134,33 @@ export function DashboardSidebar({
             <Plus className="size-4" />
           </button>
         </div>
-        <div className="flex flex-col gap-1">
-          {networks.map((network) => (
+        {activeNetwork && (
+          <div className="flex flex-col gap-1">
             <button
-              key={network.id}
               type="button"
               className={cn(
-                "flex h-10 items-center gap-3 rounded-lg px-2 text-left text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground",
-                network.id === activeNetwork?.id && "bg-muted text-foreground"
+                "flex h-10 items-center gap-3 rounded-lg px-2 text-left text-sm transition",
+                "bg-muted text-foreground"
               )}
             >
               <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-md bg-background text-xs font-semibold">
-                {network.image ? (
+                {activeNetwork.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={network.image}
+                    src={activeNetwork.image}
                     alt=""
                     className="size-full object-cover"
                   />
                 ) : (
-                  getInitials(network.name)
+                  getInitials(activeNetwork.name)
                 )}
               </span>
-              <span className="min-w-0 flex-1 truncate">{network.name}</span>
-              {network.role === "OWNER" && <Crown className="size-4" />}
+              <span className="min-w-0 flex-1 truncate">
+                {activeNetwork.name}
+              </span>
             </button>
-          ))}
-        </div>
+          </div>
+        )}
       </nav>
       <UserFooter user={user} sessionUser={sessionUser} />
     </aside>

@@ -9,6 +9,14 @@ export type Network = {
   type: NetworkType;
 };
 
+export type Channel = {
+  id: string;
+  name: string;
+  networkId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Membership = {
   id: string;
   userId: string;
@@ -34,4 +42,8 @@ export type DashboardUser = MeResponse["userData"];
 
 export type NetworkListItem = Network & {
   role: NetworkRole;
+};
+
+export type NetworkDetails = Network & {
+  channels: Channel[];
 };

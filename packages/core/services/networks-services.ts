@@ -1,4 +1,5 @@
 import { NetworkRole, prisma } from "@workspace/db";
+import { NotFoundError } from "../errors";
 
 export interface NetworkCreateType {
   name: string;
@@ -57,4 +58,30 @@ export async function searchNetworks(query: string) {
       type: "PUBLIC",
     },
   });
+}
+
+export async function getNetworkById(networkId: string, userId: string) {
+  const network = await prisma.network.findFirst({
+    where: {
+      id: networkId,
+      members: {
+        some: {
+          userId,
+        },
+      },
+    },
+    include: {
+      channels: {
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+    },
+  });
+
+  if (!network) {
+    throw new NotFoundError("Could not find network");
+  }
+
+  return network;
 }

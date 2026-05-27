@@ -7,6 +7,7 @@ type NetworkStripProps = {
   networks: NetworkListItem[];
   activeNetwork?: NetworkListItem;
   isLoading: boolean;
+  onSelectNetwork: (network: NetworkListItem) => void;
   onCreateNetwork: () => void;
 };
 
@@ -14,6 +15,7 @@ export function NetworkStrip({
   networks,
   activeNetwork,
   isLoading,
+  onSelectNetwork,
   onCreateNetwork,
 }: NetworkStripProps) {
   return (
@@ -40,6 +42,7 @@ export function NetworkStrip({
             key={network.id}
             network={network}
             active={network.id === activeNetwork?.id}
+            onClick={() => onSelectNetwork(network)}
           />
         ))}
       </div>

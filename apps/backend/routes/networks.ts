@@ -73,6 +73,32 @@ networkRouter.get("/search", async (req: Request, res: Response) => {
   }
 });
 
+networkRouter.get("/:networkId", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+
+  if (!networkIdParsed.success) {
+    throw new ValidationError(
+      "Invalid network id",
+      networkIdParsed.error.issues[0]?.message ??
+        "Param networkId should be a valid uuid"
+    );
+  }
+
+  try {
+    const network = await networksServices.getNetworkById(
+      networkIdParsed.data,
+      userId
+    );
+
+    res.json(network);
+  } catch (error) {
+    return sendErrorResponse(res, error, {
+      path: req.originalUrl,
+    });
+  }
+});
+
 networkRouter.patch("/:id", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const idParsed = uuidSchema.safeParse(req.params.id);

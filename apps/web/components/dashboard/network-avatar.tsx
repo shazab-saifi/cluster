@@ -6,15 +6,22 @@ import { getInitials } from "./utils";
 type NetworkAvatarProps = {
   network: NetworkListItem;
   active: boolean;
+  onClick: () => void;
 };
 
-export function NetworkAvatar({ network, active }: NetworkAvatarProps) {
+export function NetworkAvatar({
+  network,
+  active,
+  onClick,
+}: NetworkAvatarProps) {
   return (
     <button
       type="button"
       aria-label={network.name}
       title={network.name}
+      aria-pressed={active}
       className="group relative flex h-12 w-12 shrink-0 items-center justify-center"
+      onClick={onClick}
     >
       <span
         className={cn(
