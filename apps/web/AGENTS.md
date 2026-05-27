@@ -9,6 +9,15 @@ Load relevant skill files depending on the task:
 
 Always consult matching skill files before making changes.
 
+# Rules
+
+- Never make the page itself a client component, use client components
+
+# Data fetching and state management
+
+- Use react-query
+- Use zustand for global state managemnet
+
 # Forms examples
 
 Tools and libraries to use -

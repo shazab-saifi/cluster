@@ -24,7 +24,7 @@ export const SignInForm = () => {
         return alert("Please enter you email!");
       }
       try {
-        // @ts-expect-error magicLink showing a ts error for some reason but the configuration is correct but magic link auth is working fine
+        // @ts-expect-error magicLink showing a ts error for some reason but the configuration is correct and magic link auth is working fine
         const { error } = await authClient.signIn.magicLink({
           email: value.email.trim(),
           callbackUrl: "/",

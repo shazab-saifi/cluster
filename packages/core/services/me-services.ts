@@ -7,7 +7,11 @@ export async function getMe(userId: string) {
     },
     include: {
       networks: true,
-      memberships: true,
+      memberships: {
+        include: {
+          network: true,
+        },
+      },
     },
   });
 }
