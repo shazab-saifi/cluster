@@ -1,6 +1,5 @@
 import {
   AlertCircle,
-  Hash,
   HelpCircle,
   Inbox,
   LoaderCircle,
@@ -12,6 +11,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 
+import { ChannelRow } from "./channel-actions/channel-row";
 import type { Channel, DashboardUser, NetworkListItem } from "./types";
 import { getInitials } from "./utils";
 import { UserFooter } from "./user-footer";
@@ -106,14 +106,7 @@ export function DashboardSidebar({
           {!isChannelsLoading &&
             !hasChannelsError &&
             channels.map((channel) => (
-              <button
-                key={channel.id}
-                type="button"
-                className="flex h-10 items-center gap-3 rounded-lg px-2 text-left text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <Hash className="size-4 shrink-0" />
-                <span className="min-w-0 flex-1 truncate">{channel.name}</span>
-              </button>
+              <ChannelRow key={channel.id} channel={channel} />
             ))}
           {!isChannelsLoading && !hasChannelsError && channels.length === 0 && (
             <div className="rounded-lg px-2 py-3 text-sm text-muted-foreground">
