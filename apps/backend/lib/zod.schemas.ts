@@ -32,5 +32,5 @@ export const uuidSchema = z.uuid();
 export const inviteCreateSchema = z.object({
   networkId: uuidSchema,
   maxUses: z.number().min(1).max(10),
-  expiresAt: z.date(),
+  expiresAt: z.coerce.date(),
 });

@@ -4,6 +4,7 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { ActiveNow } from "./active-now";
+import { AddMemberDialog } from "./add-member/add-member-dialog";
 import { getMe, getNetworkDetails } from "./api";
 import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
@@ -16,6 +17,7 @@ import { getNetworkList } from "./utils";
 export function Dashboard() {
   const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
   const [activeNetworkId, setActiveNetworkId] = React.useState<string>();
   const { data: session } = authClient.useSession();
   const { data, isLoading, error } = useQuery({
@@ -59,6 +61,7 @@ export function Dashboard() {
         hasChannelsError={Boolean(networkDetailsError)}
         user={user}
         sessionUser={session?.user}
+        onAddMember={() => setIsAddMemberOpen(true)}
         onCreateChannel={() => setIsCreateChannelOpen(true)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
       />
@@ -83,6 +86,11 @@ export function Dashboard() {
         network={selectedNetwork}
         open={isCreateChannelOpen}
         onOpenChange={setIsCreateChannelOpen}
+      />
+      <AddMemberDialog
+        network={selectedNetwork}
+        open={isAddMemberOpen}
+        onOpenChange={setIsAddMemberOpen}
       />
     </main>
   );

@@ -31,8 +31,9 @@ export function NetworkAvatar({
       />
       <span
         className={cn(
-          "grid size-12 place-items-center overflow-hidden rounded-2xl bg-muted text-sm font-semibold text-muted-foreground transition-all group-hover:rounded-xl group-hover:bg-primary group-hover:text-primary-foreground",
-          active && "rounded-xl bg-primary text-primary-foreground"
+          "grid size-9.5 place-items-center overflow-hidden rounded-2xl bg-muted text-sm font-semibold text-muted-foreground transition-all group-hover:rounded-xl group-hover:bg-primary group-hover:text-primary-foreground",
+          active &&
+            "rounded-xl bg-primary text-primary-foreground ring-3 ring-blue-500 ring-offset-2 ring-offset-card"
         )}
       >
         {network.image ? (

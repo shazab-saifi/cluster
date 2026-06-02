@@ -2,7 +2,6 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { Button } from "@workspace/ui/components/button";
 import {
   Field,
@@ -12,7 +11,6 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
-
 import type { Channel } from "../types";
 import { editChannel } from "./api";
 import { editChannelSchema } from "./schema";

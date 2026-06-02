@@ -1,8 +1,8 @@
 import {
   AlertCircle,
-  HelpCircle,
   Inbox,
   LoaderCircle,
+  UserPlus,
   Plus,
   Users,
 } from "lucide-react";
@@ -26,6 +26,7 @@ type DashboardSidebarProps = {
     name?: string | null;
     image?: string | null;
   };
+  onAddMember: () => void;
   onCreateChannel: () => void;
   onCreateNetwork: () => void;
 };
@@ -37,9 +38,13 @@ export function DashboardSidebar({
   hasChannelsError,
   user,
   sessionUser,
+  onAddMember,
   onCreateChannel,
   onCreateNetwork,
 }: DashboardSidebarProps) {
+  const canAddMember =
+    activeNetwork?.role === "OWNER" || activeNetwork?.role === "ADMIN";
+
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r bg-card md:flex">
       <div className="border-b p-3">
@@ -66,14 +71,17 @@ export function DashboardSidebar({
           <Inbox className="size-5" />
           Inbox
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
-        >
-          <HelpCircle className="size-5" />
-          Help
-        </Button>
+        {canAddMember && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
+            onClick={onAddMember}
+          >
+            <UserPlus className="size-5" />
+            Add member
+          </Button>
+        )}
 
         <div className="mt-4 flex items-center justify-between px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           <span className="min-w-0 truncate">

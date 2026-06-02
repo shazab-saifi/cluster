@@ -2,7 +2,12 @@
 
 import * as React from "react";
 import { Hash, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
 import type { Channel } from "../types";
 import {
   DeleteChannelDialog,
@@ -14,34 +19,8 @@ type ChannelRowProps = {
 };
 
 export function ChannelRow({ channel }: ChannelRowProps) {
-  const menuRef = React.useRef<HTMLDivElement>(null);
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isMenuOpen) return;
-
-    function onPointerDown(event: PointerEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [isMenuOpen]);
 
   return (
     <>
@@ -53,54 +32,31 @@ export function ChannelRow({ channel }: ChannelRowProps) {
           <Hash className="size-4 shrink-0" />
           <span className="min-w-0 flex-1 truncate">{channel.name}</span>
         </button>
-        <div ref={menuRef} className="relative shrink-0 pr-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
+        <DropdownMenu>
+          <DropdownMenuTrigger
             aria-label={`Open ${channel.name} channel menu`}
-            aria-haspopup="menu"
-            aria-expanded={isMenuOpen}
-            className="opacity-0 transition group-focus-within/channel:opacity-100 group-hover/channel:opacity-100 data-[state=open]:opacity-100"
-            data-state={isMenuOpen ? "open" : "closed"}
-            onClick={() => setIsMenuOpen((open) => !open)}
+            className="mr-1 inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[min(var(--radius-md),10px)] border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap opacity-0 transition-all outline-none select-none group-focus-within/channel:opacity-100 group-hover/channel:opacity-100 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-muted data-[state=open]:text-foreground data-[state=open]:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           >
             <MoreHorizontal className="size-4" />
-          </Button>
-
-          {isMenuOpen && (
-            <div
-              role="menu"
-              aria-label={`${channel.name} channel actions`}
-              className="absolute top-8 right-1 z-20 w-40 rounded-lg border bg-card p-1 shadow-xl"
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            aria-label={`${channel.name} channel actions`}
+            className="w-40"
+          >
+            <DropdownMenuItem onSelect={() => setIsEditOpen(true)}>
+              <Pencil />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => setIsDeleteOpen(true)}
             >
-              <button
-                type="button"
-                role="menuitem"
-                className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm transition hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground focus:outline-none"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  setIsEditOpen(true);
-                }}
-              >
-                <Pencil className="size-4" />
-                Edit
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-destructive transition hover:bg-destructive/10 focus:bg-destructive/10 focus:outline-none"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  setIsDeleteOpen(true);
-                }}
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </button>
-            </div>
-          )}
-        </div>
+              <Trash2 />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <EditChannelDialog
