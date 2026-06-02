@@ -17,3 +17,23 @@ export async function createInvite(
     },
   });
 }
+
+export async function getInviteInfo(token: string) {
+  return await prisma.invite.findUnique({
+    where: { token },
+  });
+}
+
+export async function updateInviteCurrentUses(
+  currentUses: number,
+  token: string
+) {
+  return await prisma.invite.update({
+    where: {
+      token,
+    },
+    data: {
+      currentUses,
+    },
+  });
+}

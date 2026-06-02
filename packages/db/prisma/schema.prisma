@@ -187,17 +187,18 @@ enum FriendshipStatus {
 }
 
 model Invite {
-  id          String   @id @default(uuid())
-  token       String   @unique
-  createdById String
-  networkId   String
-  maxUses     Int      @default(10)
-  currentUses Int      @default(0)
-  createdAt   DateTime @default(now())
+  id          String      @id @default(uuid())
+  token       String      @unique
+  createdById String   
+  networkId   String   
+  maxUses     Int         @default(10)
+  currentUses Int         @default(0)
+  createdAt   DateTime    @default(now())
   expiresAt   DateTime
-  revoked     Boolean  @default(false)
-  createdBy   User     @relation(fields: [createdById], references: [id])
-  network     Network  @relation(fields: [networkId], references: [id])
+  revoked     Boolean     @default(false)
+  role        NetworkRole @default(MEMBER)
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  network     Network     @relation(fields: [networkId], references: [id])
 
   @@map("invite")
 }

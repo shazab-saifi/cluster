@@ -1,6 +1,8 @@
 import { NetworkRole, prisma } from "@workspace/db";
 import { NotFoundError } from "../errors";
 
+export { NetworkRole };
+
 export interface NetworkCreateType {
   name: string;
   type: "PUBLIC" | "PRIVATE";
@@ -84,4 +86,14 @@ export async function getNetworkById(networkId: string, userId: string) {
   }
 
   return network;
+}
+
+export async function addMember(networkId: string, userId: string) {
+  return await prisma.networkMembers.create({
+    data: {
+      networkId,
+      userId,
+      role: "MEMBER",
+    },
+  });
 }
