@@ -12,10 +12,10 @@ import express, { Request, Response, Router } from "express";
 import * as networksServices from "@workspace/core/services/networks-services";
 import { channelsRouter } from "./channels";
 
-export const networkRouter: Router = express.Router();
-networkRouter.use("/:networkId/channels", channelsRouter);
+export const networksRouter: Router = express.Router();
+networksRouter.use("/:networkId/channels", channelsRouter);
 
-networkRouter.post("/", async (req: Request, res: Response) => {
+networksRouter.post("/", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
 
   const { success, data, error } = networkCreateSchema.safeParse(req.body);
@@ -50,7 +50,7 @@ networkRouter.post("/", async (req: Request, res: Response) => {
   }
 });
 
-networkRouter.get("/search", async (req: Request, res: Response) => {
+networksRouter.get("/search", async (req: Request, res: Response) => {
   const query = req.query.q;
 
   if (typeof query !== "string" || query.trim() === "") {
@@ -73,7 +73,7 @@ networkRouter.get("/search", async (req: Request, res: Response) => {
   }
 });
 
-networkRouter.get("/:networkId", async (req: Request, res: Response) => {
+networksRouter.get("/:networkId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
 
@@ -99,7 +99,7 @@ networkRouter.get("/:networkId", async (req: Request, res: Response) => {
   }
 });
 
-networkRouter.patch("/:id", async (req: Request, res: Response) => {
+networksRouter.patch("/:id", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const idParsed = uuidSchema.safeParse(req.params.id);
 

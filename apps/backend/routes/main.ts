@@ -2,12 +2,16 @@ import express, { Router } from "express";
 import { meRouter } from "./me";
 import { authMiddleware } from "@lib/auth-middleware";
 import { messagesRouter } from "./messages";
-import { networkRouter } from "./networks";
+import { networksRouter } from "./networks";
 import { friendsRouter } from "./friends";
+import { invitesRouter } from "./invites";
 
 export const mainRouter: Router = express.Router();
 
-mainRouter.use("/me", authMiddleware, meRouter);
-mainRouter.use("/networks", authMiddleware, networkRouter);
-mainRouter.use("/channels/:channelId/messages", authMiddleware, messagesRouter);
-mainRouter.use("/friends", authMiddleware, friendsRouter);
+mainRouter.use(authMiddleware);
+
+mainRouter.use("/me", meRouter);
+mainRouter.use("/networks", networksRouter);
+mainRouter.use("/channels/:channelId/messages", messagesRouter);
+mainRouter.use("/friends", friendsRouter);
+mainRouter.use("/invites", invitesRouter);

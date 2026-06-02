@@ -28,3 +28,9 @@ export const networkCreateSchema = z.object({
 export const networkInfoUpdateSchema = networkCreateSchema.partial();
 
 export const uuidSchema = z.uuid();
+
+export const inviteCreateSchema = z.object({
+  networkId: uuidSchema,
+  maxUses: z.number().min(1).max(10),
+  expiresAt: z.date(),
+});
