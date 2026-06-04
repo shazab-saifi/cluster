@@ -24,16 +24,20 @@ export async function getInviteInfo(token: string) {
   });
 }
 
-export async function updateInviteCurrentUses(
-  currentUses: number,
-  token: string
-) {
+export async function IncrementInviteCurrentUses(token: string) {
   return await prisma.invite.update({
     where: {
       token,
     },
     data: {
-      currentUses,
+      currentUses: { increment: 1 },
     },
+  });
+}
+
+export async function revokeInviteLink(token: string) {
+  return await prisma.invite.update({
+    where: { token },
+    data: { revoked: true },
   });
 }

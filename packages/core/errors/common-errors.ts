@@ -69,3 +69,17 @@ export class ForbiddenError extends AppError {
     this.name = "ForbiddenError";
   }
 }
+
+export class ResourceExpiredError extends AppError {
+  constructor(
+    message = "This resource has expired.",
+    suggestion = "The resource is no longer available. Please request a new one or contact support if you believe this is a mistake."
+  ) {
+    super(message, {
+      code: "RESOURCE_EXPIRED",
+      statusCode: 410,
+      suggestion,
+    });
+    this.name = "ResourceExpiredError";
+  }
+}

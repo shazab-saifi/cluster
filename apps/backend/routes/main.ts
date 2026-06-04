@@ -4,9 +4,11 @@ import { authMiddleware } from "@lib/auth-middleware";
 import { messagesRouter } from "./messages";
 import { networksRouter } from "./networks";
 import { friendsRouter } from "./friends";
-import { invitesRouter } from "./invites";
+import { getInvitePreview, invitesRouter } from "./invites";
 
 export const mainRouter: Router = express.Router();
+
+mainRouter.use("/invites", invitesRouter.get("/:token", getInvitePreview));
 
 mainRouter.use(authMiddleware);
 
