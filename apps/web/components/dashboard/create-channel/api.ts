@@ -1,42 +1,37 @@
+import axios from "axios";
+
+import { API_BASE_URL } from "@/lib/utils";
 import type { Channel } from "../types";
 import type { CreateChannelValues } from "./schema";
-
-const API_BASE_URL = "http://localhost:4000";
 
 type CreateChannelInput = CreateChannelValues & {
   networkId: string;
 };
 
 export async function createChannel({ networkId, name }: CreateChannelInput) {
-  const response = await fetch(
-    `${API_BASE_URL}/networks/${networkId}/channels`,
-    {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+  try {
+    const response = await axios.post<Channel>(
+      `${API_BASE_URL}/networks/${networkId}/channels`,
+      {
         name: name.trim(),
-      }),
-    }
-  );
+      },
+      {
+        withCredentials: true,
+      }
+    );
 
-  if (!response.ok) {
-    let message = "Could not create channel.";
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not create channel."));
+  }
+}
 
-    try {
-      const body = (await response.json()) as {
-        message?: string;
-        details?: string;
-      };
-      message = body.details ?? body.message ?? message;
-    } catch {
-      // Keep the generic message if the response is not JSON.
-    }
-
-    throw new Error(message);
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<{ message?: string; details?: string }>(error)) {
+    return (
+      error.response?.data?.details ?? error.response?.data?.message ?? fallback
+    );
   }
 
-  return (await response.json()) as Channel;
+  return fallback;
 }

@@ -1,6 +1,8 @@
+import axios from "axios";
+
+import { API_BASE_URL } from "@/lib/utils";
 import type { CreateInviteValues, InviteExpiry } from "./schema";
 
-const API_BASE_URL = "http://localhost:4000";
 const INVITE_MAX_USES = 10;
 
 const EXPIRY_MS: Record<InviteExpiry, number> = {
@@ -22,34 +24,31 @@ export async function createInvite({
   networkId,
   expiresIn,
 }: CreateInviteInput) {
-  const response = await fetch(`${API_BASE_URL}/invites`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      networkId,
-      maxUses: INVITE_MAX_USES,
-      expiresAt: new Date(Date.now() + EXPIRY_MS[expiresIn]).toISOString(),
-    }),
-  });
+  try {
+    const response = await axios.post<CreateInviteResponse>(
+      `${API_BASE_URL}/invites`,
+      {
+        networkId,
+        maxUses: INVITE_MAX_USES,
+        expiresAt: new Date(Date.now() + EXPIRY_MS[expiresIn]).toISOString(),
+      },
+      {
+        withCredentials: true,
+      }
+    );
 
-  if (!response.ok) {
-    let message = "Could not create invite link.";
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not create invite link."));
+  }
+}
 
-    try {
-      const body = (await response.json()) as {
-        message?: string;
-        details?: string;
-      };
-      message = body.details ?? body.message ?? message;
-    } catch {
-      // Keep the generic message if the response is not JSON.
-    }
-
-    throw new Error(message);
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<{ message?: string; details?: string }>(error)) {
+    return (
+      error.response?.data?.details ?? error.response?.data?.message ?? fallback
+    );
   }
 
-  return (await response.json()) as CreateInviteResponse;
+  return fallback;
 }

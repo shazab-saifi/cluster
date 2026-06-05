@@ -1,27 +1,31 @@
+import axios from "axios";
+
+import { API_BASE_URL } from "@/lib/utils";
 import type { MeResponse, NetworkDetails } from "./types";
 
-const API_BASE_URL = "http://localhost:4000";
-
 export async function getMe() {
-  const response = await fetch(`${API_BASE_URL}/me`, {
-    credentials: "include",
-  });
+  try {
+    const response = await axios.get<MeResponse>(`${API_BASE_URL}/me`, {
+      withCredentials: true,
+    });
 
-  if (!response.ok) {
+    return response.data;
+  } catch {
     throw new Error("Could not load your profile.");
   }
-
-  return (await response.json()) as MeResponse;
 }
 
 export async function getNetworkDetails(networkId: string) {
-  const response = await fetch(`${API_BASE_URL}/networks/${networkId}`, {
-    credentials: "include",
-  });
+  try {
+    const response = await axios.get<NetworkDetails>(
+      `${API_BASE_URL}/networks/${networkId}`,
+      {
+        withCredentials: true,
+      }
+    );
 
-  if (!response.ok) {
+    return response.data;
+  } catch {
     throw new Error("Could not load network channels.");
   }
-
-  return (await response.json()) as NetworkDetails;
 }

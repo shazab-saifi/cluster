@@ -1,7 +1,8 @@
+import axios from "axios";
+
+import { API_BASE_URL } from "@/lib/utils";
 import type { Channel } from "../types";
 import type { EditChannelValues } from "./schema";
-
-const API_BASE_URL = "http://localhost:4000";
 
 type ChannelRequestInput = {
   networkId: string;
@@ -15,62 +16,47 @@ export async function editChannel({
   channelId,
   name,
 }: EditChannelInput) {
-  const response = await fetch(
-    `${API_BASE_URL}/networks/${networkId}/channels/${channelId}`,
-    {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+  try {
+    const response = await axios.patch<Channel>(
+      `${API_BASE_URL}/networks/${networkId}/channels/${channelId}`,
+      {
         name: name.trim(),
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      await getChannelErrorMessage(response, "Could not edit channel.")
+      },
+      {
+        withCredentials: true,
+      }
     );
-  }
 
-  return (await response.json()) as Channel;
+    return response.data;
+  } catch (error) {
+    throw new Error(getChannelErrorMessage(error, "Could not edit channel."));
+  }
 }
 
 export async function deleteChannel({
   networkId,
   channelId,
 }: ChannelRequestInput) {
-  const response = await fetch(
-    `${API_BASE_URL}/networks/${networkId}/channels/${channelId}`,
-    {
-      method: "DELETE",
-      credentials: "include",
-    }
-  );
+  try {
+    const response = await axios.delete<{
+      msg: string;
+      deletedChannel: Channel;
+    }>(`${API_BASE_URL}/networks/${networkId}/channels/${channelId}`, {
+      withCredentials: true,
+    });
 
-  if (!response.ok) {
-    throw new Error(
-      await getChannelErrorMessage(response, "Could not delete channel.")
+    return response.data;
+  } catch (error) {
+    throw new Error(getChannelErrorMessage(error, "Could not delete channel."));
+  }
+}
+
+function getChannelErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<{ message?: string; details?: string }>(error)) {
+    return (
+      error.response?.data?.details ?? error.response?.data?.message ?? fallback
     );
   }
 
-  return (await response.json()) as {
-    msg: string;
-    deletedChannel: Channel;
-  };
-}
-
-async function getChannelErrorMessage(response: Response, fallback: string) {
-  try {
-    const body = (await response.json()) as {
-      message?: string;
-      details?: string;
-    };
-
-    return body.details ?? body.message ?? fallback;
-  } catch {
-    return fallback;
-  }
+  return fallback;
 }

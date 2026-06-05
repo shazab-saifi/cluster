@@ -1,7 +1,8 @@
+import axios from "axios";
+
+import { API_BASE_URL } from "@/lib/utils";
 import type { Network } from "../types";
 import type { CreateNetworkValues } from "./schema";
-
-const API_BASE_URL = "http://localhost:4000";
 
 type CreateNetworkResponse = {
   msg: string;
@@ -9,34 +10,31 @@ type CreateNetworkResponse = {
 };
 
 export async function createNetwork(values: CreateNetworkValues) {
-  const response = await fetch(`${API_BASE_URL}/networks`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: values.name.trim(),
-      image: values.image?.trim() || undefined,
-      type: values.type,
-    }),
-  });
+  try {
+    const response = await axios.post<CreateNetworkResponse>(
+      `${API_BASE_URL}/networks`,
+      {
+        name: values.name.trim(),
+        image: values.image?.trim() || undefined,
+        type: values.type,
+      },
+      {
+        withCredentials: true,
+      }
+    );
 
-  if (!response.ok) {
-    let message = "Could not create network.";
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not create network."));
+  }
+}
 
-    try {
-      const body = (await response.json()) as {
-        message?: string;
-        details?: string;
-      };
-      message = body.details ?? body.message ?? message;
-    } catch {
-      // Keep the generic message if the response is not JSON.
-    }
-
-    throw new Error(message);
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<{ message?: string; details?: string }>(error)) {
+    return (
+      error.response?.data?.details ?? error.response?.data?.message ?? fallback
+    );
   }
 
-  return (await response.json()) as CreateNetworkResponse;
+  return fallback;
 }
