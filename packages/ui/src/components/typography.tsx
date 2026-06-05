@@ -17,6 +17,25 @@ const TypographyH4 = React.forwardRef<
   );
 });
 
-TypographyH4.displayName = "TypographyH4";
+const TypographyH2 = React.forwardRef<
+  HTMLHeadingElement,
+  React.ComponentPropsWithoutRef<"h2">
+>(({ className, children, ...props }, ref) => {
+  return (
+    <h2
+      ref={ref}
+      className={cn(
+        "scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </h2>
+  );
+});
 
-export { TypographyH4 };
+TypographyH4.displayName = "TypographyH4";
+TypographyH2.displayName = "TypographyH2";
+
+export { TypographyH4, TypographyH2 };
