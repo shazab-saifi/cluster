@@ -28,12 +28,13 @@ networksRouter.post("/", async (req: Request, res: Response) => {
   }
 
   try {
-    const { name, type, image } = data;
+    const { name, type, image, desc } = data;
 
     const network = await networksServices.createNetwork(userId, {
       name,
       type,
       image,
+      desc,
       ownerId: userId,
       channels: { name: "general" },
       members: { userId, role: "OWNER" },
@@ -123,11 +124,13 @@ networksRouter.patch("/:id", async (req: Request, res: Response) => {
     image?: string;
     name?: string;
     type?: "PRIVATE" | "PUBLIC";
+    desc?: string;
   } = {};
 
   if (data.image !== undefined) newData.image = data.image;
   if (data.name !== undefined) newData.name = data.name;
   if (data.type !== undefined) newData.type = data.type;
+  if (data.desc !== undefined) newData.desc = data.desc;
 
   try {
     const updatedData = await networksServices.updateNetworkInfo(

@@ -8,11 +8,11 @@ import {
 import express, { Request, Response, type Router } from "express";
 import * as inviteServices from "@workspace/core/services/invites-services";
 import { randomBytes } from "crypto";
+import { isNetworkMember } from "@workspace/core/services/validation";
 import {
   addMember,
-  getNetworkDetails,
+  getNetworkPreview,
 } from "@workspace/core/services/networks-services";
-import { isNetworkMember } from "@workspace/core/services/validation";
 
 export const invitesRouter: Router = express.Router();
 
@@ -84,7 +84,7 @@ export async function getInvitePreview(req: Request, res: Response) {
 
   try {
     const tokenInfo = await validateInviteToken(token);
-    const network = await getNetworkDetails(tokenInfo?.networkId as string);
+    const network = await getNetworkPreview(tokenInfo?.networkId as string);
 
     res.json({ network });
   } catch (error) {

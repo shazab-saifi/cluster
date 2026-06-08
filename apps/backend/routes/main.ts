@@ -8,7 +8,7 @@ import { getInvitePreview, invitesRouter } from "./invites";
 
 export const mainRouter: Router = express.Router();
 
-mainRouter.use("/invites", invitesRouter.get("/:token", getInvitePreview));
+mainRouter.get("/invites/:token", getInvitePreview);
 
 mainRouter.use(authMiddleware);
 

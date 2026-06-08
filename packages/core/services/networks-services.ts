@@ -5,6 +5,7 @@ export interface NetworkCreateType {
   name: string;
   type: "PUBLIC" | "PRIVATE";
   image?: string;
+  desc?: string;
   ownerId: string;
   channels: {
     name: string;
@@ -21,6 +22,7 @@ export async function createNetwork(userId: string, data: NetworkCreateType) {
       name: data.name,
       type: data.type,
       image: data.image,
+      desc: data.desc,
       ownerId: userId,
       channels: {
         create: {
@@ -40,7 +42,12 @@ export async function createNetwork(userId: string, data: NetworkCreateType) {
 export async function updateNetworkInfo(
   networkId: string,
   userId: string,
-  data: { name?: string; type?: "PUBLIC" | "PRIVATE"; image?: string }
+  data: {
+    name?: string;
+    type?: "PUBLIC" | "PRIVATE";
+    image?: string;
+    desc?: string;
+  }
 ) {
   await prisma.network.update({
     where: { id: networkId, ownerId: userId },
@@ -80,18 +87,38 @@ export async function getNetworkById(networkId: string, userId: string) {
   });
 }
 
-export async function getNetworkDetails(networkId: string) {
+export async function getNetworkPreview(networkId: string) {
   return prisma.network.findUnique({
     where: { id: networkId },
+    include: {
+      members: {
+        include: {
+          user: {
+            select: {
+              image: true,
+            },
+          },
+        },
+        take: 2,
+      },
+      channels: {
+        take: 2,
+      },
+    },
   });
 }
 
 export async function addMember(networkId: string, userId: string) {
-  return await prisma.networkMembers.create({
+  return await prisma.network.update({
+    where: { id: networkId },
     data: {
-      networkId,
-      userId,
-      role: "MEMBER",
+      memberCount: { increment: 1 },
+      members: {
+        create: {
+          userId,
+          role: "MEMBER",
+        },
+      },
     },
   });
 }

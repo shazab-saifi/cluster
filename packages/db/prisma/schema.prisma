@@ -82,15 +82,17 @@ model Verification {
 }
 
 model Network {
-  id       String           @id @default(uuid())
-  name     String           
-  image    String?
-  ownerId  String
-  members  NetworkMembers[]
-  channels Channel[]
-  invites  Invite[]
-  type     NetworkType      @default(PUBLIC)
-  owner    User             @relation(fields: [ownerId], references: [id])
+  id          String           @id @default(uuid())
+  name        String           
+  image       String?
+  ownerId     String
+  desc        String?
+  memberCount Int?             @default(1)
+  members     NetworkMembers[]
+  channels    Channel[]
+  invites     Invite[]
+  type        NetworkType      @default(PUBLIC)
+  owner       User             @relation(fields: [ownerId], references: [id])
 
   @@unique([id, ownerId])
   @@index([name])

@@ -23,6 +23,7 @@ export const networkCreateSchema = z.object({
   name: z.string().min(3).max(255),
   image: z.string().max(1000).optional(),
   type: z.enum(["PUBLIC", "PRIVATE"]),
+  desc: z.string().min(3).max(555).optional(),
 });
 
 export const networkInfoUpdateSchema = networkCreateSchema.partial();
