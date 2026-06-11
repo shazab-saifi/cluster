@@ -1,8 +1,6 @@
 import { MessageCircle, Search } from "lucide-react";
-
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-
 import type { DashboardUser, NetworkListItem } from "./types";
 import { getInitials } from "./utils";
 
@@ -63,7 +61,7 @@ export function FriendsPanel({
                 <div className="flex items-center gap-2">
                   <span className="truncate font-semibold">{network.name}</span>
                   {network.role === "OWNER" && (
-                    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 uppercase">
+                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground uppercase">
                       Owner
                     </span>
                   )}

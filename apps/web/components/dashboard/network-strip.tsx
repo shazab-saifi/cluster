@@ -1,5 +1,4 @@
 import { Compass, MessageCircle, Plus } from "lucide-react";
-
 import type { NetworkListItem } from "./types";
 import { NetworkAvatar } from "./network-avatar";
 
@@ -50,7 +49,7 @@ export function NetworkStrip({
         type="button"
         aria-label="Add a network"
         title="Add a network"
-        className="grid size-12 place-items-center rounded-2xl bg-muted text-emerald-500 transition hover:rounded-xl hover:bg-emerald-500 hover:text-white"
+        className="grid size-12 place-items-center rounded-2xl bg-muted text-primary transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
         onClick={onCreateNetwork}
       >
         <Plus className="size-6" />

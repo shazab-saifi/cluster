@@ -1,6 +1,6 @@
 import { Bell, Inbox, LogOut, UserPlus, Users } from "lucide-react";
-
 import { Button } from "@workspace/ui/components/button";
+import { ThemeToggle } from "./theme-toggle";
 
 type DashboardHeaderProps = {
   onSignOut: () => void;
@@ -30,6 +30,7 @@ export function DashboardHeader({ onSignOut }: DashboardHeaderProps) {
         </div>
       </div>
       <div className="flex items-center gap-1">
+        <ThemeToggle />
         <Button variant="ghost" size="icon-sm" aria-label="Inbox">
           <Inbox className="size-4" />
         </Button>

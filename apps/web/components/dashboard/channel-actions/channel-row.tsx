@@ -24,7 +24,7 @@ export function ChannelRow({ channel }: ChannelRowProps) {
 
   return (
     <>
-      <div className="group/channel relative flex h-10 items-center rounded-lg text-sm text-muted-foreground transition focus-within:bg-muted focus-within:text-foreground hover:bg-neutral-950 hover:text-foreground">
+      <div className="group/channel relative flex h-10 items-center rounded-lg text-sm text-muted-foreground transition focus-within:bg-muted focus-within:text-foreground hover:bg-muted hover:text-foreground">
         <button
           type="button"
           className="flex min-w-0 flex-1 items-center gap-3 px-2 text-left"
