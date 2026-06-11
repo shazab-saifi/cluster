@@ -19,7 +19,7 @@ export function NetworkStrip({
   onCreateNetwork,
 }: NetworkStripProps) {
   return (
-    <aside className="flex w-[72px] shrink-0 flex-col items-center gap-2 border-r bg-card px-3 py-3">
+    <aside className="flex w-[72px] shrink-0 flex-col items-center gap-2 border-r bg-background px-3 py-3">
       <button
         type="button"
         aria-label="Direct messages"

@@ -99,10 +99,10 @@ export async function getNetworkPreview(networkId: string) {
             },
           },
         },
-        take: 2,
+        take: 3,
       },
       channels: {
-        take: 2,
+        take: 5,
       },
     },
   });

@@ -1,5 +1,4 @@
 import { cn } from "@workspace/ui/lib/utils";
-
 import type { NetworkListItem } from "./types";
 import { getInitials } from "./utils";
 
@@ -33,7 +32,7 @@ export function NetworkAvatar({
         className={cn(
           "grid size-9.5 place-items-center overflow-hidden rounded-2xl bg-muted text-sm font-semibold text-muted-foreground transition-all group-hover:rounded-xl group-hover:bg-primary group-hover:text-primary-foreground",
           active &&
-            "rounded-xl bg-primary text-primary-foreground ring-3 ring-blue-500 ring-offset-2 ring-offset-card"
+            "rounded-xl bg-primary text-primary-foreground ring-3 ring-primary ring-offset-2 ring-offset-card"
         )}
       >
         {network.image ? (

@@ -10,7 +10,6 @@ import {
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
-
 import { ChannelRow } from "./channel-actions/channel-row";
 import type { Channel, DashboardUser, NetworkListItem } from "./types";
 import { getInitials } from "./utils";
@@ -46,7 +45,7 @@ export function DashboardSidebar({
     activeNetwork?.role === "OWNER" || activeNetwork?.role === "ADMIN";
 
   return (
-    <aside className="hidden w-72 shrink-0 flex-col border-r bg-card md:flex">
+    <aside className="hidden w-72 shrink-0 flex-col border-r bg-background md:flex">
       <div className="border-b p-3">
         <Input
           aria-label="Find or start a conversation"
