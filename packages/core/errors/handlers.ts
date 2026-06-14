@@ -1,6 +1,7 @@
 import { Prisma } from "@workspace/db";
 import { randomUUID } from "node:crypto";
 import { AppError, type ErrorType } from "./app-error";
+import { NoSuchBucket, S3ServiceException } from "@workspace/aws/s3";
 
 interface ResponseLike {
   status(code: number): ResponseLike;
@@ -72,6 +73,22 @@ export function normalizeError(error: unknown) {
 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     return mapPrismaError(error);
+  }
+
+  if (error instanceof NoSuchBucket) {
+    return new AppError(error.message || "Internal server error", {
+      code: "NOT_FOUND",
+      statusCode: 403,
+      suggestion: "Please try again later",
+    });
+  }
+
+  if (error instanceof S3ServiceException) {
+    return new AppError(error.message, {
+      code: error.name,
+      statusCode: error.$metadata.httpStatusCode as number,
+      suggestion: "Please try again later",
+    });
   }
 
   if (error instanceof Error) {
