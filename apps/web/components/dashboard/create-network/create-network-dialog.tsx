@@ -2,9 +2,7 @@
 
 import * as React from "react";
 import { X } from "lucide-react";
-
 import { Button } from "@workspace/ui/components/button";
-
 import { CreateNetworkForm } from "./create-network-form";
 
 type CreateNetworkDialogProps = {

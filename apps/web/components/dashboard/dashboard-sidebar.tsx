@@ -6,13 +6,10 @@ import {
   Plus,
   Users,
 } from "lucide-react";
-
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-import { cn } from "@workspace/ui/lib/utils";
 import { ChannelRow } from "./channel-actions/channel-row";
 import type { Channel, DashboardUser, NetworkListItem } from "./types";
-import { getInitials } from "./utils";
 import { UserFooter } from "./user-footer";
 
 type DashboardSidebarProps = {
@@ -39,7 +36,6 @@ export function DashboardSidebar({
   sessionUser,
   onAddMember,
   onCreateChannel,
-  onCreateNetwork,
 }: DashboardSidebarProps) {
   const canAddMember =
     activeNetwork?.role === "OWNER" || activeNetwork?.role === "ADMIN";
@@ -121,46 +117,6 @@ export function DashboardSidebar({
             </div>
           )}
         </div>
-
-        <div className="mt-auto flex items-center justify-between px-2 pt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          <span>Network</span>
-          <button
-            type="button"
-            aria-label="Create network"
-            title="Create network"
-            className="rounded p-0.5 transition hover:bg-muted hover:text-foreground"
-            onClick={onCreateNetwork}
-          >
-            <Plus className="size-4" />
-          </button>
-        </div>
-        {activeNetwork && (
-          <div className="flex flex-col gap-1">
-            <button
-              type="button"
-              className={cn(
-                "flex h-10 items-center gap-3 rounded-lg px-2 text-left text-sm transition",
-                "bg-muted text-foreground"
-              )}
-            >
-              <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-md bg-background text-xs font-semibold">
-                {activeNetwork.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={activeNetwork.image}
-                    alt=""
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  getInitials(activeNetwork.name)
-                )}
-              </span>
-              <span className="min-w-0 flex-1 truncate">
-                {activeNetwork.name}
-              </span>
-            </button>
-          </div>
-        )}
       </nav>
       <UserFooter user={user} sessionUser={sessionUser} />
     </aside>

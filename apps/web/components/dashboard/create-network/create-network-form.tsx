@@ -13,7 +13,8 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 import { createNetwork } from "./api";
-import { createNetworkSchema } from "./schema";
+import { createNetworkSchema, CreateNetworkValues } from "./schema";
+import { Textarea } from "@workspace/ui/components/textarea";
 
 type CreateNetworkFormProps = {
   onCancel: () => void;
@@ -49,9 +50,10 @@ export function CreateNetworkForm({
   const form = useForm({
     defaultValues: {
       name: "",
-      image: "",
+      desc: "",
+      image: undefined,
       type: "PUBLIC" as "PUBLIC" | "PRIVATE",
-    },
+    } as CreateNetworkValues,
     validators: {
       onSubmit: createNetworkSchema,
     },
@@ -77,7 +79,7 @@ export function CreateNetworkForm({
 
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Network name</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Name</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -87,6 +89,7 @@ export function CreateNetworkForm({
                   aria-invalid={isInvalid}
                   placeholder="Design Circle"
                   autoComplete="off"
+                  required
                 />
                 <FieldDescription>
                   Choose a short name that members will recognize.
@@ -104,19 +107,45 @@ export function CreateNetworkForm({
 
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Image URL</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Avatar</FieldLabel>
                 <Input
                   id={field.name}
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp"
+                  onChange={(event) => {
+                    if (!event.target.files) return;
+                    field.handleChange(event.target.files[0]);
+                  }}
+                />
+                <FieldDescription>
+                  Optional, Select an avatar for network.
+                </FieldDescription>
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+              </Field>
+            );
+          }}
+        </form.Field>
+
+        <form.Field name="desc">
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                <Textarea
+                  id={field.name}
+                  placeholder="Write network description here."
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
                   aria-invalid={isInvalid}
-                  placeholder="https://example.com/network.png"
-                  autoComplete="off"
+                  required
                 />
                 <FieldDescription>
-                  Optional icon for the network strip.
+                  Add a description for your network.
                 </FieldDescription>
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -127,7 +156,7 @@ export function CreateNetworkForm({
         <form.Field name="type">
           {(field) => (
             <Field>
-              <FieldLabel>Network type</FieldLabel>
+              <FieldLabel>Type</FieldLabel>
               <div className="grid grid-cols-2 gap-2">
                 {NETWORK_TYPES.map((type) => {
                   const isSelected = field.state.value === type.value;
@@ -138,7 +167,8 @@ export function CreateNetworkForm({
                       type="button"
                       className={cn(
                         "rounded-lg border p-3 text-left transition hover:bg-muted",
-                        isSelected && "border-primary bg-primary/10"
+                        isSelected &&
+                          "border-primary bg-primary/10 ring-3 ring-ring/50"
                       )}
                       onClick={() => field.handleChange(type.value)}
                     >
