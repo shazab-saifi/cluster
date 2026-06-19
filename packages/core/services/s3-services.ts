@@ -1,7 +1,8 @@
 import { getSignedUrl, PutObjectCommand, s3Client } from "@workspace/aws/s3";
 
 export async function getUploadUrl(contentType: string, filename: string) {
-  const key = `uploads/${Date.now()}-${filename}`;
+  const name = filename.replace("", "-");
+  const key = `uploads/${Date.now()}-${name}`;
 
   const command = new PutObjectCommand({
     Bucket: process.env.S3_BUCKET_NAME,
