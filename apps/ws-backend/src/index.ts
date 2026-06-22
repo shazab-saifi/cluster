@@ -1,3 +1,4 @@
+import * as http from "http";
 import { getSessionFromHeaders } from "@workspace/auth";
 import {
   BadRequestError,
@@ -5,11 +6,11 @@ import {
   normalizeError,
   UnauthorizedError,
 } from "@workspace/core/errors";
-import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { InputPayloadUnion } from "./zod.schemas";
 import { assertHasMembership } from "@workspace/core/services/validation";
 import { publisher, redisClient, subscriber } from "@workspace/redis";
+import { NotificationType } from "@workspace/core/services/notification-services";
 
 const server = http.createServer();
 const wss = new WebSocketServer({ noServer: true });
@@ -28,7 +29,7 @@ server.on("upgrade", async (req, socket, head) => {
       throw new UnauthorizedError();
     }
 
-    req.userId = session.user.id;
+    Object.assign(req, { userId: session.user.id });
 
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit("connection", ws, req);
@@ -55,8 +56,10 @@ const userSocketData = new WeakMap<
 const channels = new Map<string, Set<WebSocket>>();
 const subscribedChannels = new Set<string>();
 
-wss.on("connection", (ws, req) => {
+wss.on("connection", async (ws, req) => {
   userSocketData.set(ws, { userId: req.userId as string, channels: new Set() });
+  await subscribeToNotification(ws);
+
   ws.on("error", (error) => console.error("Error in error event: ", error));
 
   ws.on("close", async () => {
@@ -194,4 +197,14 @@ async function unsubscribeChannel(channelId: string) {
 
   await subscriber.unsubscribe(channelId);
   subscribedChannels.delete(channelId);
+}
+
+async function subscribeToNotification(ws: WebSocket) {
+  await subscriber.subscribe("notification", (data) => {
+    const notification: NotificationType = JSON.parse(data);
+    const isRecevier = userSocketData.get(ws);
+    if (isRecevier?.userId === notification.receiverId) {
+      ws.send(String(notification));
+    }
+  });
 }

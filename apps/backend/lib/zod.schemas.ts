@@ -35,3 +35,9 @@ export const inviteCreateSchema = z.object({
   maxUses: z.number().min(1).max(10),
   expiresAt: z.coerce.date(),
 });
+
+export const notificationSchema = z.object({
+  type: z.enum(["FRIEND_REQUEST", "ACCEPTED_REQUEST"]),
+  senderId: z.uuid(),
+  receiverId: z.uuid(),
+});

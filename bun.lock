@@ -86,6 +86,7 @@
     "apps/workers/notification-worker": {
       "name": "notification-worker",
       "dependencies": {
+        "@workspace/core": "workspace:*",
         "@workspace/redis": "workspace:*",
         "zod": "^4.4.3",
       },
