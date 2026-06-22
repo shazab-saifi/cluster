@@ -16,9 +16,3 @@ export async function createManyNotification(
     })),
   });
 }
-
-export async function createNotification(notification: NotificationType) {
-  await prisma.notification.create({
-    data: { ...notification, isRead: false },
-  });
-}

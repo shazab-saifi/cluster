@@ -139,7 +139,7 @@ model Channel {
 }
 
 model Message {
-  id             String          @id
+  id             String          @id @default(uuid())
   message        String
   channelId      String?
   conversationId String?

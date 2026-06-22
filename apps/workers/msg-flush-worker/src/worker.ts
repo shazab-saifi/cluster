@@ -4,7 +4,6 @@ import os from "os";
 
 let batchStartedAt: number | null = null;
 let buffer: {
-  id: string;
   senderId: string;
   channelId: string;
   message: string;
@@ -26,7 +25,6 @@ async function batchMessage() {
 
       if (response && response[0] && buffer.length < 100) {
         const mapMessages = response[0].messages.map((message) => ({
-          id: message.id,
           senderId: message.message.senderId as string,
           channelId: message.message.channelId as string,
           message: message.message.content as string,
