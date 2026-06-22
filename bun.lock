@@ -25,6 +25,7 @@
         "@types/express": "^5.0.6",
         "@workspace/auth": "workspace:*",
         "@workspace/core": "workspace:*",
+        "@workspace/redis": "workspace:*",
         "cors": "^2.8.6",
         "express": "^5.2.1",
         "zod": "^4.3.6",

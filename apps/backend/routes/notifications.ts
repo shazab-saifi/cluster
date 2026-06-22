@@ -1,7 +1,7 @@
 import { notificationSchema } from "@lib/zod.schemas";
 import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
 import express, { Request, Response, Router } from "express";
-import * as notifServices from "@workspace/core/services/notification-services";
+import { redisClient } from "@workspace/redis";
 
 export const notifRouter: Router = express.Router();
 
@@ -16,7 +16,15 @@ notifRouter.post("/", async (req: Request, res: Response) => {
   }
 
   try {
-    await notifServices.createNotification(data);
+    const notification = redisClient.xAdd("notif:stream", "*", data, {
+      TRIM: {
+        strategy: "MAXLEN",
+        strategyModifier: "~",
+        threshold: 10000,
+      },
+    });
+
+    res.json({ msg: "Notification sent", notification });
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }
