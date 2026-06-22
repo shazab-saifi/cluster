@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@workspace/redis": "workspace:*",
+    "@workspace/core": "workspace:*",
     "zod": "^4.4.3"
   },
   "peerDependencies": {

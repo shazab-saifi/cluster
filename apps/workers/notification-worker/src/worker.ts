@@ -1,3 +1,4 @@
+import { createManyNotification } from "@workspace/core/services/notification-services";
 import { publisher, redisClient } from "@workspace/redis";
 import os from "os";
 import { z } from "zod";
@@ -8,19 +9,27 @@ const NotificationSchema = z.object({
   receiverId: z.uuid(),
 });
 
+type Notification = z.infer<typeof NotificationSchema>;
+
 async function notificationWorker() {
   while (true) {
     const workerName = `${os.hostname()}:${process.pid}`;
+    const structuredNotif: Notification[] = [];
+    const notificationIds: string[] = [];
 
     try {
       const notifications = await redisClient.xReadGroup(
         "notif-group",
         workerName,
         { key: "notif:stream", id: ">" },
-        { COUNT: 10, BLOCK: 10000 }
+        { COUNT: 10, BLOCK: 5000 }
       );
 
-      for (const notification of notifications || []) {
+      if (!notifications?.length) {
+        continue;
+      }
+
+      for (const notification of notifications) {
         for (const message of notification.messages) {
           const parsedMessage = NotificationSchema.safeParse(message);
 
@@ -31,10 +40,14 @@ async function notificationWorker() {
             );
           }
 
-          publisher.publish("notification", JSON.stringify(parsedMessage));
+          publisher.publish("notification", JSON.stringify(parsedMessage.data));
+          structuredNotif.push(parsedMessage.data as Notification);
+          notificationIds.push(message.id);
         }
       }
-      console.log(notifications);
+
+      await createManyNotification(structuredNotif);
+      await redisClient.xAck("notif:stream", "notif-group", notificationIds);
     } catch (error) {
       console.error(error);
     }
