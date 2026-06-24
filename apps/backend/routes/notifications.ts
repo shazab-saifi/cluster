@@ -17,7 +17,7 @@ notifRouter.post("/", async (req: Request, res: Response) => {
   }
 
   try {
-    const notification = redisClient.xAdd("notif:stream", "*", data, {
+    const notification = await redisClient.xAdd("notif:stream", "*", data, {
       TRIM: {
         strategy: "MAXLEN",
         strategyModifier: "~",

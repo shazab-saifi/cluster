@@ -6,8 +6,9 @@ import {
 } from "@workspace/core/errors";
 import {
   getAllFriends,
-  sendFriendRequest,
+  addFriend,
 } from "@workspace/core/services/friends-services";
+import { redisClient } from "@workspace/redis";
 import express, { Request, Response, Router } from "express";
 
 export const friendsRouter: Router = express.Router();
@@ -42,7 +43,23 @@ friendsRouter.post("/add/:friendId", async (req: Request, res: Response) => {
 
   try {
     // TODO: A friend request notification needs to go to the receiver user
-    await sendFriendRequest(userId, parsedFriendId.data);
+    await redisClient.xAdd(
+      "notif:stream",
+      "*",
+      {
+        type: "FRIEND_REQUEST",
+        senderId: userId,
+        receiverId: parsedFriendId.data,
+      },
+      {
+        TRIM: {
+          strategy: "MAXLEN",
+          strategyModifier: "~",
+          threshold: 10000,
+        },
+      }
+    );
+    await addFriend(userId, parsedFriendId.data);
 
     res.json({ msg: "friend request sent successfully" });
   } catch (error) {
