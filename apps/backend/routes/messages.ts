@@ -1,8 +1,4 @@
-import {
-  BadRequestError,
-  sendErrorResponse,
-  ValidationError,
-} from "@workspace/core/errors";
+import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
 import {
   uuidSchema,
   messageCreateSchema,
@@ -60,18 +56,11 @@ messagesRouter.get("/", async (req: Request, res: Response) => {
     );
   }
 
-  if (typeof cursor !== "string" || cursor.trim() === "") {
-    throw new BadRequestError(
-      "No 'q' query was provided in the URI!",
-      "Provide the q query parameter and try again."
-    );
-  }
-
   try {
     const { messages, nextCursor } = await messagesServices.getMessages(
       channelIdParsed.data,
       userId,
-      cursor
+      cursor && (cursor as string)
     );
 
     res.json({ messages, nextCursor });

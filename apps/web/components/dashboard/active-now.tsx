@@ -1,4 +1,4 @@
-import { Hash } from "lucide-react";
+import { Hash } from "@phosphor-icons/react";
 
 import type { NetworkListItem } from "./types";
 import { getInitials } from "./utils";

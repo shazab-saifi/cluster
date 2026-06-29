@@ -1,4 +1,4 @@
-import { Compass, MessageCircle, Plus } from "lucide-react";
+import { ChatCircleIcon, CompassIcon, PlusIcon } from "@phosphor-icons/react";
 import type { NetworkListItem } from "./types";
 import { NetworkAvatar } from "./network-avatar";
 
@@ -25,7 +25,7 @@ export function NetworkStrip({
         title="Direct messages"
         className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm"
       >
-        <MessageCircle className="size-6" />
+        <ChatCircleIcon className="size-6" />
       </button>
       <div className="my-1 h-px w-8 bg-border" />
       <div className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto">
@@ -52,7 +52,7 @@ export function NetworkStrip({
         className="grid size-12 place-items-center rounded-2xl bg-muted text-primary transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
         onClick={onCreateNetwork}
       >
-        <Plus className="size-6" />
+        <PlusIcon className="size-6" />
       </button>
       <button
         type="button"
@@ -60,7 +60,7 @@ export function NetworkStrip({
         title="Explore networks"
         className="grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
       >
-        <Compass className="size-6" />
+        <CompassIcon className="size-6" />
       </button>
     </aside>
   );

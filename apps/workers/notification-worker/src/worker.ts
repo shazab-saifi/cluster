@@ -56,7 +56,7 @@ async function notificationWorker() {
 
 async function ensureConsumerGroup() {
   try {
-    await redisClient.xGroupCreate("stream:notif", "notif-group", "$", {
+    await redisClient.xGroupCreate("notif:stream", "notif-group", "$", {
       MKSTREAM: true,
     });
   } catch (error) {
@@ -69,8 +69,9 @@ async function ensureConsumerGroup() {
 }
 
 try {
-  notificationWorker();
-  ensureConsumerGroup();
+  await notificationWorker();
+  await ensureConsumerGroup();
+  console.log("Notification worker is running");
 } catch (error) {
   console.error(error);
   process.exit(1);

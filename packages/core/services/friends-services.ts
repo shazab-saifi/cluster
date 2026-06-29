@@ -6,7 +6,7 @@ export async function getAllFriends(userId: string) {
   });
 }
 
-export async function sendFriendRequest(userId: string, friendId: string) {
+export async function addFriend(userId: string, friendId: string) {
   return await prisma.friendship.create({
     data: {
       senderId: userId,

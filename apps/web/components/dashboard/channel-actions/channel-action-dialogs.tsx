@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { Button } from "@workspace/ui/components/button";
 import type { Channel } from "../types";
 import { deleteChannel } from "./api";

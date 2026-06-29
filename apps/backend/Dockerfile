@@ -8,7 +8,7 @@ RUN bunx turbo prune backend --docker
 FROM base AS builder
 COPY --from=prepare /app/out/json .
 COPY --from=prepare /app/out/bun.lock ./bun.lock
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --production
 
 COPY --from=prepare /app/out/full .
 RUN bunx turbo run db:generate --filter=@workspace/db

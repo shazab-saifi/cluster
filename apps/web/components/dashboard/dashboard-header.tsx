@@ -1,4 +1,4 @@
-import { Bell, Inbox, LogOut, UserPlus, Users } from "lucide-react";
+import { Bell, SignOut, Tray, UserPlus, Users } from "@phosphor-icons/react";
 import { Button } from "@workspace/ui/components/button";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -32,7 +32,7 @@ export function DashboardHeader({ onSignOut }: DashboardHeaderProps) {
       <div className="flex items-center gap-1">
         <ThemeToggle />
         <Button variant="ghost" size="icon-sm" aria-label="Inbox">
-          <Inbox className="size-4" />
+          <Tray className="size-4" />
         </Button>
         <Button variant="ghost" size="icon-sm" aria-label="Notifications">
           <Bell className="size-4" />
@@ -43,7 +43,7 @@ export function DashboardHeader({ onSignOut }: DashboardHeaderProps) {
           aria-label="Sign out"
           onClick={onSignOut}
         >
-          <LogOut className="size-4" />
+          <SignOut className="size-4" />
         </Button>
       </div>
     </header>

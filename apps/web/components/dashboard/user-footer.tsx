@@ -1,7 +1,5 @@
-import { Mic, Settings } from "lucide-react";
-
+import { Gear, Microphone } from "@phosphor-icons/react";
 import { Button } from "@workspace/ui/components/button";
-
 import type { DashboardUser } from "./types";
 import { getInitials } from "./utils";
 
@@ -40,7 +38,7 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         aria-label="Mute"
         title="Mute"
       >
-        <Mic className="size-4" />
+        <Microphone className="size-4" />
       </Button>
       <Button
         type="button"
@@ -49,7 +47,7 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         aria-label="Settings"
         title="Settings"
       >
-        <Settings className="size-4" />
+        <Gear className="size-4" />
       </Button>
     </div>
   );

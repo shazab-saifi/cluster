@@ -13,12 +13,14 @@ import { DashboardSidebar } from "./dashboard-sidebar";
 import { FriendsPanel } from "./friends-panel";
 import { NetworkStrip } from "./network-strip";
 import { getNetworkList } from "./utils";
+import { ChatSection } from "./chat-section";
 
 export function Dashboard() {
   const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
   const [activeNetworkId, setActiveNetworkId] = React.useState<string>();
+  const [activeChannelId, setActiveChannelId] = React.useState<string>();
   const { data: session } = authClient.useSession();
   const { data, isLoading, error } = useQuery({
     queryKey: ["me"],
@@ -64,17 +66,22 @@ export function Dashboard() {
         onAddMember={() => setIsAddMemberOpen(true)}
         onCreateChannel={() => setIsCreateChannelOpen(true)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
+        setIsChatOpen={setActiveChannelId}
       />
 
       <section className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader onSignOut={handleSignOut} />
         <div className="flex min-h-0 flex-1">
-          <FriendsPanel
-            user={user}
-            networks={networks}
-            isLoading={isLoading}
-            hasError={Boolean(error)}
-          />
+          {activeChannelId ? (
+            <ChatSection channelId={activeChannelId} />
+          ) : (
+            <FriendsPanel
+              user={user}
+              networks={networks}
+              isLoading={isLoading}
+              hasError={Boolean(error)}
+            />
+          )}
           <ActiveNow activeNetwork={selectedNetwork} />
         </div>
       </section>

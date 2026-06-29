@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Monitor, Moon, SunMedium } from "lucide-react";
+import { Desktop, Moon, Sun } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -22,11 +22,11 @@ export function ThemeToggle() {
 
   const themeIcon =
     !mounted || theme === "system" ? (
-      <Monitor className="size-4" />
+      <Desktop className="size-4" />
     ) : resolvedTheme === "dark" ? (
       <Moon className="size-4" />
     ) : (
-      <SunMedium className="size-4" />
+      <Sun className="size-4" />
     );
 
   return (
@@ -44,7 +44,7 @@ export function ThemeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onSelect={() => setTheme("light")}>
-          <SunMedium />
+          <Sun />
           Light
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => setTheme("dark")}>
@@ -52,7 +52,7 @@ export function ThemeToggle() {
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => setTheme("system")}>
-          <Monitor />
+          <Desktop />
           System
         </DropdownMenuItem>
       </DropdownMenuContent>
