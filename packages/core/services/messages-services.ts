@@ -1,6 +1,6 @@
 import { prisma } from "@workspace/db";
 import { NotFoundError } from "../errors";
-import { assertHasMembership } from "./validation";
+import { assertHasConversation, assertHasMembership } from "./validation";
 
 async function assertCanManageMessage(userId: string, messageId: string) {
   const message = await prisma.message.findFirst({
@@ -15,18 +15,25 @@ async function assertCanManageMessage(userId: string, messageId: string) {
   }
 }
 
-export async function createMessage(
-  channelId: string,
-  userId: string,
-  message: string
-) {
-  await assertHasMembership(channelId, userId);
+export async function createMessage({
+  userId,
+  message,
+  channelId,
+  conversationId,
+}: {
+  userId: string;
+  message: string;
+  channelId?: string;
+  conversationId?: string;
+}) {
+  if (channelId) await assertHasMembership(channelId, userId);
+  if (conversationId) await assertHasConversation(conversationId, userId);
 
   return await prisma.message.create({
     data: {
-      channelId,
       senderId: userId,
       message,
+      ...(channelId ? { channelId } : { conversationId }),
     },
   });
 }

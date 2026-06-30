@@ -45,6 +45,24 @@ export async function assertHasMembership(channelId: string, userId: string) {
   return channel;
 }
 
+export async function assertHasConversation(
+  conversationId: string,
+  userId: string
+) {
+  const conversation = await prisma.dMConversation.findUnique({
+    where: {
+      id: conversationId,
+      OR: [{ userOneId: userId }, { userTwoId: userId }],
+    },
+  });
+
+  if (conversation) {
+    throw new NotFoundError("DM not found");
+  }
+
+  return conversation;
+}
+
 export async function isNetworkMember(
   networkId: string,
   userId: string,
