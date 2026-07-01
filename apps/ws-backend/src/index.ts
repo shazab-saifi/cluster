@@ -11,6 +11,7 @@ import { InputPayloadUnion } from "./zod.schemas";
 import { assertHasMembership } from "@workspace/core/services/validation";
 import { publisher, redisClient, subscriber } from "@workspace/redis";
 import { NotificationType } from "@workspace/core/services/notification-services";
+import { getMe } from "@workspace/core/services/me-services";
 
 const server = http.createServer();
 const wss = new WebSocketServer({ noServer: true });
@@ -91,52 +92,80 @@ wss.on("connection", async (ws, req) => {
         );
       }
 
-      const channelId = data.payload.channelId;
+      const channelId = data.channelId;
 
       switch (data.type) {
-        case "JOIN_CHANNEL":
+        case "JOIN_CHANNEL": {
           await joinChannel(channelId, req.userId as string, ws);
 
           ws.send(
             JSON.stringify({
-              type: "Success",
-              status: "Successfully joined channel",
+              type: "SUCCESS",
+              message: "Successfully joined channel",
             })
           );
           break;
-        case "SEND_MESSAGE":
+        }
+        case "NEW_MESSAGE": {
+          const userId = req.userId as string;
+          const user = await getMe(userId);
+          const timestamp = new Date().toISOString();
+
+          const messagePayloadForPublisher = {
+            type: "NEW_MESSAGE",
+            channelId,
+            message: data.message,
+            sender: {
+              id: userId,
+              name: user.name,
+              avatar: user.image,
+            },
+            timestamp,
+          };
+
+          if (data.attachment !== undefined) {
+            (
+              messagePayloadForPublisher as { attachment?: unknown }
+            ).attachment = data.attachment;
+          }
+
           await publisher.publish(
             `${channelId}`,
-            JSON.stringify({
-              type: "NEW_MESSAGE",
-              payload: {
-                channelId,
-                senderId: req.userId,
-                content: data.payload.content,
-              },
-            })
+            JSON.stringify(messagePayloadForPublisher)
           );
 
-          await redisClient.xAdd(
-            "chat-stream",
-            "*",
-            {
-              type: "NEW_MESSAGE",
-              channelId,
-              senderId: req.userId as string,
-              content: data.payload.content,
+          const messagePayloadForStream = {
+            channelId,
+            message: data.message,
+            senderId: userId,
+            timestamp,
+          };
+
+          if (data.attachment !== undefined) {
+            (messagePayloadForStream as { attachment?: unknown }).attachment =
+              data.attachment;
+          }
+
+          await redisClient.xAdd("chat-stream", "*", messagePayloadForStream, {
+            TRIM: {
+              strategy: "MAXLEN",
+              strategyModifier: "~",
+              threshold: 10000,
             },
-            {
-              TRIM: {
-                strategy: "MAXLEN",
-                strategyModifier: "~",
-                threshold: 10000,
-              },
-            }
-          );
+          });
           break;
-        default:
-          throw new BadRequestError();
+        }
+        default: {
+          const appError = normalizeError(
+            new BadRequestError(
+              "Invalid type",
+              "Please make sure type is valid"
+            )
+          );
+          const errorPayload = buildErrorPayload(appError);
+          ws.send(JSON.stringify({ type: "ERROR", error: errorPayload }));
+          break;
+        }
       }
     } catch (error) {
       const appError = normalizeError(error);

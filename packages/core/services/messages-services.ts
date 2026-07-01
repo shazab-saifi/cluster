@@ -49,6 +49,14 @@ export async function getMessages(
     where: {
       channelId,
     },
+    include: {
+      sender: {
+        select: {
+          name: true,
+          image: true,
+        },
+      },
+    },
     orderBy: {
       createdAt: "desc",
     },

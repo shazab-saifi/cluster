@@ -7,6 +7,8 @@ let buffer: {
   senderId: string;
   channelId: string;
   message: string;
+  attachment?: string;
+  timestamp: string;
 }[] = [];
 
 let messageIds: string[] = [];
@@ -27,7 +29,9 @@ async function batchMessage() {
         const mapMessages = response[0].messages.map((message) => ({
           senderId: message.message.senderId as string,
           channelId: message.message.channelId as string,
-          message: message.message.content as string,
+          message: message.message.message as string,
+          attachment: message.message.attachment,
+          timestamp: message.message.timestamp as string,
         }));
 
         if (buffer.length === 0 && mapMessages.length > 0) {

@@ -3,18 +3,15 @@ import { z } from "zod";
 export const InputPayloadUnion = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("JOIN_CHANNEL"),
-    payload: z.object({
-      channelId: z.uuid(),
-    }),
+    channelId: z.uuid(),
   }),
   z.object({
-    type: z.literal("SEND_MESSAGE"),
-    payload: z.object({
-      channelId: z.uuid(),
-      content: z.string(),
-    }),
+    type: z.literal("NEW_MESSAGE"),
+    channelId: z.uuid(),
+    message: z.string(),
+    attachment: z.string().optional(),
   }),
 ]);
 
 export type InputPayload = z.infer<typeof InputPayloadUnion>;
-export type MessagePayload = Extract<InputPayload, { type: "SEND_MESSAGE" }>;
+export type NewMessagePayload = Extract<InputPayload, { type: "NEW_MESSAGE" }>;

@@ -27,10 +27,11 @@ async function messageRecovery() {
     try {
       await prisma.message.createMany({
         data: pendingMessages.messages.map((message) => ({
-          id: message?.id as string,
           senderId: message?.message.senderId as string,
-          channelId: message?.message.channelId as string,
-          message: message?.message.content as string,
+          channelId: message?.message.channelId,
+          message: message?.message.message as string,
+          attachment: message?.message.attachment,
+          sentAt: message?.message.timestamp,
         })),
         skipDuplicates: true,
       });

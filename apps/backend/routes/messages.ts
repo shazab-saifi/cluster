@@ -31,11 +31,11 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
   }
 
   try {
-    const message = await messagesServices.createMessage(
-      channelIdParsed.data,
+    const message = await messagesServices.createMessage({
+      channelId: channelIdParsed.data,
       userId,
-      bodyParsed.data.message
-    );
+      message: bodyParsed.data.message,
+    });
 
     res.json(message);
   } catch (error) {

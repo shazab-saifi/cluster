@@ -143,7 +143,9 @@ model Message {
   message        String
   channelId      String?
   conversationId String?
+  attachment     String?
   senderId       String
+  timestamp      DateTime?
   channel        Channel?        @relation(fields: [channelId], references: [id], onDelete: Cascade)
   sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
   conversation   DMConversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -163,8 +165,8 @@ model DMConversation {
   messages  Message[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  userOne   User      @relation("userOne", fields: [userOneId], references: [id])
-  userTwo   User      @relation("userTwo", fields: [userTwoId], references: [id])
+  userOne   User      @relation("userOne", fields: [userOneId], references: [id], onDelete: Cascade)
+  userTwo   User      @relation("userTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
 
   @@unique([userOneId, userTwoId])
   @@map("dm_conversation")
