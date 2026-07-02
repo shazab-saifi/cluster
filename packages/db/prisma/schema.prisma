@@ -24,8 +24,6 @@ model User {
   messages               Message[]
   sentFriendships        Friendship[]     @relation("sender")
   receivedFriendships    Friendship[]     @relation("receiver")
-  conversationsAsUserOne DMConversation[] @relation("userOne")
-  conversationsAsUserTwo DMConversation[] @relation("userTwo")
   createdInvites         Invite[]
   sentNotifications      Notification[]   @relation("sender")
   receivedNotifications  Notification[]   @relation("receiver")
@@ -142,45 +140,32 @@ model Message {
   id             String          @id @default(uuid())
   message        String
   channelId      String?
-  conversationId String?
+  friendshipId   String?
   attachment     String?
   senderId       String
   timestamp      DateTime?
   channel        Channel?        @relation(fields: [channelId], references: [id], onDelete: Cascade)
   sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  conversation   DMConversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  friendship     Friendship?     @relation(fields: [friendshipId], references: [id], onDelete: Cascade)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   @@index([message])
   @@index([channelId, createdAt(sort: Desc)])
-  @@index([conversationId, createdAt(sort: Desc)])
+  @@index([friendshipId, createdAt(sort: Desc)])
   @@map("message")
 }
 
-model DMConversation {
-  id        String    @id @default(uuid())
-  userOneId String
-  userTwoId String
-  messages  Message[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  userOne   User      @relation("userOne", fields: [userOneId], references: [id], onDelete: Cascade)
-  userTwo   User      @relation("userTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
-
-  @@unique([userOneId, userTwoId])
-  @@map("dm_conversation")
-}
-
 model Friendship {
-  id         String           @id @default(uuid())
-  senderId   String
-  receiverId String
-  status     FriendshipStatus @default(PENDING)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  sender     User             @relation("sender", fields: [senderId], references: [id])
-  receiver   User             @relation("receiver", fields: [receiverId], references: [id])
+  id           String           @id @default(uuid())
+  senderId     String
+  receiverId   String
+  status       FriendshipStatus @default(PENDING)
+  messages     Message[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  sender       User             @relation("sender", fields: [senderId], references: [id])
+  receiver     User             @relation("receiver", fields: [receiverId], references: [id])
 
   @@unique([senderId, receiverId])
   @@map("friendship")
