@@ -55,10 +55,10 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
 
   try {
     const message = await messagesServices.createMessage({
-      channelId: parsedChannelId ? parsedChannelId.data : undefined,
-      friendshipId: parsedFriendshipId ? parsedFriendshipId.data : undefined,
       userId,
       message: bodyParsed.data.message,
+      channelId: parsedChannelId ? parsedChannelId.data : undefined,
+      friendshipId: parsedFriendshipId ? parsedFriendshipId.data : undefined,
     });
 
     res.json(message);
@@ -69,22 +69,46 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
 
 messagesRouter.get("/", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const isChannelId = uuidSchema.safeParse(req.params.channelId);
+  const { channelId, friendshipId } = req.params;
+  let parsedChannelId;
+  let parsedFriendshipId;
   const cursor = req.query.cursor;
 
-  if (!isChannelId.success) {
+  if (Boolean(channelId) === Boolean(friendshipId)) {
     throw new ValidationError(
       "Invalid Params",
-      isChannelId.error.issues[0]?.message ??
-        "Param channelId should be a valid uuid"
+      "Exactly one of channelId or friendshipId is required"
     );
+  }
+
+  if (channelId) {
+    parsedChannelId = uuidSchema.safeParse(channelId);
+
+    if (!parsedChannelId.success) {
+      throw new ValidationError(
+        "Invalid Params",
+        parsedChannelId.error.issues[0]?.message ??
+          "Param channelId should be a valid uuid"
+      );
+    }
+  } else {
+    parsedFriendshipId = uuidSchema.safeDecode(friendshipId as string);
+
+    if (!parsedFriendshipId.success) {
+      throw new ValidationError(
+        "Invalid Params",
+        parsedFriendshipId.error.issues[0]?.message ??
+          "Param friendshipId should be a valid uuid"
+      );
+    }
   }
 
   try {
     const { messages, nextCursor } = await messagesServices.getMessages(
-      isChannelId.data,
       userId,
-      cursor && (cursor as string)
+      cursor && (cursor as string),
+      parsedChannelId?.data,
+      parsedFriendshipId?.data
     );
 
     res.json({ messages, nextCursor });
@@ -93,15 +117,15 @@ messagesRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-messagesRouter.patch("/:id", async (req: Request, res: Response) => {
-  const idParsed = uuidSchema.safeParse(req.params.id);
+messagesRouter.patch("/:messageId", async (req: Request, res: Response) => {
+  const parsedMessageId = uuidSchema.safeParse(req.params.messageId);
   const userId = req.user?.id as string;
   const bodyParsed = messageUpdateSchema.safeParse(req.body);
 
-  if (!idParsed.success) {
+  if (!parsedMessageId.success) {
     throw new ValidationError(
       "Invalid Params",
-      idParsed.error.issues[0]?.message ??
+      parsedMessageId.error.issues[0]?.message ??
         "Check the request body and try again."
     );
   }
@@ -119,7 +143,7 @@ messagesRouter.patch("/:id", async (req: Request, res: Response) => {
 
   try {
     const updatedMessage = await messagesServices.updateMessage(
-      idParsed.data,
+      parsedMessageId.data,
       userId,
       message
     );
@@ -130,21 +154,21 @@ messagesRouter.patch("/:id", async (req: Request, res: Response) => {
   }
 });
 
-messagesRouter.delete("/:id", async (req: Request, res: Response) => {
-  const idParsed = uuidSchema.safeParse(req.params.id);
+messagesRouter.delete("/:messageId", async (req: Request, res: Response) => {
+  const parsedMessageId = uuidSchema.safeParse(req.params.messageId);
   const userId = req.user?.id as string;
 
-  if (!idParsed.success) {
+  if (!parsedMessageId.success) {
     throw new ValidationError(
       "Invalid Params",
-      idParsed.error.issues[0]?.message ??
+      parsedMessageId.error.issues[0]?.message ??
         "Check the request body and try again."
     );
   }
 
   try {
     const deletedMsg = await messagesServices.deleteMessage(
-      idParsed.data,
+      parsedMessageId.data,
       userId
     );
 

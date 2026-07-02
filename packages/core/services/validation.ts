@@ -57,7 +57,7 @@ export async function assertHasFriendship(
   });
 
   if (!friendship) {
-    throw new NotFoundError("DM not found");
+    throw new NotFoundError("friend not found");
   }
 
   return friendship;

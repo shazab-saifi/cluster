@@ -39,16 +39,16 @@ export async function createMessage({
 }
 
 export async function getMessages(
-  channelId: string,
   userId: string,
-  cursor?: string
+  cursor?: string,
+  channelId?: string,
+  friendshipId?: string
 ) {
-  await assertHasMembership(channelId, userId);
+  if (channelId) await assertHasMembership(channelId, userId);
+  if (friendshipId) await assertHasFriendship(friendshipId, userId);
 
   const messages = await prisma.message.findMany({
-    where: {
-      channelId,
-    },
+    where: channelId ? { channelId } : { friendshipId },
     include: {
       sender: {
         select: {
