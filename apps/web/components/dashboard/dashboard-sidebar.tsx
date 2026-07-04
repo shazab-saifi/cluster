@@ -1,10 +1,10 @@
 import {
-  WarningCircle,
-  Tray,
-  SpinnerGap,
-  UserPlus,
-  Plus,
-  Users,
+  WarningCircleIcon,
+  TrayIcon,
+  SpinnerGapIcon,
+  UserPlusIcon,
+  PlusIcon,
+  UsersIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -57,7 +57,7 @@ export function DashboardSidebar({
           variant="secondary"
           className="h-11 justify-start gap-3 px-3 text-base"
         >
-          <Users className="size-5" />
+          <UsersIcon className="size-5" />
           Friends
         </Button>
         <Button
@@ -65,7 +65,7 @@ export function DashboardSidebar({
           variant="ghost"
           className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
         >
-          <Tray className="size-5" weight="bold" />
+          <TrayIcon className="size-5" weight="bold" />
           Inbox
         </Button>
         {canAddMember && (
@@ -75,7 +75,7 @@ export function DashboardSidebar({
             className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
             onClick={onAddMember}
           >
-            <UserPlus className="size-5" />
+            <UserPlusIcon className="size-5" />
             Add member
           </Button>
         )}
@@ -92,19 +92,19 @@ export function DashboardSidebar({
             disabled={!activeNetwork}
             onClick={onCreateChannel}
           >
-            <Plus className="size-4" weight="bold" />
+            <PlusIcon className="size-4" weight="bold" />
           </button>
         </div>
         <div className="flex flex-col gap-1">
           {isChannelsLoading && (
             <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
-              <SpinnerGap className="size-4 animate-spin" />
+              <SpinnerGapIcon className="size-4 animate-spin" />
               Loading channels
             </div>
           )}
           {hasChannelsError && (
             <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
-              <WarningCircle className="size-4" />
+              <WarningCircleIcon className="size-4" />
               Channels unavailable
             </div>
           )}

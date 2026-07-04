@@ -47,3 +47,29 @@ export type NetworkListItem = Network & {
 export type NetworkDetails = Network & {
   channels: Channel[];
 };
+
+export type MessageType = {
+  type: "NEW_MESSAGE";
+  channelId: string;
+  message: string;
+  sender: {
+    id?: string;
+    name: string;
+    image: string | null;
+  };
+  createdAt?: Date;
+  timestamp: Date | string;
+  attachment?: string;
+};
+
+export type MessageErrorType = {
+  type: "ERROR";
+  error: {
+    code: string;
+    message: string;
+    timestamp: Date;
+    createdAt?: Date;
+    path: string;
+    suggestion: string;
+  };
+};
