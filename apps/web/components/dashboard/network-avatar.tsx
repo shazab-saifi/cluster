@@ -1,6 +1,5 @@
-import { cn } from "@workspace/ui/lib/utils";
+import { cn, getInitials } from "@workspace/ui/lib/utils";
 import type { NetworkListItem } from "./types";
-import { getInitials } from "./utils";
 
 type NetworkAvatarProps = {
   network: NetworkListItem;

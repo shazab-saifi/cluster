@@ -13,7 +13,7 @@ import { DashboardSidebar } from "./dashboard-sidebar";
 import { FriendsPanel } from "./friends-panel";
 import { NetworkStrip } from "./network-strip";
 import { getNetworkList } from "./utils";
-import { ChatSection } from "./chat-section";
+import { ChatSection } from "./chat-section/chat-section";
 
 export function Dashboard() {
   const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);

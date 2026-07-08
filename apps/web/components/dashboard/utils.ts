@@ -1,14 +1,5 @@
 import type { DashboardUser, NetworkListItem } from "./types";
 
-export function getInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 export function getNetworkList(user: DashboardUser | undefined) {
   if (!user) return [];
 

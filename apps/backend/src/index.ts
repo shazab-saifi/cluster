@@ -24,6 +24,5 @@ app.all("/api/auth/{*any}", toNodeHandler(auth));
 app.use(express.json());
 
 app.use("/api", mainRouter);
-app.use("/", mainRouter);
 
 app.listen(4000, () => console.log("Backend running on port 4000 ✅"));

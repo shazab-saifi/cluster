@@ -172,7 +172,7 @@ messagesRouter.delete("/:messageId", async (req: Request, res: Response) => {
       userId
     );
 
-    res.json({ msg: "Channel Deleted Successfully!", deletedMsg });
+    res.json({ msg: "Message Deleted Successfully!", deletedMsg });
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }

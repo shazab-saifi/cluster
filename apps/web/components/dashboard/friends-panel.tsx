@@ -1,8 +1,8 @@
-import { ChatCircle, MagnifyingGlass } from "@phosphor-icons/react";
+import { ChatCircleIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import type { DashboardUser, NetworkListItem } from "./types";
-import { getInitials } from "./utils";
+import { getInitials } from "@workspace/ui/lib/utils";
 
 type FriendsPanelProps = {
   user?: DashboardUser;
@@ -20,7 +20,7 @@ export function FriendsPanel({
   return (
     <div className="flex min-w-0 flex-1 flex-col p-4">
       <label className="relative mb-5 block">
-        <MagnifyingGlass className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
+        <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
         <Input
           aria-label="Search friends"
           placeholder="Search"
@@ -71,7 +71,7 @@ export function FriendsPanel({
                 </div>
               </div>
               <Button variant="ghost" size="icon-sm" aria-label="Open chat">
-                <ChatCircle className="size-4" />
+                <ChatCircleIcon className="size-4" />
               </Button>
             </div>
           ))

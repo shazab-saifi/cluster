@@ -1,7 +1,7 @@
 import { Hash } from "@phosphor-icons/react";
 
 import type { NetworkListItem } from "./types";
-import { getInitials } from "./utils";
+import { getInitials } from "@workspace/ui/lib/utils";
 
 type ActiveNowProps = {
   activeNetwork?: NetworkListItem;

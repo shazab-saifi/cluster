@@ -11,9 +11,9 @@ import {
 import { redisClient } from "@workspace/redis";
 import express, { Request, Response, Router } from "express";
 
-export const friendsRouter: Router = express.Router();
+export const friendshipRouter: Router = express.Router();
 
-friendsRouter.get("/", async (req: Request, res: Response) => {
+friendshipRouter.get("/", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
 
   try {
@@ -29,7 +29,7 @@ friendsRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-friendsRouter.post("/add/:friendId", async (req: Request, res: Response) => {
+friendshipRouter.post("/add/:friendId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const parsedFriendId = uuidSchema.safeParse(req.params.friendId);
 

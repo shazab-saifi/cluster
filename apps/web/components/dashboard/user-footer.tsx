@@ -1,7 +1,7 @@
-import { Gear, Microphone } from "@phosphor-icons/react";
+import { GearIcon, MicrophoneIcon } from "@phosphor-icons/react";
 import { Button } from "@workspace/ui/components/button";
 import type { DashboardUser } from "./types";
-import { getInitials } from "./utils";
+import { getInitials } from "@workspace/ui/lib/utils";
 
 type UserFooterProps = {
   user?: DashboardUser;
@@ -38,7 +38,7 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         aria-label="Mute"
         title="Mute"
       >
-        <Microphone className="size-4" />
+        <MicrophoneIcon className="size-4" />
       </Button>
       <Button
         type="button"
@@ -47,7 +47,7 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         aria-label="Settings"
         title="Settings"
       >
-        <Gear className="size-4" />
+        <GearIcon className="size-4" />
       </Button>
     </div>
   );

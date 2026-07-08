@@ -1,10 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
-import { cn } from "@workspace/ui/lib/utils";
-import { getInitials } from "../../../../apps/web/components/dashboard/utils";
+import { cn, getInitials } from "@workspace/ui/lib/utils";
+import { MessageManage } from "./message-actions";
 
 type MessageProps = {
   name: string;
@@ -46,6 +49,7 @@ export function Message({
   className,
   endGroup,
 }: MessageProps) {
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
   const hasValidTimestamp =
     date instanceof Date && !Number.isNaN(date.getTime());
@@ -53,12 +57,14 @@ export function Message({
   return (
     <article
       className={cn(
-        `group flex items-start gap-3 rounded-lg px-2 ${endGroup && "mt-4 py-0.5"} transition-colors hover:bg-muted/50`,
+        "group relative z-0 flex items-start gap-3 rounded-lg px-2 transition-colors focus-within:z-10 focus-within:bg-accent hover:z-10 hover:bg-accent",
+        endGroup && "mt-4 py-0.5",
+        isActionsOpen && "z-10 bg-accent",
         className
       )}
     >
       {endGroup && (
-        <Avatar size="lg" aria-label={avatarAlt ?? `'s avatar`}>
+        <Avatar size="lg" aria-label={avatarAlt ?? "'s avatar"}>
           {avatarUrl ? <AvatarImage src={avatarUrl} alt={avatarAlt} /> : null}
           <AvatarFallback>{getInitials(name)}</AvatarFallback>
         </Avatar>
@@ -82,9 +88,16 @@ export function Message({
           </header>
         )}
 
-        <p className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground/90">
-          {message}
-        </p>
+        <div className="flex flex-1 items-center justify-between">
+          <p className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground/90">
+            {message}
+          </p>
+          <MessageManage
+            isOpen={isActionsOpen}
+            message={message}
+            onOpenChange={setIsActionsOpen}
+          />
+        </div>
       </div>
     </article>
   );

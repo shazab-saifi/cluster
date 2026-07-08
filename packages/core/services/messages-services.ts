@@ -52,6 +52,7 @@ export async function getMessages(
     include: {
       sender: {
         select: {
+          id: true,
           name: true,
           image: true,
         },
