@@ -11,6 +11,17 @@ export const InputPayloadUnion = z.discriminatedUnion("type", [
     message: z.string(),
     attachment: z.string().optional(),
   }),
+  z.object({
+    type: z.literal("DELETE_MESSAGE"),
+    messageId: z.uuid(),
+    channelId: z.uuid(),
+  }),
+  z.object({
+    type: z.literal("EDIT_MESSAGE"),
+    messageId: z.uuid(),
+    channelId: z.uuid(),
+    editedMessage: z.string(),
+  }),
 ]);
 
 export type InputPayload = z.infer<typeof InputPayloadUnion>;

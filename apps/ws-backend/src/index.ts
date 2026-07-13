@@ -9,9 +9,10 @@ import {
 import { WebSocketServer, WebSocket } from "ws";
 import { InputPayloadUnion } from "./zod.schemas";
 import { assertHasMembership } from "@workspace/core/services/validation";
-import { publisher, redisClient, subscriber } from "@workspace/redis";
+import { publisher, subscriber } from "@workspace/redis";
 import { NotificationType } from "@workspace/core/services/notification-services";
 import { getMe } from "@workspace/core/services/me-services";
+import * as messageServices from "@workspace/core/services/messages-services";
 
 const server = http.createServer();
 const wss = new WebSocketServer({ noServer: true });
@@ -92,11 +93,12 @@ wss.on("connection", async (ws, req) => {
         );
       }
 
+      const userId = req.userId as string;
       const channelId = data.channelId;
 
       switch (data.type) {
         case "JOIN_CHANNEL": {
-          await joinChannel(channelId, req.userId as string, ws);
+          await joinChannel(channelId, userId, ws);
 
           ws.send(
             JSON.stringify({
@@ -107,11 +109,13 @@ wss.on("connection", async (ws, req) => {
           break;
         }
         case "NEW_MESSAGE": {
-          const userId = req.userId as string;
           const user = await getMe(userId);
           const timestamp = new Date().toISOString();
+          // NOTE: Generating message id at websocket layer, so if the user can delete/update the message even if worker hasn't stored it in db yet
+          const id: string = crypto.randomUUID();
 
           const messagePayloadForPublisher = {
+            id,
             type: "NEW_MESSAGE",
             channelId,
             message: data.message,
@@ -135,10 +139,12 @@ wss.on("connection", async (ws, req) => {
           );
 
           const messagePayloadForStream = {
-            channelId,
-            message: data.message,
+            type: "NEW_MESSAGE" as const,
+            id,
             senderId: userId,
+            channelId,
             timestamp,
+            message: data.message,
           };
 
           if (data.attachment !== undefined) {
@@ -146,13 +152,40 @@ wss.on("connection", async (ws, req) => {
               data.attachment;
           }
 
-          await redisClient.xAdd("chat-stream", "*", messagePayloadForStream, {
-            TRIM: {
-              strategy: "MAXLEN",
-              strategyModifier: "~",
-              threshold: 10000,
-            },
+          await messageServices.newMsgEvent(messagePayloadForStream);
+          break;
+        }
+        case "EDIT_MESSAGE": {
+          await messageServices.editMsgEvent({
+            type: "EDIT_MESSAGE",
+            id: data.messageId,
+            senderId: userId,
+            channelId,
+            editedMsg: data.editedMessage,
           });
+
+          ws.send(
+            JSON.stringify({
+              type: "SUCCESS",
+              message: "Message Edited",
+            })
+          );
+          break;
+        }
+        case "DELETE_MESSAGE": {
+          await messageServices.deleteMsgEvent({
+            type: "DELETE_MESSAGE",
+            id: data.messageId,
+            senderId: userId,
+            channelId,
+          });
+
+          ws.send(
+            JSON.stringify({
+              type: "SUCCESS",
+              message: "Message Deleted",
+            })
+          );
           break;
         }
         default: {
@@ -162,6 +195,7 @@ wss.on("connection", async (ws, req) => {
               "Please make sure type is valid"
             )
           );
+
           const errorPayload = buildErrorPayload(appError);
           ws.send(JSON.stringify({ type: "ERROR", error: errorPayload }));
           break;
@@ -170,6 +204,7 @@ wss.on("connection", async (ws, req) => {
     } catch (error) {
       const appError = normalizeError(error);
       const errorPayload = buildErrorPayload(appError);
+      console.log(errorPayload);
 
       ws.send(JSON.stringify({ type: "ERROR", error: errorPayload }));
     }
@@ -177,7 +212,7 @@ wss.on("connection", async (ws, req) => {
 });
 
 server.listen(8080, () => {
-  console.log("ws server running on port 8080");
+  console.log("ws-server is running on port 8080");
 });
 
 async function joinChannel(channelId: string, userId: string, ws: WebSocket) {
@@ -232,6 +267,7 @@ async function subscribeToNotification(ws: WebSocket) {
   await subscriber.subscribe("notification", (data) => {
     const notification: NotificationType = JSON.parse(data);
     const isRecevier = userSocketData.get(ws);
+
     if (isRecevier?.userId === notification.receiverId) {
       ws.send(String(notification));
     }

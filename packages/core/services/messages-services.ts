@@ -1,41 +1,24 @@
 import { prisma } from "@workspace/db";
 import { NotFoundError } from "../errors";
 import { assertHasFriendship, assertHasMembership } from "./validation";
+import { redisClient } from "@workspace/redis";
 
-async function assertCanManageMessage(userId: string, messageId: string) {
+async function assertCanManageMessage(
+  userId: string,
+  messageId: string,
+  channelId: string
+) {
   const message = await prisma.message.findFirst({
     where: {
       id: messageId,
       senderId: userId,
+      channelId: channelId,
     },
   });
 
   if (!message) {
     throw new NotFoundError("Could not find message");
   }
-}
-
-export async function createMessage({
-  userId,
-  message,
-  channelId,
-  friendshipId,
-}: {
-  userId: string;
-  message: string;
-  channelId?: string;
-  friendshipId?: string;
-}) {
-  if (channelId) await assertHasMembership(channelId, userId);
-  if (friendshipId) await assertHasFriendship(friendshipId, userId);
-
-  return await prisma.message.create({
-    data: {
-      senderId: userId,
-      message,
-      ...(channelId ? { channelId } : { friendshipId }),
-    },
-  });
 }
 
 export async function getMessages(
@@ -72,21 +55,57 @@ export async function getMessages(
   return { messages, nextCursor };
 }
 
-export async function updateMessage(
-  messageId: string,
-  userId: string,
-  message: string
-) {
-  await assertCanManageMessage(userId, messageId);
+interface BaseMsgPayload {
+  type: "NEW_MESSAGE" | "EDIT_MESSAGE" | "DELETE_MESSAGE";
+  id: string;
+  senderId: string;
+  channelId: string;
+}
 
-  return await prisma.message.update({
-    where: { id: messageId },
-    data: { message },
+interface NewMsgPayload extends BaseMsgPayload {
+  type: "NEW_MESSAGE";
+  message: string;
+  attachment?: string;
+  timestamp: string;
+}
+
+interface EditMessagePaylaod extends BaseMsgPayload {
+  type: "EDIT_MESSAGE";
+  editedMsg: string;
+}
+
+interface DeleteMessagePayload extends BaseMsgPayload {
+  type: "DELETE_MESSAGE";
+}
+
+type MsgEventPayload =
+  | NewMsgPayload
+  | EditMessagePaylaod
+  | DeleteMessagePayload;
+
+async function addMsgEvent(payload: MsgEventPayload) {
+  const redisPayload = payload as unknown as Record<string, string>;
+
+  return await redisClient.xAdd("event:stream", "*", redisPayload, {
+    TRIM: {
+      strategy: "MAXLEN",
+      strategyModifier: "~",
+      threshold: 10000,
+    },
   });
 }
 
-export async function deleteMessage(messageId: string, userId: string) {
-  await assertCanManageMessage(userId, messageId);
+export async function newMsgEvent(payload: NewMsgPayload) {
+  await addMsgEvent(payload);
+}
 
-  return await prisma.message.delete({ where: { id: messageId } });
+export async function editMsgEvent(payload: EditMessagePaylaod) {
+  await assertCanManageMessage(payload.senderId, payload.id, payload.channelId);
+
+  await addMsgEvent(payload);
+}
+
+export async function deleteMsgEvent(payload: DeleteMessagePayload) {
+  await assertCanManageMessage(payload.senderId, payload.id, payload.channelId);
+  await addMsgEvent(payload);
 }
