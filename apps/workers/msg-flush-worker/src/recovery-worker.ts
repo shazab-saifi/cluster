@@ -6,8 +6,8 @@ let messageIds: string[] = [];
 async function messageRecovery() {
   while (true) {
     const pendingMessages = await redisClient.XAUTOCLAIM(
-      "chat-stream",
-      "chat-workers",
+      "event:stream",
+      "event-workers",
       "recovery-worker",
       30000,
       "0-0"
@@ -27,6 +27,7 @@ async function messageRecovery() {
     try {
       await prisma.message.createMany({
         data: pendingMessages.messages.map((message) => ({
+          id: message?.message.id as string,
           senderId: message?.message.senderId as string,
           channelId: message?.message.channelId,
           message: message?.message.message as string,
@@ -36,7 +37,7 @@ async function messageRecovery() {
         skipDuplicates: true,
       });
 
-      await redisClient.xAck("chat-stream", "chat-workers", messageIds);
+      await redisClient.xAck("event:stream", "event-workers", messageIds);
 
       messageIds = [];
       await Bun.sleep(30000);
