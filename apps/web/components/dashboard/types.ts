@@ -50,6 +50,7 @@ export type NetworkDetails = Network & {
 
 export type MessageType = {
   type: "NEW_MESSAGE";
+  id: string;
   channelId: string;
   message: string;
   sender: {

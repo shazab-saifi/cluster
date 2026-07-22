@@ -22,7 +22,7 @@ type PersistedMessage = {
   };
   createdAt: string;
 };
-type OptimisticMessage = MessageType & {
+type OptimisticMessage = Omit<MessageType, "id"> & {
   optimistic: true;
 };
 type ChatMessageListItem = PersistedMessage | MessageType | OptimisticMessage;
@@ -70,6 +70,7 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
     if (!lastJsonMessage) return;
 
     if (lastJsonMessage.type === "ERROR") {
+      console.log(lastJsonMessage);
       toast.error(lastJsonMessage.error.message, {
         description: "Please try again later or report to the maintainer",
         action: {
@@ -168,6 +169,21 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
     setMessage("");
   };
 
+  const handleDeleteMessage = (messageId: string) => {
+    sendJsonMessage({
+      type: "DELETE_MESSAGE",
+      channelId,
+      messageId,
+    });
+
+    queryClient.setQueryData<MessageType[]>(
+      getMessagesQueryKey(channelId),
+      (oldMessages = []) => oldMessages.filter((msg) => msg.id !== messageId)
+    );
+
+    toast.success("Message Delete");
+  };
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 pt-4">
@@ -184,12 +200,15 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
                     ? message.id
                     : `${message.channelId}-${message.timestamp}-${idx}`
                 }
+                messageId={"id" in message ? message.id : undefined}
                 message={message.message}
+                isSender={session?.user.id === message.sender.id}
                 name={message.sender.name}
                 avatarUrl={message.sender.image}
                 avatarAlt={`avatar-${message.sender.name}`}
                 timestamp={timestamp}
                 endGroup={endsGroup}
+                handleMsgDelete={handleDeleteMessage}
               />
             );
           })

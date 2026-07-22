@@ -5,6 +5,7 @@ import { QueryProvider } from "@/components/query-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { cn } from "@workspace/ui/lib/utils";
 import { Toaster } from "@workspace/ui/components/sonner";
+import { TooltipProvider } from "@workspace/ui/components/tooltip";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -32,8 +33,10 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <QueryProvider>
-            <AuthProvider>{children}</AuthProvider>
-            <Toaster />
+            <TooltipProvider>
+              <AuthProvider>{children}</AuthProvider>
+              <Toaster />
+            </TooltipProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>
