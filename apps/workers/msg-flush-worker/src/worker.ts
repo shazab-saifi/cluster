@@ -73,26 +73,26 @@ async function MsgFlushWorker() {
 
   while (true) {
     try {
-      const response = await redisClient.xReadGroup(
+      const messageEvents = await redisClient.xReadGroup(
         "message-workers",
         workerName,
         { key: "message:stream", id: ">" },
         { COUNT: 100, BLOCK: 3000 }
       );
 
-      if (response && response[0]) {
-        for (const redidMsg of response[0].messages) {
-          switch (redidMsg.message.type) {
+      if (messageEvents && messageEvents[0]) {
+        for (const msgEvent of messageEvents[0].messages) {
+          switch (msgEvent.message.type) {
             case "NEW_MESSAGE": {
               const mapMessage = {
-                redisId: redidMsg.id,
+                redisId: msgEvent.id,
                 data: {
-                  id: redidMsg.message.id as string,
-                  senderId: redidMsg.message.senderId as string,
-                  channelId: redidMsg.message.channelId as string,
-                  message: redidMsg.message.message as string,
-                  attachment: redidMsg.message.attachment,
-                  timestamp: redidMsg.message.timestamp as string,
+                  id: msgEvent.message.id as string,
+                  senderId: msgEvent.message.senderId as string,
+                  channelId: msgEvent.message.channelId as string,
+                  message: msgEvent.message.message as string,
+                  attachment: msgEvent.message.attachment,
+                  timestamp: msgEvent.message.timestamp as string,
                 },
               };
 
@@ -108,9 +108,9 @@ async function MsgFlushWorker() {
             }
             case "EDIT_MESSAGE": {
               await prisma.message.update({
-                where: { id: redidMsg.message.id },
+                where: { id: msgEvent.message.id },
                 data: {
-                  message: redidMsg.message.editedMsg,
+                  message: msgEvent.message.editedMsg,
                 },
               });
 
@@ -118,20 +118,20 @@ async function MsgFlushWorker() {
                 "message-actions",
                 JSON.stringify({
                   type: "Success",
-                  message: `Updated message to "${redidMsg.message.editedMsg}"`,
+                  message: `Updated message to "${msgEvent.message.editedMsg}"`,
                 })
               );
 
               await redisClient.xAck(
                 "message:stream",
                 "message-workers",
-                redidMsg.id
+                msgEvent.id
               );
               break;
             }
             case "DELETE_MESSAGE":
               await prisma.message.delete({
-                where: { id: redidMsg.message.id },
+                where: { id: msgEvent.message.id },
               });
 
               await publisher.publish(
@@ -145,7 +145,7 @@ async function MsgFlushWorker() {
               await redisClient.xAck(
                 "message:stream",
                 "message-workers",
-                redidMsg.id
+                msgEvent.id
               );
               break;
             default:
@@ -153,7 +153,7 @@ async function MsgFlushWorker() {
               await redisClient.xAck(
                 "message:stream",
                 "message-workers",
-                redidMsg.id
+                msgEvent.id
               );
               break;
           }
