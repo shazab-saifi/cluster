@@ -61,6 +61,7 @@ const subscribedChannels = new Set<string>();
 wss.on("connection", async (ws, req) => {
   userSocketData.set(ws, { userId: req.userId as string, channels: new Set() });
   await subscribeToNotification(ws);
+  await subscribeToFlushWorker(ws);
 
   ws.on("error", (error) => console.error("Error in error event: ", error));
 
@@ -111,7 +112,7 @@ wss.on("connection", async (ws, req) => {
         case "NEW_MESSAGE": {
           const user = await getMe(userId);
           const timestamp = new Date().toISOString();
-          // NOTE: Generating message id at websocket layer, so if the user can delete/update the message even if worker hasn't stored it in db yet
+          // NOTE: Generating message id at websocket layer, so if the user can delete/update the message even if it's not stored in the db yet
           const id: string = crypto.randomUUID();
 
           const messagePayloadForPublisher = {
@@ -270,6 +271,17 @@ async function subscribeToNotification(ws: WebSocket) {
 
     if (isRecevier?.userId === notification.receiverId) {
       ws.send(String(notification));
+    }
+  });
+}
+
+async function subscribeToFlushWorker(ws: WebSocket) {
+  await subscriber.subscribe("flush-worker-events", (data) => {
+    const event = JSON.parse(data);
+    const user = userSocketData.get(ws);
+
+    if (user?.userId === event.senderId) {
+      ws.send(event);
     }
   });
 }

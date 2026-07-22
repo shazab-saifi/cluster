@@ -115,9 +115,11 @@ async function MsgFlushWorker() {
               });
 
               await publisher.publish(
-                "message-actions",
+                "flush-worker-events",
                 JSON.stringify({
-                  type: "Success",
+                  type: "EDIT_MESSAGE",
+                  status: "Success",
+                  userId: msgEvent.message.senderId,
                   message: `Updated message to "${msgEvent.message.editedMsg}"`,
                 })
               );
@@ -135,9 +137,11 @@ async function MsgFlushWorker() {
               });
 
               await publisher.publish(
-                "message-actions",
+                "flush-worker-events",
                 JSON.stringify({
-                  type: "Success",
+                  type: "DELETE_MESSAGE",
+                  status: "Success",
+                  userId: msgEvent.message.senderId,
                   message: "Delete message",
                 })
               );
