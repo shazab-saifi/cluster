@@ -1,5 +1,11 @@
-import { prisma } from "@workspace/db";
-import { redisClient } from "@workspace/redis";
+import {
+  createMessage,
+  deleteMessage,
+  Prisma,
+  updateMessage,
+} from "@workspace/core/services/messages-services";
+import { publisher, redisClient } from "@workspace/redis";
+import { buildErrorPayload, normalizeError } from "@workspace/core/errors";
 
 async function messageRecovery() {
   while (true) {
@@ -17,52 +23,66 @@ async function messageRecovery() {
     }
 
     for (const msgEvent of pendingMsgEvents.messages) {
-      switch (msgEvent?.message.type) {
-        case "NEW_MESSAGE":
-          await prisma.message.create({
-            data: {
+      try {
+        switch (msgEvent?.message.type) {
+          case "NEW_MESSAGE": {
+            const messagePayload = {
               id: msgEvent.message.id as string,
               senderId: msgEvent.message.senderId as string,
-              channelId: msgEvent.message.channelId,
+              channelId: msgEvent.message.channelId as string,
               message: msgEvent.message.message as string,
-              attachment: msgEvent.message.attachment,
-              timestamp: msgEvent.message.timestamp,
-            },
-          });
+              attachment: msgEvent.message.attachment ?? null,
+              timestamp: msgEvent.message.timestamp as unknown as Date,
+            };
 
-          await redisClient.xAck(
-            "message:stream",
-            "message-workers",
-            msgEvent.id
-          );
-          break;
-        case "EDIT_MESSAGE":
-          await prisma.message.update({
-            where: { id: msgEvent.message.id },
-            data: {
-              message: msgEvent.message.editedMsg,
-            },
-          });
+            await createMessage(messagePayload);
 
-          await redisClient.xAck(
-            "message:stream",
-            "message-workers",
-            msgEvent.id
-          );
-          break;
-        case "DELETE_MESSAGE":
-          await prisma.message.delete({
-            where: { id: msgEvent.message.id },
-          });
+            await redisClient.xAck(
+              "message:stream",
+              "message-workers",
+              msgEvent.id
+            );
+            break;
+          }
+          case "EDIT_MESSAGE":
+            await updateMessage({
+              messageId: msgEvent.message.messageId as string,
+              editedMsg: msgEvent.message.editedMsg as string,
+            });
 
-          await redisClient.xAck(
-            "message:stream",
-            "message-workers",
-            msgEvent.id
+            await redisClient.xAck(
+              "message:stream",
+              "message-workers",
+              msgEvent.id
+            );
+            break;
+          case "DELETE_MESSAGE":
+            await deleteMessage(msgEvent.message.id as string);
+
+            await redisClient.xAck(
+              "message:stream",
+              "message-workers",
+              msgEvent.id
+            );
+            break;
+          default:
+            throw new Error(`Invalid message event type detected: ${msgEvent}`);
+        }
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          await publisher.publish(
+            "flush-worker-events",
+            JSON.stringify({
+              type: msgEvent?.message.type,
+              status: "FAILED",
+              senderId: msgEvent?.message.senderId,
+              message: msgEvent?.message.meessage,
+              error: buildErrorPayload(normalizeError(error)),
+            })
           );
-          break;
-        default:
-          throw new Error(`Invalid message event type detected: ${msgEvent}`);
+        }
+
+        console.log("Failed to execute event: ", error);
       }
     }
 
