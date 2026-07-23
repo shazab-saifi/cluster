@@ -55,9 +55,51 @@ export async function getMessages(
   return { messages, nextCursor };
 }
 
+export type BufferedMessage = {
+  redisId: string;
+  data: {
+    id: string;
+    senderId: string;
+    channelId: string;
+    message: string;
+    attachment: string | null;
+    timestamp: Date;
+  };
+};
+
+export type Msg = BufferedMessage["data"];
+
+export async function createMessage(message: Msg) {
+  await prisma.message.create({ data: message });
+}
+
+export async function createManyMessages(messages: Msg[]) {
+  await prisma.message.createMany({
+    data: messages,
+    skipDuplicates: true,
+  });
+}
+
+export async function updateMessage({
+  messageId,
+  editedMsg,
+}: {
+  messageId: string;
+  editedMsg: string;
+}) {
+  await prisma.message.update({
+    where: { id: messageId },
+    data: { message: editedMsg },
+  });
+}
+
+export async function deleteMessage(messageId: string) {
+  await prisma.message.delete({ where: { id: messageId } });
+}
+
 interface BaseMsgPayload {
   type: "NEW_MESSAGE" | "EDIT_MESSAGE" | "DELETE_MESSAGE";
-  id: string;
+  messageId: string;
   senderId: string;
   channelId: string;
 }
@@ -86,7 +128,7 @@ type MsgEventPayload =
 async function addMsgEvent(payload: MsgEventPayload) {
   const redisPayload = payload as unknown as Record<string, string>;
 
-  return await redisClient.xAdd("event:stream", "*", redisPayload, {
+  return await redisClient.xAdd("message:stream", "*", redisPayload, {
     TRIM: {
       strategy: "MAXLEN",
       strategyModifier: "~",
@@ -100,12 +142,23 @@ export async function newMsgEvent(payload: NewMsgPayload) {
 }
 
 export async function editMsgEvent(payload: EditMessagePaylaod) {
-  await assertCanManageMessage(payload.senderId, payload.id, payload.channelId);
+  await assertCanManageMessage(
+    payload.senderId,
+    payload.messageId,
+    payload.channelId
+  );
 
   await addMsgEvent(payload);
 }
 
 export async function deleteMsgEvent(payload: DeleteMessagePayload) {
-  await assertCanManageMessage(payload.senderId, payload.id, payload.channelId);
+  await assertCanManageMessage(
+    payload.senderId,
+    payload.messageId,
+    payload.channelId
+  );
+
   await addMsgEvent(payload);
 }
+
+export { Prisma } from "@workspace/db";
