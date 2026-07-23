@@ -1,21 +1,16 @@
-import { prisma } from "@workspace/db";
 import { publisher, redisClient } from "@workspace/redis";
 import os from "os";
+import {
+  BufferedMessage,
+  createManyMessages,
+  deleteMessage,
+  Prisma,
+  updateMessage,
+} from "@workspace/core/services/messages-services";
+import { buildErrorPayload, normalizeError } from "@workspace/core/errors";
 
 const MAX_BATCH_SIZE = 100;
 const FLUSH_DELAY_MS = 350;
-
-type BufferedMessage = {
-  redisId: string;
-  data: {
-    id: string;
-    senderId: string;
-    channelId: string;
-    message: string;
-    attachment?: string;
-    timestamp: string;
-  };
-};
 
 async function MsgFlushWorker() {
   const workerName = `${os.hostname()}:${process.pid}`;
@@ -47,10 +42,7 @@ async function MsgFlushWorker() {
       if (batch.length === 0) return;
 
       try {
-        await prisma.message.createMany({
-          data: batch.map(({ data }) => data),
-          skipDuplicates: true,
-        });
+        await createManyMessages(batch.map(({ data }) => data));
 
         await redisClient.xAck(
           "message:stream",
@@ -82,89 +74,94 @@ async function MsgFlushWorker() {
 
       if (messageEvents && messageEvents[0]) {
         for (const msgEvent of messageEvents[0].messages) {
-          switch (msgEvent.message.type) {
-            case "NEW_MESSAGE": {
-              const mapMessage = {
-                redisId: msgEvent.id,
-                data: {
-                  id: msgEvent.message.id as string,
-                  senderId: msgEvent.message.senderId as string,
-                  channelId: msgEvent.message.channelId as string,
-                  message: msgEvent.message.message as string,
-                  attachment: msgEvent.message.attachment,
-                  timestamp: msgEvent.message.timestamp as string,
-                },
-              };
+          try {
+            switch (msgEvent.message.type) {
+              case "NEW_MESSAGE": {
+                const mapMessage = {
+                  redisId: msgEvent.id,
+                  data: {
+                    id: msgEvent.message.messageId as string,
+                    senderId: msgEvent.message.senderId as string,
+                    channelId: msgEvent.message.channelId as string,
+                    message: msgEvent.message.message as string,
+                    attachment: msgEvent.message.attachment ?? null,
+                    timestamp: msgEvent.message.timestamp as unknown as Date,
+                  },
+                };
 
-              buffer.push(mapMessage);
+                buffer.push(mapMessage);
 
-              if (buffer.length >= MAX_BATCH_SIZE) {
-                await flush();
-              } else {
-                scheduleFlush();
+                if (buffer.length >= MAX_BATCH_SIZE) {
+                  await flush();
+                } else {
+                  scheduleFlush();
+                }
+
+                break;
               }
+              case "EDIT_MESSAGE":
+                await updateMessage({
+                  messageId: msgEvent.message.messageId as string,
+                  editedMsg: msgEvent.message.editedMsg as string,
+                });
 
-              break;
+                await publisher.publish(
+                  "flush-worker-events",
+                  JSON.stringify({
+                    type: "EDIT_MESSAGE",
+                    status: "Success",
+                    senderId: msgEvent.message.senderId,
+                    message: msgEvent.message.editedMsg,
+                  })
+                );
+
+                break;
+              case "DELETE_MESSAGE":
+                await deleteMessage(msgEvent.message.messageId as string);
+
+                await publisher.publish(
+                  "flush-worker-events",
+                  JSON.stringify({
+                    type: "DELETE_MESSAGE",
+                    status: "Success",
+                    senderId: msgEvent.message.senderId,
+                    message: msgEvent.message.meessage,
+                  })
+                );
+                break;
+              default:
+                console.error(
+                  "Invalid message message type detected: ",
+                  msgEvent
+                );
+                break;
             }
-            case "EDIT_MESSAGE": {
-              await prisma.message.update({
-                where: { id: msgEvent.message.id },
-                data: {
-                  message: msgEvent.message.editedMsg,
-                },
-              });
 
+            await redisClient.xAck(
+              "message:stream",
+              "message-workers",
+              msgEvent.id
+            );
+          } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
               await publisher.publish(
                 "flush-worker-events",
                 JSON.stringify({
-                  type: "EDIT_MESSAGE",
-                  status: "Success",
-                  userId: msgEvent.message.senderId,
-                  message: `Updated message to "${msgEvent.message.editedMsg}"`,
+                  type: msgEvent.message.type,
+                  status: "FAILED",
+                  senderId: msgEvent.message.senderId,
+                  message: msgEvent.message.meessage,
+                  error: buildErrorPayload(normalizeError(error)),
                 })
               );
-
-              await redisClient.xAck(
-                "message:stream",
-                "message-workers",
-                msgEvent.id
-              );
-              break;
             }
-            case "DELETE_MESSAGE":
-              await prisma.message.delete({
-                where: { id: msgEvent.message.id },
-              });
 
-              await publisher.publish(
-                "flush-worker-events",
-                JSON.stringify({
-                  type: "DELETE_MESSAGE",
-                  status: "Success",
-                  userId: msgEvent.message.senderId,
-                  message: "Delete message",
-                })
-              );
-
-              await redisClient.xAck(
-                "message:stream",
-                "message-workers",
-                msgEvent.id
-              );
-              break;
-            default:
-              console.error("Invalid message message type detected");
-              await redisClient.xAck(
-                "message:stream",
-                "message-workers",
-                msgEvent.id
-              );
-              break;
+            console.log("Failed to execute event: ", error);
           }
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error("Could not read message stream: ", error);
     }
   }
 }
