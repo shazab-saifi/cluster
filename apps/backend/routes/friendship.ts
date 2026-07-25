@@ -4,11 +4,7 @@ import {
   sendErrorResponse,
   ValidationError,
 } from "@workspace/core/errors";
-import {
-  getAllFriends,
-  addFriend,
-} from "@workspace/core/services/friends-services";
-import { redisClient } from "@workspace/redis";
+import * as friendServices from "@workspace/core/services/friends-services";
 import express, { Request, Response, Router } from "express";
 
 export const friendshipRouter: Router = express.Router();
@@ -17,7 +13,7 @@ friendshipRouter.get("/", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
 
   try {
-    const friends = await getAllFriends(userId);
+    const friends = await friendServices.getAllFriends(userId);
 
     if (!friends) {
       throw new NotFoundError("You don't have any friend, LOL.");
@@ -43,23 +39,8 @@ friendshipRouter.post("/add/:friendId", async (req: Request, res: Response) => {
 
   try {
     // TODO: A friend request notification needs to go to the receiver user
-    await redisClient.xAdd(
-      "notif:stream",
-      "*",
-      {
-        type: "FRIEND_REQUEST",
-        senderId: userId,
-        receiverId: parsedFriendId.data,
-      },
-      {
-        TRIM: {
-          strategy: "MAXLEN",
-          strategyModifier: "~",
-          threshold: 10000,
-        },
-      }
-    );
-    await addFriend(userId, parsedFriendId.data);
+    // EDIT: Shifted the notification event trigger in addFriend function
+    await friendServices.addFriend(userId, parsedFriendId.data);
 
     res.json({ msg: "friend request sent successfully" });
   } catch (error) {

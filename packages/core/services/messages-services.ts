@@ -82,14 +82,14 @@ export async function createManyMessages(messages: Msg[]) {
 
 export async function updateMessage({
   messageId,
-  editedMsg,
+  editedMessage,
 }: {
   messageId: string;
-  editedMsg: string;
+  editedMessage: string;
 }) {
   await prisma.message.update({
     where: { id: messageId },
-    data: { message: editedMsg },
+    data: { message: editedMessage },
   });
 }
 
@@ -113,7 +113,7 @@ interface NewMsgPayload extends BaseMsgPayload {
 
 interface EditMessagePaylaod extends BaseMsgPayload {
   type: "EDIT_MESSAGE";
-  editedMsg: string;
+  editedMessage: string;
 }
 
 interface DeleteMessagePayload extends BaseMsgPayload {

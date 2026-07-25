@@ -7,16 +7,29 @@ import {
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { cn, getInitials } from "@workspace/ui/lib/utils";
-import { MessageManage } from "./message-actions";
+import { MessageActions } from "./message-actions";
 
 type MessageProps = {
+  messageId?: string;
   name: string;
   timestamp: Date | string;
   message: string;
+  isSender: boolean;
   avatarUrl?: string | null;
   avatarAlt?: string;
   className?: string;
   endGroup?: boolean;
+  handleMsgDelete: (messageId: string) => void;
+  isEditing: { messageId: string; message: string } | null;
+  setIsEditing: ({
+    messageId,
+    message,
+  }: {
+    messageId: string;
+    message: string;
+  }) => void;
+  EditInputComponent: React.ReactNode;
+  isBeingEdit: boolean;
 };
 
 const getLocale = () =>
@@ -41,25 +54,36 @@ const customDateTimeFormatter = (date: Date) => {
 };
 
 export function Message({
+  messageId,
   name,
   timestamp,
   message,
+  isSender,
   avatarUrl,
   avatarAlt,
   className,
   endGroup,
+  handleMsgDelete,
+  isEditing,
+  setIsEditing,
+  EditInputComponent,
+  isBeingEdit,
 }: MessageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
   const hasValidTimestamp =
     date instanceof Date && !Number.isNaN(date.getTime());
+  const editingMsg =
+    messageId !== undefined && isEditing?.messageId === messageId;
 
   return (
     <article
       className={cn(
-        "group relative z-0 flex items-start gap-3 rounded-lg px-2 transition-colors focus-within:z-10 focus-within:bg-accent hover:z-10 hover:bg-accent",
+        "group relative z-0 flex items-start gap-3 rounded-lg px-2 transition-colors",
         endGroup && "mt-4 py-0.5",
-        isActionsOpen && "z-10 bg-accent",
+        isActionsOpen && "z-10 bg-secondary",
+        editingMsg && "bg-secondary py-2",
+        !editingMsg && "hover:z-10 hover:bg-secondary",
         className
       )}
     >
@@ -89,14 +113,25 @@ export function Message({
         )}
 
         <div className="flex flex-1 items-center justify-between">
-          <p className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground/90">
-            {message}
-          </p>
-          <MessageManage
-            isOpen={isActionsOpen}
-            message={message}
-            onOpenChange={setIsActionsOpen}
-          />
+          {editingMsg ? (
+            EditInputComponent
+          ) : (
+            <p className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground/90">
+              {message}
+            </p>
+          )}
+
+          {!editingMsg && isSender && messageId && (
+            <MessageActions
+              messageId={messageId}
+              isOpen={isActionsOpen}
+              message={message}
+              onOpenChange={setIsActionsOpen}
+              handleMsgDelete={handleMsgDelete}
+              setIsEditing={setIsEditing}
+              isBeingEdit={isBeingEdit}
+            />
+          )}
         </div>
       </div>
     </article>

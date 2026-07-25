@@ -25,7 +25,6 @@
         "@types/express": "^5.0.6",
         "@workspace/auth": "workspace:*",
         "@workspace/core": "workspace:*",
-        "@workspace/redis": "workspace:*",
         "cors": "^2.8.6",
         "express": "^5.2.1",
         "zod": "^4.3.6",
@@ -74,6 +73,7 @@
     "apps/workers/msg-flush-worker": {
       "name": "msg-flush-worker",
       "dependencies": {
+        "@workspace/core": "workspace:*",
         "@workspace/db": "workspace:*",
         "@workspace/redis": "workspace:*",
       },
@@ -158,6 +158,7 @@
       "dependencies": {
         "@workspace/aws": "workspace:*",
         "@workspace/db": "workspace:*",
+        "@workspace/redis": "workspace:*",
         "eslint": "^10.2.1",
       },
       "devDependencies": {

@@ -137,12 +137,13 @@ model Channel {
 }
 
 model Message {
-  id             String          @id @default(uuid())
+  id             String          @id
   message        String
   channelId      String?
   friendshipId   String?
   attachment     String?
   senderId       String
+  edited         Boolean?        @default(false)
   timestamp      DateTime
   channel        Channel?        @relation(fields: [channelId], references: [id], onDelete: Cascade)
   sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)

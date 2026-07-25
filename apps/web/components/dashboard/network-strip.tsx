@@ -1,6 +1,8 @@
-import { ChatCircleIcon, CompassIcon, PlusIcon } from "@phosphor-icons/react";
+import { CompassIcon, PlusIcon } from "@phosphor-icons/react";
 import type { NetworkListItem } from "./types";
 import { NetworkAvatar } from "./network-avatar";
+import Image from "next/image";
+import Link from "next/link";
 
 type NetworkStripProps = {
   networks: NetworkListItem[];
@@ -18,15 +20,13 @@ export function NetworkStrip({
   onCreateNetwork,
 }: NetworkStripProps) {
   return (
-    <aside className="flex w-[72px] shrink-0 flex-col items-center gap-2 border-r bg-background px-3 py-3">
-      <button
-        type="button"
-        aria-label="Direct messages"
-        title="Direct messages"
-        className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm"
+    <aside className="flex w-18 shrink-0 flex-col items-center gap-2 border-r bg-background px-3 py-3">
+      <Link
+        href="/friends"
+        className="grid size-12 cursor-pointer place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm"
       >
-        <ChatCircleIcon className="size-6" />
-      </button>
+        <Image src="/cluster-logo.svg" width={48} height={48} alt="logo" />
+      </Link>
       <div className="my-1 h-px w-8 bg-border" />
       <div className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto">
         {isLoading &&

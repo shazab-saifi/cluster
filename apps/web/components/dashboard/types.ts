@@ -63,7 +63,7 @@ export type MessageType = {
   attachment?: string;
 };
 
-export type MessageErrorType = {
+type MessageErrorType = {
   type: "ERROR";
   error: {
     code: string;
@@ -74,3 +74,27 @@ export type MessageErrorType = {
     suggestion: string;
   };
 };
+
+type NewMessageEvent = MessageType;
+
+type EditMessageResult = {
+  type: "EDIT_MESSAGE";
+  status: "Success" | "FAILED";
+  senderId: string;
+  messageId: string;
+  error?: MessageErrorType["error"];
+};
+
+type DeleteMessageResult = {
+  type: "DELETE_MESSAGE";
+  status: "Success" | "FAILED";
+  senderId: string;
+  messageId: string;
+  error?: MessageErrorType["error"];
+};
+
+export type ServerEvent =
+  | NewMessageEvent
+  | MessageErrorType
+  | EditMessageResult
+  | DeleteMessageResult;

@@ -1,17 +1,17 @@
 "use client";
 
 import { SpinnerGapIcon } from "@phosphor-icons/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useWebSocket from "react-use-websocket";
 import { authClient } from "@/lib/auth-client";
 import { API_BASE_URL, contextFetcher, SOCKET_URL } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MessageErrorType, MessageType } from "../types";
+import { MessageType, ServerEvent } from "../types";
 import { Message } from "@workspace/ui/components/message";
 import { MessageComposer } from "./message-composer";
+import EditInput from "./edit-input";
 
-type ChatMessage = MessageType | MessageErrorType;
 type PersistedMessage = {
   id: string;
   message: string;
@@ -22,9 +22,11 @@ type PersistedMessage = {
   };
   createdAt: string;
 };
+
 type OptimisticMessage = Omit<MessageType, "id"> & {
   optimistic: true;
 };
+
 type ChatMessageListItem = PersistedMessage | MessageType | OptimisticMessage;
 
 const getMessagesQueryKey = (channelId: string) =>
@@ -35,7 +37,7 @@ const getMessageTimestamp = (message: ChatMessageListItem) =>
 
 export const ChatSection = ({ channelId }: { channelId: string }) => {
   const { sendJsonMessage, lastJsonMessage } =
-    useWebSocket<ChatMessage>(SOCKET_URL);
+    useWebSocket<ServerEvent>(SOCKET_URL);
   const [message, setMessage] = useState("");
   const { data: session } = authClient.useSession();
   const { data, error, isError, isLoading } = useQuery({
@@ -43,6 +45,11 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
     queryFn: (context) => contextFetcher<ChatMessageListItem[]>(context),
   });
   const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState<{
+    messageId: string;
+    message: string;
+  } | null>(null);
+  const previousMessage = useRef(new Map<string, string>());
 
   useEffect(() => {
     sendJsonMessage({
@@ -69,48 +76,95 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
   useEffect(() => {
     if (!lastJsonMessage) return;
 
-    if (lastJsonMessage.type === "ERROR") {
-      console.log(lastJsonMessage);
-      toast.error(lastJsonMessage.error.message, {
-        description: "Please try again later or report to the maintainer",
-        action: {
-          label: "Report",
-          onClick: () =>
-            (window.location.href = "https://x.com/shazabsaifi_s9"),
-        },
-      });
-      return;
-    }
+    switch (lastJsonMessage.type) {
+      case "NEW_MESSAGE":
+        queryClient.setQueryData<ChatMessageListItem[]>(
+          getMessagesQueryKey(lastJsonMessage.channelId),
+          (oldMessages = []) => {
+            const optimisticIndex = oldMessages.findIndex(
+              (cachedMessage) =>
+                "optimistic" in cachedMessage &&
+                cachedMessage.optimistic &&
+                cachedMessage.channelId === lastJsonMessage.channelId &&
+                cachedMessage.message === lastJsonMessage.message
+            );
 
-    queryClient.setQueryData<ChatMessageListItem[]>(
-      getMessagesQueryKey(lastJsonMessage.channelId),
-      (oldMessages = []) => {
-        const optimisticIndex = oldMessages.findIndex(
-          (cachedMessage) =>
-            "optimistic" in cachedMessage &&
-            cachedMessage.optimistic &&
-            cachedMessage.channelId === lastJsonMessage.channelId &&
-            cachedMessage.message === lastJsonMessage.message
+            if (optimisticIndex !== -1) {
+              return oldMessages.map((cachedMessage, index) =>
+                index === optimisticIndex ? lastJsonMessage : cachedMessage
+              );
+            }
+
+            const alreadyCached = oldMessages.some(
+              (cachedMessage) =>
+                "timestamp" in cachedMessage &&
+                cachedMessage.channelId === lastJsonMessage.channelId &&
+                cachedMessage.timestamp === lastJsonMessage.timestamp &&
+                cachedMessage.sender.id === lastJsonMessage.sender.id
+            );
+
+            return alreadyCached
+              ? oldMessages
+              : [lastJsonMessage, ...oldMessages];
+          }
         );
-
-        if (optimisticIndex !== -1) {
-          return oldMessages.map((cachedMessage, index) =>
-            index === optimisticIndex ? lastJsonMessage : cachedMessage
-          );
+        break;
+      case "DELETE_MESSAGE":
+        if (lastJsonMessage.status === "FAILED") {
+          toast.error(lastJsonMessage.error?.message, {
+            description: "Please try again later or report to the maintainer",
+          });
         }
 
-        const alreadyCached = oldMessages.some(
-          (cachedMessage) =>
-            "timestamp" in cachedMessage &&
-            cachedMessage.channelId === lastJsonMessage.channelId &&
-            cachedMessage.timestamp === lastJsonMessage.timestamp &&
-            cachedMessage.sender.id === lastJsonMessage.sender.id
+        queryClient.setQueryData<ChatMessageListItem[]>(
+          getMessagesQueryKey(channelId),
+          (oldMessages = []) =>
+            oldMessages.filter(
+              (msg) => "id" in msg && msg.id !== lastJsonMessage.messageId
+            )
         );
 
-        return alreadyCached ? oldMessages : [lastJsonMessage, ...oldMessages];
-      }
-    );
-  }, [lastJsonMessage, queryClient]);
+        break;
+      case "EDIT_MESSAGE":
+        if (lastJsonMessage.status === "FAILED") {
+          queryClient.setQueryData<ChatMessageListItem[]>(
+            getMessagesQueryKey(channelId),
+            (oldMessages = []) =>
+              oldMessages.map((msg) =>
+                "id" in msg && msg.id === lastJsonMessage.messageId
+                  ? {
+                      ...msg,
+                      message:
+                        previousMessage.current.get(
+                          lastJsonMessage.messageId
+                        ) ?? msg.message,
+                    }
+                  : msg
+              )
+          );
+
+          toast.error(lastJsonMessage.error?.message, {
+            description: "Please try again later or report to the maintainer",
+          });
+        }
+
+        previousMessage.current.clear();
+        break;
+      case "ERROR":
+        console.log(lastJsonMessage);
+        toast.error(lastJsonMessage.error?.message, {
+          description: "Please try again later or report to the maintainer",
+          action: {
+            label: "Report",
+            onClick: () =>
+              (window.location.href = "https://x.com/shazabsaifi_s9"),
+          },
+        });
+        break;
+      default:
+        break;
+    }
+  }, [lastJsonMessage, queryClient, channelId]);
 
   if (isLoading) {
     return (
@@ -176,12 +230,37 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
       messageId,
     });
 
-    queryClient.setQueryData<MessageType[]>(
+    toast.success("Message Delete");
+  };
+
+  const handleEditMessage = (messageId: string, editedMessage: string) => {
+    sendJsonMessage({
+      type: "EDIT_MESSAGE",
+      channelId,
+      messageId,
+      editedMessage,
+    });
+
+    const current = queryClient
+      .getQueryData<ChatMessageListItem[]>(getMessagesQueryKey(channelId))
+      ?.find((msg) => "id" in msg && msg.id === messageId);
+
+    if (current) {
+      previousMessage.current.set(messageId, current.message);
+    }
+
+    queryClient.setQueryData<ChatMessageListItem[]>(
       getMessagesQueryKey(channelId),
-      (oldMessages = []) => oldMessages.filter((msg) => msg.id !== messageId)
+      (oldMessages = []) =>
+        oldMessages.map((msg) =>
+          "id" in msg && msg.id === messageId
+            ? { ...msg, message: editedMessage }
+            : msg
+        )
     );
 
-    toast.success("Message Delete");
+    setIsEditing(null);
+    toast.success("Message Updates");
   };
 
   return (
@@ -209,6 +288,17 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
                 timestamp={timestamp}
                 endGroup={endsGroup}
                 handleMsgDelete={handleDeleteMessage}
+                isEditing={isEditing}
+                setIsEditing={setIsEditing}
+                EditInputComponent={
+                  <EditInput
+                    message={message.message}
+                    messageId={("id" in message && message.id) as string}
+                    handleEdit={handleEditMessage}
+                    setIsEditing={setIsEditing}
+                  />
+                }
+                isBeingEdit={!!previousMessage}
               />
             );
           })

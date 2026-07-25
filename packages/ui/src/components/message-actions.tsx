@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   CopyIcon,
   DotsThreeIcon,
@@ -17,25 +17,39 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
 import { toast } from "sonner";
 
-type MessageManageProps = {
+type MessageActionsProps = {
+  messageId: string;
   isOpen: boolean;
   message: string;
   onOpenChange: (open: boolean) => void;
+  handleMsgDelete: (messageId: string) => void;
+  setIsEditing: ({
+    messageId,
+    message,
+  }: {
+    messageId: string;
+    message: string;
+  }) => void;
+  isBeingEdit: boolean;
 };
 
-export const MessageManage = ({
+export const MessageActions = ({
+  messageId,
   isOpen,
   message,
   onOpenChange,
-}: MessageManageProps) => {
+  handleMsgDelete,
+  setIsEditing,
+  isBeingEdit,
+}: MessageActionsProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [isTooltipSuppressed, setIsTooltipSuppressed] = useState(false);
+  const skipTriggerFocusRef = useRef(false);
 
   const suppressTooltip = () => {
     setIsTooltipOpen(false);
@@ -43,8 +57,20 @@ export const MessageManage = ({
   };
 
   const handleDropdownOpenChange = (open: boolean) => {
+    if (open) skipTriggerFocusRef.current = false;
     onOpenChange(open);
     suppressTooltip();
+  };
+
+  const handleItemPointerDown = () => {
+    skipTriggerFocusRef.current = true;
+  };
+
+  const handleCloseAutoFocus = (event: Event) => {
+    if (!skipTriggerFocusRef.current) return;
+
+    event.preventDefault();
+    skipTriggerFocusRef.current = false;
   };
 
   const handleCopy = () => {
@@ -64,14 +90,14 @@ export const MessageManage = ({
   };
 
   const actionClassName = cn(
-    "inline-flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-400 opacity-0 transition-all outline-none group-focus-within:opacity-100 group-hover:opacity-100 group-hover:delay-200 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 [&_svg]:pointer-events-none",
+    "inline-flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-400 opacity-0 transition-all outline-none group-hover:opacity-100 group-hover:delay-200 hover:text-foreground [&_svg]:pointer-events-none",
     isOpen && "text-foreground opacity-100"
   );
 
   return (
     <div
       className={cn(
-        "pointer-events-none absolute top-0 right-2 z-20 -translate-y-full pb-2 group-focus-within:pointer-events-auto group-hover:pointer-events-auto",
+        "pointer-events-none absolute top-0 right-2 z-20 -translate-y-full pb-2 group-hover:pointer-events-auto",
         isOpen && "pointer-events-auto"
       )}
       onPointerEnter={handlePointerEnter}
@@ -79,8 +105,8 @@ export const MessageManage = ({
     >
       <div
         className={cn(
-          "relative flex items-center gap-2 rounded-md px-2 py-1 group-focus-within:bg-accent group-hover:bg-accent group-hover:delay-200 after:absolute after:inset-x-0 after:top-full after:h-2",
-          isOpen && "bg-accent"
+          "relative flex items-center gap-2 rounded-md px-2 py-1 group-hover:bg-secondary group-hover:delay-200 after:absolute after:inset-x-0 after:top-full after:h-2",
+          isOpen && "bg-secondary"
         )}
       >
         <button
@@ -92,44 +118,65 @@ export const MessageManage = ({
         </button>
 
         <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpenChange}>
-          <TooltipProvider>
-            <Tooltip
-              open={!isOpen && !isTooltipSuppressed && isTooltipOpen}
-              onOpenChange={setIsTooltipOpen}
-            >
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger
-                  type="button"
-                  aria-label="Open message actions"
-                  className={cn(
-                    actionClassName,
-                    "data-[state=open]:text-foreground data-[state=open]:opacity-100"
-                  )}
-                  onClick={suppressTooltip}
-                >
-                  <DotsThreeIcon weight="bold" className="size-6" />
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={6}>
-                More
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip
+            open={!isOpen && !isTooltipSuppressed && isTooltipOpen}
+            onOpenChange={setIsTooltipOpen}
+          >
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger
+                type="button"
+                aria-label="Open message actions"
+                className={cn(
+                  actionClassName,
+                  "data-[state=open]:text-foreground data-[state=open]:opacity-100"
+                )}
+                onClick={suppressTooltip}
+              >
+                <DotsThreeIcon weight="bold" className="size-6" />
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={6}>
+              More
+            </TooltipContent>
+          </Tooltip>
 
           <DropdownMenuContent
             align="end"
             aria-label="Message actions"
             className="w-36"
+            onCloseAutoFocus={handleCloseAutoFocus}
           >
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                if (isBeingEdit) {
+                  toast.info(
+                    "Previous edit on this message is being processed"
+                  );
+                  return;
+                }
+                handleItemPointerDown();
+                requestAnimationFrame(() => {
+                  setIsEditing({ messageId, message });
+                });
+              }}
+            >
               <PencilSimpleIcon />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleCopy}>
+            <DropdownMenuItem
+              onPointerDown={handleItemPointerDown}
+              onSelect={handleCopy}
+            >
               <CopyIcon />
               Copy
             </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
+            <DropdownMenuItem
+              variant="destructive"
+              onPointerDown={() => {
+                handleItemPointerDown();
+                handleMsgDelete(messageId);
+              }}
+            >
               <TrashIcon />
               Delete
             </DropdownMenuItem>

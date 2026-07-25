@@ -47,7 +47,7 @@ async function messageRecovery() {
           case "EDIT_MESSAGE":
             await updateMessage({
               messageId: msgEvent.message.messageId as string,
-              editedMsg: msgEvent.message.editedMsg as string,
+              editedMessage: msgEvent.message.editedMessage as string,
             });
 
             await redisClient.xAck(

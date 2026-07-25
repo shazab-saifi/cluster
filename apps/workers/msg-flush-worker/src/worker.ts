@@ -102,7 +102,7 @@ async function MsgFlushWorker() {
               case "EDIT_MESSAGE":
                 await updateMessage({
                   messageId: msgEvent.message.messageId as string,
-                  editedMsg: msgEvent.message.editedMsg as string,
+                  editedMessage: msgEvent.message.editedMessage as string,
                 });
 
                 await publisher.publish(
@@ -111,7 +111,7 @@ async function MsgFlushWorker() {
                     type: "EDIT_MESSAGE",
                     status: "Success",
                     senderId: msgEvent.message.senderId,
-                    message: msgEvent.message.editedMsg,
+                    messageId: msgEvent.message.messageId,
                   })
                 );
 
@@ -125,7 +125,7 @@ async function MsgFlushWorker() {
                     type: "DELETE_MESSAGE",
                     status: "Success",
                     senderId: msgEvent.message.senderId,
-                    message: msgEvent.message.meessage,
+                    messageId: msgEvent.message.messageId,
                   })
                 );
                 break;
@@ -150,7 +150,7 @@ async function MsgFlushWorker() {
                   type: msgEvent.message.type,
                   status: "FAILED",
                   senderId: msgEvent.message.senderId,
-                  message: msgEvent.message.meessage,
+                  messageId: msgEvent.message.messageId,
                   error: buildErrorPayload(normalizeError(error)),
                 })
               );

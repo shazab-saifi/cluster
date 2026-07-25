@@ -113,10 +113,10 @@ wss.on("connection", async (ws, req) => {
           const user = await getMe(userId);
           const timestamp = new Date().toISOString();
           // NOTE: Generating message id at websocket layer, so if the user can delete/update the message even if it's not stored in the db yet
-          const id: string = crypto.randomUUID();
+          const messageId: string = crypto.randomUUID();
 
           const messagePayloadForPublisher = {
-            id,
+            messageId,
             type: "NEW_MESSAGE",
             channelId,
             message: data.message,
@@ -141,7 +141,7 @@ wss.on("connection", async (ws, req) => {
 
           const messagePayloadForStream = {
             type: "NEW_MESSAGE" as const,
-            id,
+            messageId,
             senderId: userId,
             channelId,
             timestamp,
@@ -159,34 +159,22 @@ wss.on("connection", async (ws, req) => {
         case "EDIT_MESSAGE": {
           await messageServices.editMsgEvent({
             type: "EDIT_MESSAGE",
-            id: data.messageId,
+            messageId: data.messageId,
             senderId: userId,
             channelId,
-            editedMsg: data.editedMessage,
+            editedMessage: data.editedMessage,
           });
 
-          ws.send(
-            JSON.stringify({
-              type: "SUCCESS",
-              message: "Message Edited",
-            })
-          );
           break;
         }
         case "DELETE_MESSAGE": {
           await messageServices.deleteMsgEvent({
             type: "DELETE_MESSAGE",
-            id: data.messageId,
+            messageId: data.messageId,
             senderId: userId,
             channelId,
           });
 
-          ws.send(
-            JSON.stringify({
-              type: "SUCCESS",
-              message: "Message Deleted",
-            })
-          );
           break;
         }
         default: {
@@ -281,7 +269,7 @@ async function subscribeToFlushWorker(ws: WebSocket) {
     const user = userSocketData.get(ws);
 
     if (user?.userId === event.senderId) {
-      ws.send(event);
+      ws.send(JSON.stringify(event));
     }
   });
 }
