@@ -58,10 +58,49 @@ const userSocketData = new WeakMap<
 const channels = new Map<string, Set<WebSocket>>();
 const subscribedChannels = new Set<string>();
 
+type RequestType =
+  | "JOIN_CHANNEL"
+  | "NEW_MESSAGE"
+  | "EDIT_MESSAGE"
+  | "DELETE_MESSAGE"
+  | "UNKNOWN";
+
+function sendSuccess(
+  ws: WebSocket,
+  requestType: Exclude<RequestType, "UNKNOWN">,
+  clientRequestId?: string
+) {
+  ws.send(
+    JSON.stringify({
+      type: "SUCCESS",
+      requestType,
+      ...(clientRequestId ? { clientRequestId } : {}),
+    })
+  );
+}
+
+function sendError(
+  ws: WebSocket,
+  requestType: RequestType,
+  clientRequestId: string | undefined,
+  error: unknown
+) {
+  const errorPayload = buildErrorPayload(normalizeError(error));
+  console.error(errorPayload);
+
+  ws.send(
+    JSON.stringify({
+      type: "ERROR",
+      requestType,
+      ...(clientRequestId ? { clientRequestId } : {}),
+      error: errorPayload,
+    })
+  );
+}
+
 wss.on("connection", async (ws, req) => {
   userSocketData.set(ws, { userId: req.userId as string, channels: new Set() });
   await subscribeToNotification(ws);
-  await subscribeToFlushWorker(ws);
 
   ws.on("error", (error) => console.error("Error in error event: ", error));
 
@@ -81,43 +120,58 @@ wss.on("connection", async (ws, req) => {
   });
 
   ws.on("message", async (raw) => {
-    try {
-      const { success, error, data } = InputPayloadUnion.safeParse(
-        JSON.parse(raw.toString())
-      );
+    let requestType: RequestType = "UNKNOWN";
+    let clientRequestId: string | undefined;
 
-      if (!success) {
+    try {
+      const rawPayload: unknown = JSON.parse(raw.toString());
+      if (typeof rawPayload === "object" && rawPayload !== null) {
+        const payload = rawPayload as Record<string, unknown>;
+        if (typeof payload.type === "string") {
+          requestType = [
+            "JOIN_CHANNEL",
+            "NEW_MESSAGE",
+            "EDIT_MESSAGE",
+            "DELETE_MESSAGE",
+          ].includes(payload.type)
+            ? (payload.type as Exclude<RequestType, "UNKNOWN">)
+            : "UNKNOWN";
+        }
+        clientRequestId =
+          typeof payload.clientRequestId === "string"
+            ? payload.clientRequestId
+            : undefined;
+      }
+
+      const parsed = InputPayloadUnion.safeParse(rawPayload);
+      if (!parsed.success) {
         throw new BadRequestError(
           "Invalid Inputs",
-          error.issues[0]?.message ??
+          parsed.error.issues[0]?.message ??
             "Please make sure message follows the standard structure"
         );
       }
 
+      const data = parsed.data;
+      requestType = data.type;
+      clientRequestId =
+        data.type === "JOIN_CHANNEL" ? undefined : data.clientRequestId;
       const userId = req.userId as string;
       const channelId = data.channelId;
 
       switch (data.type) {
         case "JOIN_CHANNEL": {
           await joinChannel(channelId, userId, ws);
-
-          ws.send(
-            JSON.stringify({
-              type: "SUCCESS",
-              message: "Successfully joined channel",
-            })
-          );
+          sendSuccess(ws, data.type);
           break;
         }
         case "NEW_MESSAGE": {
           const user = await getMe(userId);
           const timestamp = new Date().toISOString();
-          // NOTE: Generating message id at websocket layer, so if the user can delete/update the message even if it's not stored in the db yet
-          const messageId: string = crypto.randomUUID();
-
+          const messageId = crypto.randomUUID();
           const messagePayloadForPublisher = {
-            messageId,
-            type: "NEW_MESSAGE",
+            type: "NEW_MESSAGE" as const,
+            id: messageId,
             channelId,
             message: data.message,
             sender: {
@@ -126,19 +180,10 @@ wss.on("connection", async (ws, req) => {
               image: user.image,
             },
             timestamp,
+            ...(data.attachment !== undefined
+              ? { attachment: data.attachment }
+              : {}),
           };
-
-          if (data.attachment !== undefined) {
-            (
-              messagePayloadForPublisher as { attachment?: unknown }
-            ).attachment = data.attachment;
-          }
-
-          await publisher.publish(
-            `${channelId}`,
-            JSON.stringify(messagePayloadForPublisher)
-          );
-
           const messagePayloadForStream = {
             type: "NEW_MESSAGE" as const,
             messageId,
@@ -146,14 +191,17 @@ wss.on("connection", async (ws, req) => {
             channelId,
             timestamp,
             message: data.message,
+            ...(data.attachment !== undefined
+              ? { attachment: data.attachment }
+              : {}),
           };
 
-          if (data.attachment !== undefined) {
-            (messagePayloadForStream as { attachment?: unknown }).attachment =
-              data.attachment;
-          }
-
           await messageServices.newMsgEvent(messagePayloadForStream);
+          await publisher.publish(
+            channelId,
+            JSON.stringify(messagePayloadForPublisher)
+          );
+          sendSuccess(ws, data.type, clientRequestId);
           break;
         }
         case "EDIT_MESSAGE": {
@@ -164,7 +212,16 @@ wss.on("connection", async (ws, req) => {
             channelId,
             editedMessage: data.editedMessage,
           });
-
+          await publisher.publish(
+            channelId,
+            JSON.stringify({
+              type: "EDIT_MESSAGE",
+              channelId,
+              messageId: data.messageId,
+              editedMessage: data.editedMessage,
+            })
+          );
+          sendSuccess(ws, data.type, clientRequestId);
           break;
         }
         case "DELETE_MESSAGE": {
@@ -174,28 +231,22 @@ wss.on("connection", async (ws, req) => {
             senderId: userId,
             channelId,
           });
-
-          break;
-        }
-        default: {
-          const appError = normalizeError(
-            new BadRequestError(
-              "Invalid type",
-              "Please make sure type is valid"
-            )
+          await publisher.publish(
+            channelId,
+            JSON.stringify({
+              type: "DELETE_MESSAGE",
+              channelId,
+              messageId: data.messageId,
+            })
           );
-
-          const errorPayload = buildErrorPayload(appError);
-          ws.send(JSON.stringify({ type: "ERROR", error: errorPayload }));
+          sendSuccess(ws, data.type, clientRequestId);
           break;
         }
+        default:
+          throw new BadRequestError("Invalid type", "Unsupported message type");
       }
     } catch (error) {
-      const appError = normalizeError(error);
-      const errorPayload = buildErrorPayload(appError);
-      console.log(errorPayload);
-
-      ws.send(JSON.stringify({ type: "ERROR", error: errorPayload }));
+      sendError(ws, requestType, clientRequestId, error);
     }
   });
 });
@@ -259,17 +310,6 @@ async function subscribeToNotification(ws: WebSocket) {
 
     if (isRecevier?.userId === notification.receiverId) {
       ws.send(String(notification));
-    }
-  });
-}
-
-async function subscribeToFlushWorker(ws: WebSocket) {
-  await subscriber.subscribe("flush-worker-events", (data) => {
-    const event = JSON.parse(data);
-    const user = userSocketData.get(ws);
-
-    if (user?.userId === event.senderId) {
-      ws.send(JSON.stringify(event));
     }
   });
 }

@@ -29,7 +29,7 @@ const EditInput = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && editedMessage.trim().length > 0) {
-      handleEdit(messageId, editedMessage);
+      handleEdit(messageId, editedMessage.trim());
     } else if (e.key === "Escape") {
       setIsEditing(null);
     }

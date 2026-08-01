@@ -61,10 +61,19 @@ export type MessageType = {
   createdAt?: Date;
   timestamp: Date | string;
   attachment?: string;
+  edited?: boolean;
 };
 
-type MessageErrorType = {
+export type MessageRequestType =
+  | "JOIN_CHANNEL"
+  | "NEW_MESSAGE"
+  | "EDIT_MESSAGE"
+  | "DELETE_MESSAGE";
+
+export type MessageErrorType = {
   type: "ERROR";
+  requestType: MessageRequestType | "UNKNOWN";
+  clientRequestId?: string;
   error: {
     code: string;
     message: string;
@@ -75,26 +84,28 @@ type MessageErrorType = {
   };
 };
 
-type NewMessageEvent = MessageType;
-
-type EditMessageResult = {
-  type: "EDIT_MESSAGE";
-  status: "Success" | "FAILED";
-  senderId: string;
-  messageId: string;
-  error?: MessageErrorType["error"];
+type SuccessEvent = {
+  type: "SUCCESS";
+  requestType: MessageRequestType;
+  clientRequestId?: string;
 };
 
-type DeleteMessageResult = {
-  type: "DELETE_MESSAGE";
-  status: "Success" | "FAILED";
-  senderId: string;
+type EditMessageEvent = {
+  type: "EDIT_MESSAGE";
+  channelId: string;
   messageId: string;
-  error?: MessageErrorType["error"];
+  editedMessage: string;
+};
+
+type DeleteMessageEvent = {
+  type: "DELETE_MESSAGE";
+  channelId: string;
+  messageId: string;
 };
 
 export type ServerEvent =
-  | NewMessageEvent
+  | MessageType
+  | SuccessEvent
   | MessageErrorType
-  | EditMessageResult
-  | DeleteMessageResult;
+  | EditMessageEvent
+  | DeleteMessageEvent;

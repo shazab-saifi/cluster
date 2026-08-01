@@ -1,13 +1,11 @@
-import { publisher, redisClient } from "@workspace/redis";
+import { redisClient } from "@workspace/redis";
 import os from "os";
 import {
   BufferedMessage,
   createManyMessages,
   deleteMessage,
-  Prisma,
   updateMessage,
 } from "@workspace/core/services/messages-services";
-import { buildErrorPayload, normalizeError } from "@workspace/core/errors";
 
 const MAX_BATCH_SIZE = 100;
 const FLUSH_DELAY_MS = 350;
@@ -43,7 +41,6 @@ async function MsgFlushWorker() {
 
       try {
         await createManyMessages(batch.map(({ data }) => data));
-
         await redisClient.xAck(
           "message:stream",
           "message-workers",
@@ -69,95 +66,58 @@ async function MsgFlushWorker() {
         "message-workers",
         workerName,
         { key: "message:stream", id: ">" },
-        { COUNT: 100, BLOCK: 3000 }
+        { COUNT: MAX_BATCH_SIZE, BLOCK: 3000 }
       );
 
-      if (messageEvents && messageEvents[0]) {
-        for (const msgEvent of messageEvents[0].messages) {
-          try {
-            switch (msgEvent.message.type) {
-              case "NEW_MESSAGE": {
-                const mapMessage = {
-                  redisId: msgEvent.id,
-                  data: {
-                    id: msgEvent.message.messageId as string,
-                    senderId: msgEvent.message.senderId as string,
-                    channelId: msgEvent.message.channelId as string,
-                    message: msgEvent.message.message as string,
-                    attachment: msgEvent.message.attachment ?? null,
-                    timestamp: msgEvent.message.timestamp as unknown as Date,
-                  },
-                };
+      if (!messageEvents?.[0]) continue;
 
-                buffer.push(mapMessage);
+      for (const msgEvent of messageEvents[0].messages) {
+        try {
+          switch (msgEvent.message.type) {
+            case "NEW_MESSAGE":
+              buffer.push({
+                redisId: msgEvent.id,
+                data: {
+                  id: msgEvent.message.messageId as string,
+                  senderId: msgEvent.message.senderId as string,
+                  channelId: msgEvent.message.channelId as string,
+                  message: msgEvent.message.message as string,
+                  attachment: msgEvent.message.attachment ?? null,
+                  timestamp: msgEvent.message.timestamp as unknown as Date,
+                },
+              });
 
-                if (buffer.length >= MAX_BATCH_SIZE) {
-                  await flush();
-                } else {
-                  scheduleFlush();
-                }
-
-                break;
+              if (buffer.length >= MAX_BATCH_SIZE) {
+                await flush();
+              } else {
+                scheduleFlush();
               }
-              case "EDIT_MESSAGE":
-                await updateMessage({
-                  messageId: msgEvent.message.messageId as string,
-                  editedMessage: msgEvent.message.editedMessage as string,
-                });
 
-                await publisher.publish(
-                  "flush-worker-events",
-                  JSON.stringify({
-                    type: "EDIT_MESSAGE",
-                    status: "Success",
-                    senderId: msgEvent.message.senderId,
-                    messageId: msgEvent.message.messageId,
-                  })
-                );
-
-                break;
-              case "DELETE_MESSAGE":
-                await deleteMessage(msgEvent.message.messageId as string);
-
-                await publisher.publish(
-                  "flush-worker-events",
-                  JSON.stringify({
-                    type: "DELETE_MESSAGE",
-                    status: "Success",
-                    senderId: msgEvent.message.senderId,
-                    messageId: msgEvent.message.messageId,
-                  })
-                );
-                break;
-              default:
-                console.error(
-                  "Invalid message message type detected: ",
-                  msgEvent
-                );
-                break;
-            }
-
-            await redisClient.xAck(
-              "message:stream",
-              "message-workers",
-              msgEvent.id
-            );
-          } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-              await publisher.publish(
-                "flush-worker-events",
-                JSON.stringify({
-                  type: msgEvent.message.type,
-                  status: "FAILED",
-                  senderId: msgEvent.message.senderId,
-                  messageId: msgEvent.message.messageId,
-                  error: buildErrorPayload(normalizeError(error)),
-                })
+              // The batch flush ACKs this event only after the DB write succeeds.
+              continue;
+            case "EDIT_MESSAGE":
+              await updateMessage({
+                messageId: msgEvent.message.messageId as string,
+                editedMessage: msgEvent.message.editedMessage as string,
+              });
+              break;
+            case "DELETE_MESSAGE":
+              await deleteMessage(msgEvent.message.messageId as string);
+              break;
+            default:
+              throw new Error(
+                `Invalid message event type: ${msgEvent.message.type}`
               );
-            }
-
-            console.log("Failed to execute event: ", error);
           }
+
+          await redisClient.xAck(
+            "message:stream",
+            "message-workers",
+            msgEvent.id
+          );
+        } catch (error) {
+          // Leave the event in the PEL for the recovery worker.
+          console.error("Failed to execute message event: ", error);
         }
       }
     } catch (error) {
@@ -171,12 +131,9 @@ async function ensureConsumerGroup() {
     await redisClient.xGroupCreate("message:stream", "message-workers", "$", {
       MKSTREAM: true,
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-
-    if (!message.includes("BUSYGROUP")) {
-      throw err;
-    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes("BUSYGROUP")) throw error;
   }
 }
 

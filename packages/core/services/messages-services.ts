@@ -89,12 +89,11 @@ export async function updateMessage({
 }) {
   await prisma.message.update({
     where: { id: messageId },
-    data: { message: editedMessage },
+    data: { message: editedMessage, edited: true },
   });
 }
-
 export async function deleteMessage(messageId: string) {
-  await prisma.message.delete({ where: { id: messageId } });
+  await prisma.message.deleteMany({ where: { id: messageId } });
 }
 
 interface BaseMsgPayload {
@@ -138,7 +137,7 @@ async function addMsgEvent(payload: MsgEventPayload) {
 }
 
 export async function newMsgEvent(payload: NewMsgPayload) {
-  await addMsgEvent(payload);
+  return await addMsgEvent(payload);
 }
 
 export async function editMsgEvent(payload: EditMessagePaylaod) {
@@ -148,7 +147,7 @@ export async function editMsgEvent(payload: EditMessagePaylaod) {
     payload.channelId
   );
 
-  await addMsgEvent(payload);
+  return await addMsgEvent(payload);
 }
 
 export async function deleteMsgEvent(payload: DeleteMessagePayload) {
@@ -158,7 +157,7 @@ export async function deleteMsgEvent(payload: DeleteMessagePayload) {
     payload.channelId
   );
 
-  await addMsgEvent(payload);
+  return await addMsgEvent(payload);
 }
 
 export { Prisma } from "@workspace/db";

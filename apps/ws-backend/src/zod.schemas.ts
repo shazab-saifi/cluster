@@ -10,17 +10,20 @@ export const InputPayloadUnion = z.discriminatedUnion("type", [
     channelId: z.uuid(),
     message: z.string(),
     attachment: z.string().optional(),
+    clientRequestId: z.uuid(),
   }),
   z.object({
     type: z.literal("DELETE_MESSAGE"),
     messageId: z.uuid(),
     channelId: z.uuid(),
+    clientRequestId: z.uuid(),
   }),
   z.object({
     type: z.literal("EDIT_MESSAGE"),
     messageId: z.uuid(),
     channelId: z.uuid(),
     editedMessage: z.string(),
+    clientRequestId: z.uuid(),
   }),
 ]);
 

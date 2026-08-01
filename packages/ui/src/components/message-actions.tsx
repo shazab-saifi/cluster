@@ -35,7 +35,6 @@ type MessageActionsProps = {
     messageId: string;
     message: string;
   }) => void;
-  isBeingEdit: boolean;
 };
 
 export const MessageActions = ({
@@ -45,7 +44,6 @@ export const MessageActions = ({
   onOpenChange,
   handleMsgDelete,
   setIsEditing,
-  isBeingEdit,
 }: MessageActionsProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [isTooltipSuppressed, setIsTooltipSuppressed] = useState(false);
@@ -148,12 +146,6 @@ export const MessageActions = ({
           >
             <DropdownMenuItem
               onSelect={() => {
-                if (isBeingEdit) {
-                  toast.info(
-                    "Previous edit on this message is being processed"
-                  );
-                  return;
-                }
                 handleItemPointerDown();
                 requestAnimationFrame(() => {
                   setIsEditing({ messageId, message });

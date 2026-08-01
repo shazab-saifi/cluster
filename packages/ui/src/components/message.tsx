@@ -19,6 +19,7 @@ type MessageProps = {
   avatarAlt?: string;
   className?: string;
   endGroup?: boolean;
+  edited?: boolean;
   handleMsgDelete: (messageId: string) => void;
   isEditing: { messageId: string; message: string } | null;
   setIsEditing: ({
@@ -29,7 +30,6 @@ type MessageProps = {
     message: string;
   }) => void;
   EditInputComponent: React.ReactNode;
-  isBeingEdit: boolean;
 };
 
 const getLocale = () =>
@@ -63,11 +63,11 @@ export function Message({
   avatarAlt,
   className,
   endGroup,
+  edited = false,
   handleMsgDelete,
   isEditing,
   setIsEditing,
   EditInputComponent,
-  isBeingEdit,
 }: MessageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
@@ -118,6 +118,11 @@ export function Message({
           ) : (
             <p className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground/90">
               {message}
+              {edited ? (
+                <span className="ml-1 text-xs text-muted-foreground">
+                  (edited)
+                </span>
+              ) : null}
             </p>
           )}
 
@@ -129,7 +134,6 @@ export function Message({
               onOpenChange={setIsActionsOpen}
               handleMsgDelete={handleMsgDelete}
               setIsEditing={setIsEditing}
-              isBeingEdit={isBeingEdit}
             />
           )}
         </div>

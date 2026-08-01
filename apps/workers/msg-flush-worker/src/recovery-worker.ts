@@ -1,96 +1,70 @@
 import {
-  createMessage,
+  createManyMessages,
   deleteMessage,
-  Prisma,
   updateMessage,
 } from "@workspace/core/services/messages-services";
-import { publisher, redisClient } from "@workspace/redis";
-import { buildErrorPayload, normalizeError } from "@workspace/core/errors";
+import { redisClient } from "@workspace/redis";
+
+const RECOVERY_MIN_IDLE_MS = 1000;
+const RECOVERY_DELAY_MS = 30000;
 
 async function messageRecovery() {
   while (true) {
-    const pendingMsgEvents = await redisClient.XAUTOCLAIM(
-      "meessage:stream",
-      "message-workers",
-      "recovery-worker",
-      30000,
-      "0-0"
-    );
-
-    if (pendingMsgEvents.messages.length === 0) {
-      await Bun.sleep(30000);
-      continue;
-    }
-
-    for (const msgEvent of pendingMsgEvents.messages) {
-      try {
-        switch (msgEvent?.message.type) {
-          case "NEW_MESSAGE": {
-            const messagePayload = {
-              id: msgEvent.message.id as string,
-              senderId: msgEvent.message.senderId as string,
-              channelId: msgEvent.message.channelId as string,
-              message: msgEvent.message.message as string,
-              attachment: msgEvent.message.attachment ?? null,
-              timestamp: msgEvent.message.timestamp as unknown as Date,
-            };
-
-            await createMessage(messagePayload);
-
-            await redisClient.xAck(
-              "message:stream",
-              "message-workers",
-              msgEvent.id
-            );
-            break;
-          }
-          case "EDIT_MESSAGE":
-            await updateMessage({
-              messageId: msgEvent.message.messageId as string,
-              editedMessage: msgEvent.message.editedMessage as string,
-            });
-
-            await redisClient.xAck(
-              "message:stream",
-              "message-workers",
-              msgEvent.id
-            );
-            break;
-          case "DELETE_MESSAGE":
-            await deleteMessage(msgEvent.message.id as string);
-
-            await redisClient.xAck(
-              "message:stream",
-              "message-workers",
-              msgEvent.id
-            );
-            break;
-          default:
-            throw new Error(`Invalid message event type detected: ${msgEvent}`);
-        }
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          await publisher.publish(
-            "flush-worker-events",
-            JSON.stringify({
-              type: msgEvent?.message.type,
-              status: "FAILED",
-              senderId: msgEvent?.message.senderId,
-              message: msgEvent?.message.meessage,
-              error: buildErrorPayload(normalizeError(error)),
-            })
-          );
-        }
-
-        console.log("Failed to execute event: ", error);
-      }
-    }
-
     try {
-      await Bun.sleep(30000);
+      const pendingMsgEvents = await redisClient.XAUTOCLAIM(
+        "message:stream",
+        "message-workers",
+        "recovery-worker",
+        RECOVERY_MIN_IDLE_MS,
+        "0-0"
+      );
+
+      for (const msgEvent of pendingMsgEvents.messages) {
+        if (!msgEvent) continue;
+        try {
+          switch (msgEvent.message.type) {
+            case "NEW_MESSAGE":
+              await createManyMessages([
+                {
+                  id: msgEvent.message.messageId as string,
+                  senderId: msgEvent.message.senderId as string,
+                  channelId: msgEvent.message.channelId as string,
+                  message: msgEvent.message.message as string,
+                  attachment: msgEvent.message.attachment ?? null,
+                  timestamp: msgEvent.message.timestamp as unknown as Date,
+                },
+              ]);
+              break;
+            case "EDIT_MESSAGE":
+              await updateMessage({
+                messageId: msgEvent.message.messageId as string,
+                editedMessage: msgEvent.message.editedMessage as string,
+              });
+              break;
+            case "DELETE_MESSAGE":
+              await deleteMessage(msgEvent.message.messageId as string);
+              break;
+            default:
+              throw new Error(
+                `Invalid message event type: ${msgEvent.message.type}`
+              );
+          }
+
+          await redisClient.xAck(
+            "message:stream",
+            "message-workers",
+            msgEvent.id
+          );
+        } catch (error) {
+          // Keep failed events in the PEL for a later recovery attempt.
+          console.error("Failed to recover message event: ", error);
+        }
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Could not claim pending message events: ", error);
     }
+
+    await Bun.sleep(RECOVERY_DELAY_MS);
   }
 }
 
@@ -98,4 +72,5 @@ try {
   await messageRecovery();
 } catch (error) {
   console.error("flush recovery worker startup failed", error);
+  process.exit(1);
 }
