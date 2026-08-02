@@ -1,7 +1,7 @@
 "use client";
 
 import { SpinnerGapIcon } from "@phosphor-icons/react";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import useWebSocket from "react-use-websocket";
 import { authClient } from "@/lib/auth-client";
 import { API_BASE_URL, contextFetcher, SOCKET_URL } from "@/lib/utils";
@@ -16,6 +16,25 @@ const getMessagesQueryKey = (channelId: string) =>
   ["lastMessages", `${API_BASE_URL}/channels/${channelId}/messages`] as const;
 
 const getMessageTimestamp = (message: MessageType) => message.timestamp;
+
+const isSameCalendarDay = (left: Date, right: Date) =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
+
+const formatDatePill = (timestamp: MessageType["timestamp"]) => {
+  const date = new Date(timestamp);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (isSameCalendarDay(date, yesterday)) return "Yesterday";
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 export const ChatSection = ({ channelId }: { channelId: string }) => {
   const { sendJsonMessage, lastJsonMessage } =
@@ -165,31 +184,46 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
           sortedMessages.map((message, idx) => {
             const next = sortedMessages[idx + 1];
             const endsGroup = !next || next.sender.id !== message.sender.id;
+            const currDay = new Date(message.timestamp).toLocaleDateString();
+            const currDayLabel = formatDatePill(message.timestamp);
+            const nextDay =
+              next && new Date(next.timestamp).toLocaleDateString();
+            const startsNewDay = !nextDay || nextDay !== currDay;
 
             return (
-              <Message
-                key={message.id}
-                messageId={message.id}
-                message={message.message}
-                isSender={session?.user.id === message.sender.id}
-                name={message.sender.name}
-                avatarUrl={message.sender.image}
-                avatarAlt={`avatar-${message.sender.name}`}
-                edited={message.edited}
-                timestamp={getMessageTimestamp(message)}
-                endGroup={endsGroup}
-                handleMsgDelete={handleDeleteMessage}
-                isEditing={isEditing}
-                setIsEditing={setIsEditing}
-                EditInputComponent={
-                  <EditInput
-                    message={message.message}
-                    messageId={message.id}
-                    handleEdit={handleEditMessage}
-                    setIsEditing={setIsEditing}
-                  />
-                }
-              />
+              <React.Fragment key={message.id}>
+                <Message
+                  messageId={message.id}
+                  message={message.message}
+                  isSender={session?.user.id === message.sender.id}
+                  name={message.sender.name}
+                  avatarUrl={message.sender.image}
+                  avatarAlt={`avatar-${message.sender.name}`}
+                  edited={message.edited}
+                  timestamp={getMessageTimestamp(message)}
+                  endGroup={startsNewDay || endsGroup}
+                  handleMsgDelete={handleDeleteMessage}
+                  isEditing={isEditing}
+                  setIsEditing={setIsEditing}
+                  EditInputComponent={
+                    <EditInput
+                      message={message.message}
+                      messageId={message.id}
+                      handleEdit={handleEditMessage}
+                      setIsEditing={setIsEditing}
+                    />
+                  }
+                />
+                {startsNewDay && (
+                  <div className="flex items-center gap-2">
+                    <span className="h-0.5 flex-1 bg-secondary text-xs text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      {currDayLabel}
+                    </p>
+                    <span className="h-0.5 flex-1 bg-secondary text-xs text-muted-foreground" />
+                  </div>
+                )}
+              </React.Fragment>
             );
           })
         ) : (
