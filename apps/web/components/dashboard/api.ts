@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { API_BASE_URL } from "@/lib/utils";
-import type { MeResponse, NetworkDetails } from "./types";
+import type { Friendship, MeResponse, NetworkDetails } from "./types";
 
 export async function getMe() {
   try {
@@ -27,5 +27,20 @@ export async function getNetworkDetails(networkId: string) {
     return response.data;
   } catch {
     throw new Error("Could not load network channels.");
+  }
+}
+
+export async function getFriends() {
+  try {
+    const response = await axios.get<Friendship[]>(
+      `${API_BASE_URL}/friendship`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch {
+    throw new Error("Could not load your friends.");
   }
 }

@@ -1,3 +1,7 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 import { CompassIcon, PlusIcon } from "@phosphor-icons/react";
 import type { NetworkListItem } from "./types";
 import { NetworkAvatar } from "./network-avatar";
@@ -8,7 +12,6 @@ type NetworkStripProps = {
   networks: NetworkListItem[];
   activeNetwork?: NetworkListItem;
   isLoading: boolean;
-  onSelectNetwork: (network: NetworkListItem) => void;
   onCreateNetwork: () => void;
 };
 
@@ -16,9 +19,9 @@ export function NetworkStrip({
   networks,
   activeNetwork,
   isLoading,
-  onSelectNetwork,
   onCreateNetwork,
 }: NetworkStripProps) {
+  const router = useRouter();
   return (
     <aside className="flex w-18 shrink-0 flex-col items-center gap-2 border-r bg-background px-3 py-3">
       <Link
@@ -41,7 +44,9 @@ export function NetworkStrip({
             key={network.id}
             network={network}
             active={network.id === activeNetwork?.id}
-            onClick={() => onSelectNetwork(network)}
+            onClick={() => {
+              router.push("/networks/" + network.id);
+            }}
           />
         ))}
       </div>

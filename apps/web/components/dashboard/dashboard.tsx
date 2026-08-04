@@ -15,11 +15,14 @@ import { NetworkStrip } from "./network-strip";
 import { getNetworkList } from "./utils";
 import { ChatSection } from "./chat-section/chat-section";
 
-export function Dashboard() {
+type DashboardProps = {
+  networkId: string;
+};
+
+export function Dashboard({ networkId }: DashboardProps) {
   const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
-  const [activeNetworkId, setActiveNetworkId] = React.useState<string>();
   const [activeChannelId, setActiveChannelId] = React.useState<string>();
   const { data: session } = authClient.useSession();
   const { data, isLoading, error } = useQuery({
@@ -29,18 +32,15 @@ export function Dashboard() {
 
   const user = data?.userData;
   const networks = React.useMemo(() => getNetworkList(user), [user]);
-  const activeNetwork = networks.find(
-    (network) => network.id === activeNetworkId
-  );
-  const selectedNetwork = activeNetwork ?? networks[0];
+  const selectedNetwork = networks.find((network) => network.id === networkId);
   const {
     data: networkDetails,
     isLoading: isNetworkDetailsLoading,
     error: networkDetailsError,
   } = useQuery({
-    queryKey: ["network", selectedNetwork?.id],
-    queryFn: () => getNetworkDetails(selectedNetwork?.id ?? ""),
-    enabled: Boolean(selectedNetwork?.id),
+    queryKey: ["network", networkId],
+    queryFn: () => getNetworkDetails(networkId),
+    enabled: Boolean(networkId),
   });
 
   const handleSignOut = async () => {
@@ -53,7 +53,6 @@ export function Dashboard() {
         networks={networks}
         activeNetwork={selectedNetwork}
         isLoading={isLoading}
-        onSelectNetwork={(network) => setActiveNetworkId(network.id)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
       />
       <DashboardSidebar

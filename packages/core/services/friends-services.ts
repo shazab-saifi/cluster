@@ -2,8 +2,19 @@ import { prisma } from "@workspace/db";
 import { redisClient } from "@workspace/redis";
 
 export async function getAllFriends(userId: string) {
-  return await prisma.friendship.findMany({
-    where: { senderId: userId, receiverId: userId, status: "ACCEPTED" },
+  return prisma.friendship.findMany({
+    where: {
+      status: "ACCEPTED",
+      OR: [{ senderId: userId }, { receiverId: userId }],
+    },
+    include: {
+      sender: {
+        select: { id: true, name: true, username: true, image: true },
+      },
+      receiver: {
+        select: { id: true, name: true, username: true, image: true },
+      },
+    },
   });
 }
 

@@ -40,6 +40,20 @@ export type MeResponse = {
 
 export type DashboardUser = MeResponse["userData"];
 
+export type FriendUser = Pick<
+  DashboardUser,
+  "id" | "name" | "username" | "image"
+>;
+
+export type Friendship = {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  status: "PENDING" | "ACCEPTED" | "BLOCKED";
+  sender?: FriendUser;
+  receiver?: FriendUser;
+};
+
 export type NetworkListItem = Network & {
   role: NetworkRole;
 };
