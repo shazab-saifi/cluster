@@ -1,19 +1,24 @@
 "use client";
 
 import { SpinnerGapIcon } from "@phosphor-icons/react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import useWebSocket from "react-use-websocket";
 import { authClient } from "@/lib/auth-client";
-import { API_BASE_URL, contextFetcher, SOCKET_URL } from "@/lib/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchMessages, type MessagesPage, SOCKET_URL } from "@/lib/utils";
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageType, ServerEvent } from "../types";
 import { Message } from "@workspace/ui/components/message";
+import { MessageSkeleton } from "@workspace/ui/components/message-skeleton";
 import { MessageComposer } from "./message-composer";
 import EditInput from "./edit-input";
 
 const getMessagesQueryKey = (channelId: string) =>
-  ["lastMessages", `${API_BASE_URL}/channels/${channelId}/messages`] as const;
+  ["messages", channelId] as const;
 
 const getMessageTimestamp = (message: MessageType) => message.timestamp;
 
@@ -41,10 +46,23 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
     useWebSocket<ServerEvent>(SOCKET_URL);
   const { data: session } = authClient.useSession();
   const [message, setMessage] = useState("");
-  const { data, error, isError, isLoading } = useQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useInfiniteQuery({
     queryKey: getMessagesQueryKey(channelId),
-    queryFn: (context) => contextFetcher<MessageType[]>(context),
+    queryFn: fetchMessages,
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => {
+      return lastPage.nextCursor;
+    },
   });
+  const loadMoreRef = useRef(null);
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState<{
     messageId: string;
@@ -58,49 +76,90 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
   const sortedMessages = useMemo(
     () =>
       data
-        ? [...data].sort(
-            (a, b) =>
-              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          )
+        ? data.pages
+            .flatMap((page) => page.messages)
+            .sort(
+              (a, b) =>
+                new Date(b.timestamp).getTime() -
+                new Date(a.timestamp).getTime()
+            )
         : [],
     [data]
   );
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    });
+
+    const current = loadMoreRef.current;
+
+    if (current) {
+      observer.observe(current);
+    }
+
+    return () => {
+      if (current) observer.unobserve(current);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   useEffect(() => {
     if (!lastJsonMessage) return;
 
     switch (lastJsonMessage.type) {
       case "NEW_MESSAGE":
-        queryClient.setQueryData<MessageType[]>(
+        queryClient.setQueryData<InfiniteData<MessagesPage, string | null>>(
           getMessagesQueryKey(lastJsonMessage.channelId),
-          (oldMessages = []) =>
-            oldMessages.some((message) => message.id === lastJsonMessage.id)
-              ? oldMessages
-              : [lastJsonMessage, ...oldMessages]
+          (oldData) =>
+            oldData && {
+              ...oldData,
+              pages: oldData.pages.map((page, index) =>
+                index === 0 &&
+                !page.messages.some(
+                  (message) => message.id === lastJsonMessage.id
+                )
+                  ? { ...page, messages: [lastJsonMessage, ...page.messages] }
+                  : page
+              ),
+            }
         );
         break;
       case "EDIT_MESSAGE":
-        queryClient.setQueryData<MessageType[]>(
+        queryClient.setQueryData<InfiniteData<MessagesPage, string | null>>(
           getMessagesQueryKey(lastJsonMessage.channelId),
-          (oldMessages = []) =>
-            oldMessages.map((message) =>
-              message.id === lastJsonMessage.messageId
-                ? {
-                    ...message,
-                    message: lastJsonMessage.editedMessage,
-                    edited: true,
-                  }
-                : message
-            )
+          (oldData) =>
+            oldData && {
+              ...oldData,
+              pages: oldData.pages.map((page) => ({
+                ...page,
+                messages: page.messages.map((message) =>
+                  message.id === lastJsonMessage.messageId
+                    ? {
+                        ...message,
+                        message: lastJsonMessage.editedMessage,
+                        edited: true,
+                      }
+                    : message
+                ),
+              })),
+            }
         );
         break;
       case "DELETE_MESSAGE":
-        queryClient.setQueryData<MessageType[]>(
+        queryClient.setQueryData<InfiniteData<MessagesPage, string | null>>(
           getMessagesQueryKey(lastJsonMessage.channelId),
-          (oldMessages = []) =>
-            oldMessages.filter(
-              (message) => message.id !== lastJsonMessage.messageId
-            )
+          (oldData) =>
+            oldData && {
+              ...oldData,
+              pages: oldData.pages.map((page) => ({
+                ...page,
+                messages: page.messages.filter(
+                  (message) => message.id !== lastJsonMessage.messageId
+                ),
+              })),
+            }
         );
         break;
       case "ERROR":
@@ -231,6 +290,8 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
             No message yet
           </p>
         )}
+        {isFetchingNextPage && <MessageSkeleton />}
+        <div ref={loadMoreRef} />
       </div>
 
       <MessageComposer

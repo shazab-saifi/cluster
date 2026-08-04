@@ -1,5 +1,11 @@
 import { QueryFunctionContext } from "@tanstack/react-query";
 import axios from "axios";
+import type { MessageType } from "@/components/dashboard/types";
+
+export type MessagesPage = {
+  messages: MessageType[];
+  nextCursor: string | null;
+};
 
 export const API_BASE_URL =
   process.env.NODE_ENV === "development"
@@ -42,9 +48,33 @@ export const contextFetcher = async <T>({
   try {
     const response = await axios.get(url as string, { withCredentials: true });
 
-    return response.data.messages;
+    return response.data;
   } catch (error) {
     console.error(`Error while fetching ${key} data`, error);
     throw error;
   }
 };
+
+export async function fetchMessages({
+  pageParam,
+  queryKey,
+}: QueryFunctionContext<
+  readonly string[],
+  string | null
+>): Promise<MessagesPage> {
+  const [, channelId] = queryKey;
+
+  try {
+    const res = await axios.get(
+      `${API_BASE_URL}/channels/${channelId}/messages?cursor=${pageParam ?? ""}`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.error(`Error while fetching ${channelId} messages`, error);
+    throw error;
+  }
+}
