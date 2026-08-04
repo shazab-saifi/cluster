@@ -1,4 +1,4 @@
-import { SpinnerGapIcon, UsersIcon } from "@phosphor-icons/react";
+import { LoaderCircle, Users } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { getInitials } from "@workspace/ui/lib/utils";
 import type { DashboardUser, Friendship } from "./types";
@@ -31,13 +31,13 @@ export function FriendsSidebar({
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r bg-background md:flex">
       <div className="flex h-14 items-center gap-2 border-b px-4 font-semibold">
-        <UsersIcon className="size-5 text-muted-foreground" />
+        <Users className="size-5 text-muted-foreground" />
         Friends
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto p-3">
         {isLoading ? (
           <div className="flex items-center gap-2 px-2 py-3 text-sm text-muted-foreground">
-            <SpinnerGapIcon className="size-4 animate-spin" />
+            <LoaderCircle className="size-4 animate-spin" />
             Loading friends
           </div>
         ) : hasFriends ? (

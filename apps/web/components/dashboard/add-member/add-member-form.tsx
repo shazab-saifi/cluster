@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { Copy, SpinnerGap } from "@phosphor-icons/react";
+import { Copy, LoaderCircle } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import {
   Field,
@@ -150,7 +150,7 @@ export function AddMemberForm({ networkId, onCancel }: AddMemberFormProps) {
         </Button>
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending && (
-            <SpinnerGap data-icon="inline-start" className="animate-spin" />
+            <LoaderCircle data-icon="inline-start" className="animate-spin" />
           )}
           {inviteLink ? "Create New Link" : "Create Invite Link"}
         </Button>

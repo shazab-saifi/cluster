@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { IconContext } from "@phosphor-icons/react";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 
 function ThemeProvider({
@@ -9,18 +8,16 @@ function ThemeProvider({
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
   return (
-    <IconContext.Provider value={{ weight: "fill" }}>
-      <NextThemesProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-        {...props}
-      >
-        <ThemeHotkey />
-        {children}
-      </NextThemesProvider>
-    </IconContext.Provider>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+      {...props}
+    >
+      <ThemeHotkey />
+      {children}
+    </NextThemesProvider>
   );
 }
 

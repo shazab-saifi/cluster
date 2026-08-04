@@ -1,4 +1,4 @@
-import { SmileyIcon, XIcon } from "@phosphor-icons/react";
+import { Smile, X } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { useLayoutEffect, useRef, useState } from "react";
 
@@ -55,7 +55,7 @@ const EditInput = ({
             aria-label="Choose emoji"
             className="text-muted-foreground hover:text-foreground"
           >
-            <SmileyIcon className="size-5" />
+            <Smile className="size-5" />
           </Button>
           <Button
             type="button"
@@ -65,7 +65,7 @@ const EditInput = ({
             className="text-muted-foreground hover:text-foreground"
             onClick={() => setIsEditing(null)}
           >
-            <XIcon />
+            <X />
           </Button>
         </div>
       </div>

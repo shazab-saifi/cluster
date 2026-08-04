@@ -1,11 +1,11 @@
 import {
-  WarningCircleIcon,
-  TrayIcon,
-  SpinnerGapIcon,
-  UserPlusIcon,
-  PlusIcon,
-  UsersIcon,
-} from "@phosphor-icons/react";
+  CircleAlert,
+  Inbox,
+  LoaderCircle,
+  UserPlus,
+  Plus,
+  Users,
+} from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { ChannelRow } from "./channel-actions/channel-row";
@@ -57,7 +57,7 @@ export function DashboardSidebar({
           variant="secondary"
           className="h-11 justify-start gap-3 px-3 text-base"
         >
-          <UsersIcon className="size-5" />
+          <Users className="size-5" />
           Friends
         </Button>
         <Button
@@ -65,7 +65,7 @@ export function DashboardSidebar({
           variant="ghost"
           className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
         >
-          <TrayIcon className="size-5" weight="bold" />
+          <Inbox className="size-5" />
           Inbox
         </Button>
         {canAddMember && (
@@ -75,7 +75,7 @@ export function DashboardSidebar({
             className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
             onClick={onAddMember}
           >
-            <UserPlusIcon className="size-5" />
+            <UserPlus className="size-5" />
             Add member
           </Button>
         )}
@@ -92,19 +92,19 @@ export function DashboardSidebar({
             disabled={!activeNetwork}
             onClick={onCreateChannel}
           >
-            <PlusIcon className="size-4" weight="bold" />
+            <Plus className="size-4" />
           </button>
         </div>
         <div className="flex flex-col gap-1">
           {isChannelsLoading && (
             <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
-              <SpinnerGapIcon className="size-4 animate-spin" />
+              <LoaderCircle className="size-4 animate-spin" />
               Loading channels
             </div>
           )}
           {hasChannelsError && (
             <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
-              <WarningCircleIcon className="size-4" />
+              <CircleAlert className="size-4" />
               Channels unavailable
             </div>
           )}

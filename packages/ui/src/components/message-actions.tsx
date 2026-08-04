@@ -1,13 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  CopyIcon,
-  DotsThreeIcon,
-  PencilSimpleIcon,
-  SmileyIcon,
-  TrashIcon,
-} from "@phosphor-icons/react";
+import { Copy, Ellipsis, Pencil, Smile, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,7 +106,7 @@ export const MessageActions = ({
           aria-label="Add reaction"
           className={actionClassName}
         >
-          <SmileyIcon className="size-6" />
+          <Smile className="size-6" />
         </button>
 
         <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpenChange}>
@@ -130,7 +124,7 @@ export const MessageActions = ({
                 )}
                 onClick={suppressTooltip}
               >
-                <DotsThreeIcon weight="bold" className="size-6" />
+                <Ellipsis className="size-6" />
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={6}>
@@ -152,14 +146,14 @@ export const MessageActions = ({
                 });
               }}
             >
-              <PencilSimpleIcon />
+              <Pencil />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               onPointerDown={handleItemPointerDown}
               onSelect={handleCopy}
             >
-              <CopyIcon />
+              <Copy />
               Copy
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -169,7 +163,7 @@ export const MessageActions = ({
                 handleMsgDelete(messageId);
               }}
             >
-              <TrashIcon />
+              <Trash2 />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

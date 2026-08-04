@@ -1,6 +1,6 @@
 "use client";
 
-import { SpinnerGapIcon } from "@phosphor-icons/react";
+import { LoaderCircle } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import useWebSocket from "react-use-websocket";
 import { authClient } from "@/lib/auth-client";
@@ -180,10 +180,7 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
   if (isLoading) {
     return (
       <div className="flex h-full flex-1 items-center justify-center">
-        <SpinnerGapIcon
-          weight="bold"
-          className="size-8 animate-spin text-neutral-400"
-        />
+        <LoaderCircle className="size-8 animate-spin text-neutral-400" />
       </div>
     );
   }

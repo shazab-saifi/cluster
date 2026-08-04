@@ -1,8 +1,4 @@
-import {
-  PaperPlaneTiltIcon,
-  PlusIcon,
-  SmileyIcon,
-} from "@phosphor-icons/react";
+import { Send, Plus, Smile } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 
@@ -35,7 +31,7 @@ export const MessageComposer = ({
           aria-label="Add attachment"
           className="text-muted-foreground hover:text-foreground"
         >
-          <PlusIcon className="size-5" weight="bold" />
+          <Plus className="size-5" />
         </Button>
 
         <Input
@@ -53,7 +49,7 @@ export const MessageComposer = ({
           aria-label="Choose emoji"
           className="text-muted-foreground hover:text-foreground"
         >
-          <SmileyIcon className="size-5" />
+          <Smile className="size-5" />
         </Button>
 
         <Button
@@ -62,7 +58,7 @@ export const MessageComposer = ({
           className="hover:bg-indigo-400 dark:hover:bg-indigo-400"
           aria-label="Send message"
         >
-          <PaperPlaneTiltIcon className="size-5" />
+          <Send className="size-5" />
         </Button>
       </div>
     </form>
