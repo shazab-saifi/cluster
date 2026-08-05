@@ -271,12 +271,12 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
                   }
                 />
                 {startsNewDay && (
-                  <div className="flex items-center gap-2">
-                    <span className="h-0.5 flex-1 bg-secondary text-xs text-muted-foreground" />
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="h-0.5 flex-1 bg-tertiary text-xs text-muted-foreground" />
                     <p className="text-xs text-muted-foreground">
                       {currDayLabel}
                     </p>
-                    <span className="h-0.5 flex-1 bg-secondary text-xs text-muted-foreground" />
+                    <span className="h-0.5 flex-1 bg-tertiary text-xs text-muted-foreground" />
                   </div>
                 )}
               </React.Fragment>

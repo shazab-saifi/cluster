@@ -17,7 +17,7 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
 
   return (
     <div className="flex h-16 items-center gap-2 border-t bg-background/60 p-2">
-      <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-sm font-semibold">
+      <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-base font-semibold">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt="" className="size-full object-cover" />
@@ -26,8 +26,8 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold">{name}</div>
-        <div className="truncate text-xs text-muted-foreground">
+        <div className="truncate text-base font-semibold">{name}</div>
+        <div className="truncate text-base text-muted-foreground">
           {user?.username ? `@${user.username}` : "Online"}
         </div>
       </div>
@@ -38,7 +38,7 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         aria-label="Mute"
         title="Mute"
       >
-        <Mic className="size-4" />
+        <Mic className="size-6" />
       </Button>
       <Button
         type="button"
@@ -47,7 +47,7 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         aria-label="Settings"
         title="Settings"
       >
-        <Settings className="size-4" />
+        <Settings className="size-6" />
       </Button>
     </div>
   );

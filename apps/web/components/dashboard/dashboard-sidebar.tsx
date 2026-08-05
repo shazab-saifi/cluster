@@ -1,12 +1,12 @@
+import * as React from "react";
 import {
+  ChevronDown,
   CircleAlert,
-  Inbox,
   LoaderCircle,
-  UserPlus,
   Plus,
-  Users,
+  Search,
+  UserPlus,
 } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { ChannelRow } from "./channel-actions/channel-row";
 import type { Channel, DashboardUser, NetworkListItem } from "./types";
@@ -23,6 +23,7 @@ type DashboardSidebarProps = {
     image?: string | null;
   };
   onAddMember: () => void;
+  activeChannelId?: string;
   onCreateChannel: () => void;
   onCreateNetwork: () => void;
   setIsChatOpen: (val: string) => void;
@@ -38,57 +39,62 @@ export function DashboardSidebar({
   onAddMember,
   onCreateChannel,
   setIsChatOpen,
+  activeChannelId,
 }: DashboardSidebarProps) {
-  const canAddMember =
-    activeNetwork?.role === "OWNER" || activeNetwork?.role === "ADMIN";
+  const [channelQuery, setChannelQuery] = React.useState("");
+  const filteredChannels = channels.filter((channel) =>
+    channel.name.toLowerCase().includes(channelQuery.toLowerCase())
+  );
 
   return (
-    <aside className="hidden w-72 shrink-0 flex-col border-r bg-background md:flex">
-      <div className="border-b p-3">
-        <Input
-          aria-label="Find or start a conversation"
-          placeholder="Find or start a conversation"
-          className="h-9 bg-background"
-        />
-      </div>
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-        <Button
+    <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-background md:flex">
+      <div className="space-y-2 border-b px-8 py-4">
+        <button
           type="button"
-          variant="secondary"
-          className="h-11 justify-start gap-3 px-3 text-base"
+          className="flex w-full items-center gap-2 text-left text-base font-semibold tracking-tight"
         >
-          <Users className="size-5" />
-          Friends
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
-        >
-          <Inbox className="size-5" />
-          Inbox
-        </Button>
-        {canAddMember && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-11 justify-start gap-3 px-3 text-base text-muted-foreground"
-            onClick={onAddMember}
-          >
-            <UserPlus className="size-5" />
-            Add member
-          </Button>
-        )}
-
-        <div className="mt-4 flex items-center justify-between px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           <span className="min-w-0 truncate">
-            {activeNetwork ? activeNetwork.name : "Channels"}
+            {activeNetwork?.name ?? "Network"}
+          </span>
+          <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
+        </button>
+        <p className="text-xs text-muted-foreground">
+          {activeNetwork?.memberCount !== undefined &&
+            activeNetwork.memberCount.toLocaleString()}{" "}
+          Members
+        </p>
+      </div>
+      <div className="space-y-2 border-b p-4">
+        <button
+          type="button"
+          className="flex h-auto w-full items-center gap-4 rounded-lg px-4 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          onClick={onAddMember}
+          disabled={!activeNetwork}
+        >
+          <UserPlus className="size-6" />
+          Invite to Network
+        </button>
+        <div className="flex items-center gap-2 rounded-lg border-2 bg-transparent px-4 py-1 shadow-none">
+          <Search className="pointer-events-none size-6 text-muted-foreground" />
+          <Input
+            aria-label="Search channels"
+            placeholder="Search Channel"
+            value={channelQuery}
+            onChange={(event) => setChannelQuery(event.target.value)}
+            className="border-none bg-transparent py-0 text-base placeholder:text-base placeholder:text-muted-foreground dark:bg-transparent"
+          />
+        </div>
+      </div>
+      <nav className="flex flex-1 flex-col overflow-y-auto p-4">
+        <div className="mb-4 flex items-center justify-between px-4">
+          <span className="text-sm font-medium text-muted-foreground">
+            Channels
           </span>
           <button
             type="button"
             aria-label="Create channel"
             title="Create channel"
-            className="rounded p-0.5 transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-tertiary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
             disabled={!activeNetwork}
             onClick={onCreateChannel}
           >
@@ -97,31 +103,34 @@ export function DashboardSidebar({
         </div>
         <div className="flex flex-col gap-1">
           {isChannelsLoading && (
-            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
-              <LoaderCircle className="size-4 animate-spin" />
+            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-base text-muted-foreground">
+              <LoaderCircle className="size-6 animate-spin" />
               Loading channels
             </div>
           )}
           {hasChannelsError && (
-            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
-              <CircleAlert className="size-4" />
+            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-base text-muted-foreground">
+              <CircleAlert className="size-6" />
               Channels unavailable
             </div>
           )}
           {!isChannelsLoading &&
             !hasChannelsError &&
-            channels.map((channel) => (
+            filteredChannels.map((channel) => (
               <ChannelRow
                 key={channel.id}
                 channel={channel}
                 setIsChatOpen={setIsChatOpen}
+                active={channel.id === activeChannelId}
               />
             ))}
-          {!isChannelsLoading && !hasChannelsError && channels.length === 0 && (
-            <div className="rounded-lg px-2 py-3 text-sm text-muted-foreground">
-              No channels yet
-            </div>
-          )}
+          {!isChannelsLoading &&
+            !hasChannelsError &&
+            filteredChannels.length === 0 && (
+              <div className="rounded-lg px-2 py-3 text-base text-muted-foreground">
+                No matching channels
+              </div>
+            )}
         </div>
       </nav>
       <UserFooter user={user} sessionUser={sessionUser} />

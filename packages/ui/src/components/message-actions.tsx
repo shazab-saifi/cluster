@@ -97,8 +97,8 @@ export const MessageActions = ({
     >
       <div
         className={cn(
-          "relative flex items-center gap-2 rounded-md px-2 py-1 group-hover:bg-secondary group-hover:delay-200 after:absolute after:inset-x-0 after:top-full after:h-2",
-          isOpen && "bg-secondary"
+          "relative flex items-center gap-2 rounded-md px-2 py-1 group-hover:bg-tertiary group-hover:delay-200 after:absolute after:inset-x-0 after:top-full after:h-2",
+          isOpen && "bg-tertiary"
         )}
       >
         <button

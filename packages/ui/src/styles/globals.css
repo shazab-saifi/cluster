@@ -32,6 +32,7 @@
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+  --color-tertiary: var(--background-tertiary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
@@ -62,7 +63,7 @@
   --background-dark-secondary: #0a0a0a;
   --destructive-default: #e7000b;
   --button-secondary-default: #0a0a0a;
-  --background-dark-tertiary: #404040;
+  --background-dark-tertiary: #262626;
   --background-light-secondary: #ffffff;
   --accent-default: #615fff;
   --text-light-secondary: #404040;
@@ -71,7 +72,7 @@
   --text-light-tertiary: #525252;
   --text-light-primary-default: #171717;
   --text-primary: var(--text-light-primary-default);
-  --background-tertiary: var(--background-light-primary);
+  --background-tertiary: var(--background-light-secondary);
   --background: var(--background-light-primary);
   --foreground: var(--text-light-primary-default);
   --card: var(--background-light-secondary);

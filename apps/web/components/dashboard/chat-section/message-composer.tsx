@@ -23,7 +23,7 @@ export const MessageComposer = ({
         handlerFn();
       }}
     >
-      <div className="flex items-center gap-2 rounded-xl bg-muted px-4 py-2">
+      <div className="flex items-center gap-2 rounded-xl bg-tertiary px-4 py-2">
         <Button
           type="button"
           variant="ghost"

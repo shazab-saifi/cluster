@@ -7,6 +7,7 @@ export type Network = {
   image: string | null;
   ownerId: string;
   type: NetworkType;
+  memberCount?: number;
 };
 
 export type Channel = {

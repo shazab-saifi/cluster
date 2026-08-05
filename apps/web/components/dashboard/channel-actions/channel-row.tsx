@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
+import { cn } from "@workspace/ui/lib/utils";
 import type { Channel } from "../types";
 import {
   DeleteChannelDialog,
@@ -17,9 +18,11 @@ import {
 export function ChannelRow({
   channel,
   setIsChatOpen,
+  active = false,
 }: {
   channel: Channel;
   setIsChatOpen: (value: string) => void;
+  active?: boolean;
 }) {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
@@ -28,18 +31,21 @@ export function ChannelRow({
     <>
       <span
         onClick={() => setIsChatOpen(channel.id)}
-        className="group/channel relative flex h-10 items-center rounded-lg text-sm text-muted-foreground transition focus-within:bg-muted focus-within:text-foreground hover:bg-muted hover:text-foreground"
+        className={cn(
+          "group/channel relative flex items-center rounded-lg px-4 py-2 text-base text-muted-foreground transition focus-within:text-foreground hover:bg-secondary hover:text-foreground",
+          active && "bg-secondary text-foreground"
+        )}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-1 px-2 text-left">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
           <Hash className="size-4 shrink-0" />
           <span className="min-w-0 flex-1 truncate">{channel.name}</span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`Open ${channel.name} channel menu`}
-            className="mr-1 inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[min(var(--radius-md),10px)] border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap opacity-0 transition-all outline-none select-none group-focus-within/channel:opacity-100 group-hover/channel:opacity-100 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-muted data-[state=open]:text-foreground data-[state=open]:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+            className="mr-1 inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[min(var(--radius-md),10px)] border border-transparent bg-clip-padding text-base font-medium whitespace-nowrap opacity-0 transition-all outline-none select-none group-focus-within/channel:opacity-100 group-hover/channel:opacity-100 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-tertiary data-[state=open]:text-foreground data-[state=open]:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           >
-            <Ellipsis className="size-4" />
+            <Ellipsis className="size-6" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
