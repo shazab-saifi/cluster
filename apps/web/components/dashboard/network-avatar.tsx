@@ -1,15 +1,18 @@
+import { motion } from "motion/react";
 import { cn, getInitials } from "@workspace/ui/lib/utils";
 import type { NetworkListItem } from "./types";
 
 type NetworkAvatarProps = {
   network: NetworkListItem;
   active: boolean;
+  indicatorLayoutId: string;
   onClick: () => void;
 };
 
 export function NetworkAvatar({
   network,
   active,
+  indicatorLayoutId,
   onClick,
 }: NetworkAvatarProps) {
   return (
@@ -18,20 +21,20 @@ export function NetworkAvatar({
       aria-label={network.name}
       title={network.name}
       aria-pressed={active}
-      className="group relative flex h-12 w-12 shrink-0 items-center justify-center"
+      className="group relative flex h-11 w-14 shrink-0 items-center justify-end"
       onClick={onClick}
     >
+      {active ? (
+        <motion.span
+          layoutId={indicatorLayoutId}
+          className="absolute top-1/2 left-0 h-6 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
+          transition={{ type: "spring", stiffness: 500, damping: 38 }}
+        />
+      ) : null}
       <span
         className={cn(
-          "absolute -left-3 h-2 w-1 rounded-r-full bg-foreground transition-all",
-          active ? "h-9" : "group-hover:h-5"
-        )}
-      />
-      <span
-        className={cn(
-          "grid size-9.5 place-items-center overflow-hidden rounded-2xl bg-muted text-sm font-semibold text-muted-foreground transition-all group-hover:rounded-xl group-hover:bg-primary group-hover:text-primary-foreground",
-          active &&
-            "rounded-xl bg-primary text-primary-foreground ring-3 ring-primary ring-offset-2 ring-offset-card"
+          "grid size-10 place-items-center overflow-hidden rounded-xl bg-muted text-sm font-semibold text-muted-foreground transition-all group-hover:rounded-lg group-hover:bg-primary group-hover:text-primary-foreground",
+          active && "rounded-lg bg-primary text-primary-foreground"
         )}
       >
         {network.image ? (

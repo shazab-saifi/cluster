@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
+import { motion } from "motion/react";
+import { usePathname, useRouter } from "next/navigation";
 import { Compass, Plus } from "lucide-react";
 import type { NetworkListItem } from "./types";
 import { NetworkAvatar } from "./network-avatar";
@@ -21,22 +21,33 @@ export function NetworkStrip({
   isLoading,
   onCreateNetwork,
 }: NetworkStripProps) {
+  const pathname = usePathname();
   const router = useRouter();
+  const isFriendsActive = pathname === "/friends";
+
   return (
-    <aside className="flex w-18 shrink-0 flex-col items-center gap-2 border-r bg-background px-3 py-3">
+    <aside className="flex flex-col items-end gap-4 border-r bg-muted/20 py-3 pr-4">
       <Link
         href="/friends"
-        className="grid size-12 cursor-pointer place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm"
+        className="relative flex h-11 w-14 items-center justify-end"
       >
-        <Image src="/cluster-logo.svg" width={48} height={48} alt="logo" />
+        {isFriendsActive ? (
+          <motion.span
+            layoutId="network-strip-active-indicator"
+            className="absolute top-1/2 left-0 h-6 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
+            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+          />
+        ) : null}
+        <span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+          <Image src="/cluster-logo.svg" width={48} height={48} alt="logo" />
+        </span>
       </Link>
-      <div className="my-1 h-px w-8 bg-border" />
-      <div className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto">
         {isLoading &&
           Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="size-12 animate-pulse rounded-2xl bg-muted"
+              className="h-11 w-14 animate-pulse rounded-xl bg-muted"
             />
           ))}
         {networks.map((network) => (
@@ -44,6 +55,7 @@ export function NetworkStrip({
             key={network.id}
             network={network}
             active={network.id === activeNetwork?.id}
+            indicatorLayoutId="network-strip-active-indicator"
             onClick={() => {
               router.push("/networks/" + network.id);
             }}
@@ -54,7 +66,7 @@ export function NetworkStrip({
         type="button"
         aria-label="Add a network"
         title="Add a network"
-        className="grid size-12 place-items-center rounded-2xl bg-muted text-primary transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
+        className="grid size-11 place-items-center rounded-xl bg-muted text-primary transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
         onClick={onCreateNetwork}
       >
         <Plus className="size-6" />
@@ -63,7 +75,7 @@ export function NetworkStrip({
         type="button"
         aria-label="Explore networks"
         title="Explore networks"
-        className="grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
+        className="grid size-11 place-items-center rounded-xl bg-muted text-muted-foreground transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
       >
         <Compass className="size-6" />
       </button>
