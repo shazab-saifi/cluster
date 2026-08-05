@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { usePathname, useRouter } from "next/navigation";
-import { Compass, Plus } from "lucide-react";
+import { CirclePlus, Compass } from "lucide-react";
 import type { NetworkListItem } from "./types";
 import { NetworkAvatar } from "./network-avatar";
 import Image from "next/image";
@@ -26,7 +26,7 @@ export function NetworkStrip({
   const isFriendsActive = pathname === "/friends";
 
   return (
-    <aside className="flex flex-col items-end gap-4 border-r bg-muted/20 py-3 pr-4">
+    <aside className="flex flex-col items-end gap-4 border-r bg-background py-3 pr-4">
       <Link
         href="/friends"
         className="relative flex h-11 w-14 items-center justify-end"
@@ -42,7 +42,7 @@ export function NetworkStrip({
           <Image src="/cluster-logo.svg" width={48} height={48} alt="logo" />
         </span>
       </Link>
-      <div className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col items-end gap-4 overflow-y-auto">
         {isLoading &&
           Array.from({ length: 4 }).map((_, index) => (
             <div
@@ -61,23 +61,30 @@ export function NetworkStrip({
             }}
           />
         ))}
+        <button
+          type="button"
+          aria-label="Add a network"
+          title="Add a network"
+          className="group grid size-11 place-items-center rounded-xl bg-secondary text-(--text-primary) transition-colors hover:bg-primary hover:text-primary-foreground"
+          onClick={onCreateNetwork}
+        >
+          <CirclePlus
+            fill="currentColor"
+            className="size-8 stroke-secondary transition-colors group-hover:stroke-primary"
+          />
+        </button>
       </div>
-      <button
-        type="button"
-        aria-label="Add a network"
-        title="Add a network"
-        className="grid size-11 place-items-center rounded-xl bg-muted text-primary transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
-        onClick={onCreateNetwork}
-      >
-        <Plus className="size-6" />
-      </button>
+
       <button
         type="button"
         aria-label="Explore networks"
         title="Explore networks"
-        className="grid size-11 place-items-center rounded-xl bg-muted text-muted-foreground transition hover:rounded-xl hover:bg-primary hover:text-primary-foreground"
+        className="group grid size-11 place-items-center rounded-xl bg-secondary text-(--text-primary) transition-colors hover:bg-primary hover:text-primary-foreground"
       >
-        <Compass className="size-6" />
+        <Compass
+          fill="currentColor"
+          className="size-8 stroke-secondary transition-colors group-hover:stroke-primary"
+        />
       </button>
     </aside>
   );
