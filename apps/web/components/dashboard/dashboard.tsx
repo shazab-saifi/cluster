@@ -10,7 +10,6 @@ import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
-import { FriendsPanel } from "./friends-panel";
 import { NetworkStrip } from "./network-strip";
 import { getNetworkList } from "./utils";
 import { ChatSection } from "./chat-section/chat-section";
@@ -25,7 +24,7 @@ export function Dashboard({ networkId }: DashboardProps) {
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
   const [activeChannelId, setActiveChannelId] = React.useState<string>();
   const { data: session } = authClient.useSession();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
   });
@@ -42,6 +41,36 @@ export function Dashboard({ networkId }: DashboardProps) {
     queryFn: () => getNetworkDetails(networkId),
     enabled: Boolean(networkId),
   });
+  const channels = React.useMemo(
+    () => networkDetails?.channels ?? [],
+    [networkDetails?.channels]
+  );
+  const activeChannel = channels.find(
+    (channel) => channel.id === activeChannelId
+  );
+
+  React.useEffect(() => {
+    const set = () => setActiveChannelId(undefined);
+    set();
+  }, [networkId]);
+
+  React.useEffect(() => {
+    if (isNetworkDetailsLoading || networkDetailsError) return;
+
+    const set = () =>
+      setActiveChannelId((currentChannelId) => {
+        if (
+          currentChannelId &&
+          channels.some((channel) => channel.id === currentChannelId)
+        ) {
+          return currentChannelId;
+        }
+
+        return channels[0]?.id;
+      });
+
+    set();
+  }, [channels, isNetworkDetailsLoading, networkDetailsError]);
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -57,7 +86,7 @@ export function Dashboard({ networkId }: DashboardProps) {
       />
       <DashboardSidebar
         activeNetwork={selectedNetwork}
-        channels={networkDetails?.channels ?? []}
+        channels={channels}
         isChannelsLoading={isNetworkDetailsLoading}
         hasChannelsError={Boolean(networkDetailsError)}
         user={user}
@@ -66,21 +95,28 @@ export function Dashboard({ networkId }: DashboardProps) {
         onCreateChannel={() => setIsCreateChannelOpen(true)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
         setIsChatOpen={setActiveChannelId}
-        activeChannelId={activeChannelId}
+        activeChannelId={activeChannel?.id}
       />
 
       <section className="flex min-w-0 flex-1 flex-col">
-        <DashboardHeader onSignOut={handleSignOut} />
+        <DashboardHeader
+          variant="network"
+          activeChannelName={activeChannel?.name}
+          onSignOut={handleSignOut}
+        />
         <div className="flex min-h-0 flex-1">
-          {activeChannelId ? (
-            <ChatSection channelId={activeChannelId} />
+          {activeChannel ? (
+            <ChatSection channelId={activeChannel.id} />
           ) : (
-            <FriendsPanel
-              user={user}
-              networks={networks}
-              isLoading={isLoading}
-              hasError={Boolean(error)}
-            />
+            <section className="flex min-w-0 flex-1 items-center justify-center p-6">
+              <p className="text-center text-sm text-muted-foreground">
+                {isNetworkDetailsLoading
+                  ? "Loading channels"
+                  : networkDetailsError
+                    ? "Channels unavailable"
+                    : "No channels yet"}
+              </p>
+            </section>
           )}
           <ActiveNow activeNetwork={selectedNetwork} />
         </div>

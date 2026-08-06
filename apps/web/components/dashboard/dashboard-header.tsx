@@ -1,33 +1,52 @@
-import { Bell, LogOut, Inbox, UserPlus, Users } from "lucide-react";
+import { Bell, Hash, LogOut, Inbox, UserPlus, Users } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { ThemeToggle } from "./theme-toggle";
 
 type DashboardHeaderProps = {
   onSignOut: () => void;
+  activeChannelName?: string | null;
+  variant?: "friends" | "network";
 };
 
-export function DashboardHeader({ onSignOut }: DashboardHeaderProps) {
+export function DashboardHeader({
+  onSignOut,
+  activeChannelName,
+  variant = "friends",
+}: DashboardHeaderProps) {
+  const isNetworkHeader = variant === "network";
+
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b px-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <Users className="size-5 text-muted-foreground" />
-        <h1 className="truncate font-semibold">Friends</h1>
-        <div className="hidden h-6 w-px bg-border sm:block" />
-        <div className="hidden items-center gap-1 sm:flex">
-          <Button variant="secondary" size="sm">
-            Online
-          </Button>
-          <Button variant="ghost" size="sm">
-            All
-          </Button>
-          <Button variant="ghost" size="sm">
-            Pending
-          </Button>
-          <Button size="sm">
-            <UserPlus className="size-4" />
-            Add Friend
-          </Button>
-        </div>
+      <div className="flex min-w-0 items-center gap-2">
+        {isNetworkHeader ? (
+          <>
+            <Hash className="size-5 shrink-0 text-muted-foreground" />
+            <h1 className="truncate font-semibold">
+              {activeChannelName ?? "Channel"}
+            </h1>
+          </>
+        ) : (
+          <>
+            <Users className="size-5 text-muted-foreground" />
+            <h1 className="truncate font-semibold">Friends</h1>
+            <div className="hidden h-6 w-px bg-border sm:block" />
+            <div className="hidden items-center gap-1 sm:flex">
+              <Button variant="secondary" size="sm">
+                Online
+              </Button>
+              <Button variant="ghost" size="sm">
+                All
+              </Button>
+              <Button variant="ghost" size="sm">
+                Pending
+              </Button>
+              <Button size="sm">
+                <UserPlus className="size-4" />
+                Add Friend
+              </Button>
+            </div>
+          </>
+        )}
       </div>
       <div className="flex items-center gap-1">
         <ThemeToggle />

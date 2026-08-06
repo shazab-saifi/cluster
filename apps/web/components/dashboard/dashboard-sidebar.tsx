@@ -86,15 +86,15 @@ export function DashboardSidebar({
         </div>
       </div>
       <nav className="flex flex-1 flex-col overflow-y-auto p-4">
-        <div className="mb-4 flex items-center justify-between px-4">
-          <span className="text-sm font-medium text-muted-foreground">
+        <div className="mb-4 flex items-center justify-between pl-4">
+          <span className="text-xs font-medium text-muted-foreground">
             Channels
           </span>
           <button
             type="button"
             aria-label="Create channel"
             title="Create channel"
-            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-tertiary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
             disabled={!activeNetwork}
             onClick={onCreateChannel}
           >
