@@ -32,7 +32,7 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg":
-          "size-9 rounded-full p-2 hover:bg-background dark:hover:bg-background",
+          "size-9 rounded-full p-2 hover:bg-secondary dark:hover:bg-secondary",
       },
     },
     defaultVariants: {

@@ -1,4 +1,4 @@
-import { Send, Plus, Smile } from "lucide-react";
+import { Plus, Smile, ArrowUp } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 
@@ -17,21 +17,28 @@ export const MessageComposer = ({
 }: MessageComposer) => {
   return (
     <form
-      className="sticky bottom-0 shrink-0 bg-background px-4 py-3"
+      className="sticky bottom-0 shrink-0 bg-background p-4"
       onSubmit={(e) => {
         e.preventDefault();
         handlerFn();
       }}
     >
-      <div className="flex items-center gap-2 rounded-xl bg-tertiary px-4 py-2">
+      <div className="flex items-center rounded-xl bg-tertiary p-2">
         <Button
           type="button"
           variant="ghost"
           size="icon-lg"
           aria-label="Add attachment"
-          className="text-muted-foreground hover:text-foreground"
         >
           <Plus className="size-5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-lg"
+          aria-label="Choose emoji"
+        >
+          <Smile className="size-5" />
         </Button>
 
         <Input
@@ -39,18 +46,8 @@ export const MessageComposer = ({
           placeholder="Write message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="h-full flex-1 border-0 bg-transparent px-1 shadow-none placeholder:text-sm focus-visible:ring-0 dark:bg-transparent"
+          className="ml-2 h-full flex-1 border-0 bg-transparent px-1 shadow-none placeholder:text-sm focus-visible:ring-0 dark:bg-transparent"
         />
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-lg"
-          aria-label="Choose emoji"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <Smile className="size-5" />
-        </Button>
 
         <Button
           type="submit"
@@ -58,7 +55,7 @@ export const MessageComposer = ({
           className="hover:bg-indigo-400 dark:hover:bg-indigo-400"
           aria-label="Send message"
         >
-          <Send className="size-5" />
+          <ArrowUp className="size-5 stroke-3" />
         </Button>
       </div>
     </form>

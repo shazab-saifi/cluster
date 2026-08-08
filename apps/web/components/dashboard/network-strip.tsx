@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { motion } from "motion/react";
 import { usePathname, useRouter } from "next/navigation";
 import { CirclePlus, Compass } from "lucide-react";
@@ -15,7 +16,7 @@ type NetworkStripProps = {
   onCreateNetwork: () => void;
 };
 
-export function NetworkStrip({
+function NetworkStrip({
   networks,
   activeNetwork,
   isLoading,
@@ -34,7 +35,7 @@ export function NetworkStrip({
         {isFriendsActive ? (
           <motion.span
             layoutId="network-strip-active-indicator"
-            className="absolute top-1/2 left-0 h-6 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
+            className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
             transition={{ type: "spring", stiffness: 500, damping: 38 }}
           />
         ) : null}
@@ -89,3 +90,5 @@ export function NetworkStrip({
     </aside>
   );
 }
+
+export default React.memo(NetworkStrip);

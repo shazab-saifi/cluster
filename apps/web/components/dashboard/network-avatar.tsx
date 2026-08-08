@@ -27,13 +27,13 @@ export function NetworkAvatar({
       {active ? (
         <motion.span
           layoutId={indicatorLayoutId}
-          className="absolute top-1/2 left-0 h-6 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
-          transition={{ type: "spring", stiffness: 500, damping: 38 }}
+          className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
+          transition={{ type: "spring", stiffness: 400, damping: 35 }}
         />
       ) : null}
       <span
         className={cn(
-          "grid size-10 place-items-center overflow-hidden rounded-xl bg-muted text-sm font-semibold text-muted-foreground transition-all group-hover:rounded-lg group-hover:bg-primary group-hover:text-primary-foreground",
+          "grid size-11 place-items-center overflow-hidden rounded-xl bg-muted text-sm font-semibold text-muted-foreground transition-all group-hover:bg-primary group-hover:text-primary-foreground",
           active && "rounded-lg bg-primary text-primary-foreground"
         )}
       >

@@ -32,7 +32,7 @@ export function ChannelRow({
       <span
         onClick={() => setIsChatOpen(channel.id)}
         className={cn(
-          "group/channel relative flex items-center rounded-lg px-4 py-1 text-base text-muted-foreground transition focus-within:text-foreground hover:bg-secondary/60 hover:text-foreground",
+          "group/channel relative flex cursor-pointer items-center rounded-lg px-4 py-1 text-base text-muted-foreground transition focus-within:text-foreground hover:bg-secondary/60 hover:text-foreground",
           active && "hover:bg-secondar bg-secondary text-foreground"
         )}
       >

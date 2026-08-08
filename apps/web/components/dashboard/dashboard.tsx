@@ -10,7 +10,7 @@ import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
-import { NetworkStrip } from "./network-strip";
+import NetworkStrip from "./network-strip";
 import { getNetworkList } from "./utils";
 import { ChatSection } from "./chat-section/chat-section";
 

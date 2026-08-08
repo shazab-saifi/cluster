@@ -67,25 +67,25 @@ export function DashboardSidebar({
       <div className="space-y-2 border-b p-4">
         <button
           type="button"
-          className="flex h-auto w-full items-center gap-4 rounded-lg px-4 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="flex h-auto w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           onClick={onAddMember}
           disabled={!activeNetwork}
         >
-          <UserPlus className="size-6" />
+          <UserPlus className="size-5" />
           Invite to Network
         </button>
         <div className="flex items-center gap-2 rounded-lg border-2 bg-transparent px-4 py-1 shadow-none">
-          <Search className="pointer-events-none size-6 text-muted-foreground" />
+          <Search className="pointer-events-none size-5 text-muted-foreground" />
           <Input
             aria-label="Search channels"
             placeholder="Search Channel"
             value={channelQuery}
             onChange={(event) => setChannelQuery(event.target.value)}
-            className="border-none bg-transparent py-0 text-base placeholder:text-base placeholder:text-muted-foreground dark:bg-transparent"
+            className="border-none bg-transparent py-0 text-sm placeholder:text-sm placeholder:text-muted-foreground dark:bg-transparent"
           />
         </div>
       </div>
-      <nav className="flex flex-1 flex-col overflow-y-auto p-4">
+      <nav className="custom-scrollbar flex flex-1 flex-col overflow-y-auto scroll-smooth p-4">
         <div className="mb-4 flex items-center justify-between pl-4">
           <span className="text-xs font-medium text-muted-foreground">
             Channels
@@ -103,13 +103,13 @@ export function DashboardSidebar({
         </div>
         <div className="flex flex-col gap-1">
           {isChannelsLoading && (
-            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-base text-muted-foreground">
-              <LoaderCircle className="size-6 animate-spin" />
-              Loading channels
+            <div className="mx-auto flex h-10 flex-col items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
+              <LoaderCircle className="size-5 shrink-0 animate-spin" />
+              Loading channels...
             </div>
           )}
           {hasChannelsError && (
-            <div className="flex h-10 items-center gap-3 rounded-lg px-2 text-base text-muted-foreground">
+            <div className="mx-auto flex h-10 items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
               <CircleAlert className="size-6" />
               Channels unavailable
             </div>

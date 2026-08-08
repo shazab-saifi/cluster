@@ -235,7 +235,7 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 pt-4">
+      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 pt-4">
         {sortedMessages.length !== 0 ? (
           sortedMessages.map((message, idx) => {
             const next = sortedMessages[idx + 1];
@@ -245,6 +245,7 @@ export const ChatSection = ({ channelId }: { channelId: string }) => {
             const nextDay =
               next && new Date(next.timestamp).toLocaleDateString();
             const startsNewDay = !nextDay || nextDay !== currDay;
+            console.log(message.id, message.message);
 
             return (
               <React.Fragment key={message.id}>

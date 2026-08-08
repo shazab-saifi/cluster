@@ -151,3 +151,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    display: block;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #171717;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #262626 !important;
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover,
+  &::-webkit-scrollbar-thumb:active {
+    background: #262626 !important;
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: #262626 #171717;
+}
