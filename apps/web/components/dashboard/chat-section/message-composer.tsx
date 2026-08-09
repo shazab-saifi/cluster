@@ -1,26 +1,41 @@
+"use client";
+
 import { Plus, Smile, ArrowUp } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import React, { useState } from "react";
+import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 
 type MessageComposer = {
-  handlerFn: () => void;
   channelId: string;
-  message: string;
-  setMessage: (val: string) => void;
+  sendJsonMessage: SendJsonMessage;
 };
 
 export const MessageComposer = ({
-  handlerFn,
   channelId,
-  setMessage,
-  message,
+  sendJsonMessage,
 }: MessageComposer) => {
+  const [message, setMessage] = useState("");
+
+  const handleSendMessage = () => {
+    const content = message.trim();
+    if (content.length === 0) return;
+
+    sendJsonMessage({
+      type: "NEW_MESSAGE",
+      channelId,
+      clientRequestId: crypto.randomUUID(),
+      message: content,
+    });
+    setMessage("");
+  };
+
   return (
     <form
       className="sticky bottom-0 shrink-0 bg-background p-4"
       onSubmit={(e) => {
         e.preventDefault();
-        handlerFn();
+        handleSendMessage();
       }}
     >
       <div className="flex items-center rounded-xl bg-tertiary p-2">

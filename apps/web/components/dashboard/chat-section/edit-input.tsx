@@ -1,6 +1,6 @@
 import { Smile, X } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
-import { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 
 interface EditInputProps {
   message: string;
@@ -77,4 +77,4 @@ const EditInput = ({
   );
 };
 
-export default EditInput;
+export default React.memo(EditInput);

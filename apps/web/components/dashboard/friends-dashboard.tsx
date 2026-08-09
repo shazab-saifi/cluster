@@ -5,7 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { getFriends, getMe } from "./api";
 import { DashboardHeader } from "./dashboard-header";
 import { EmptyFriends, FriendsSidebar } from "./friends-sidebar";
-import { NetworkStrip } from "./network-strip";
+import NetworkStrip from "./network-strip";
 import { getNetworkList } from "./utils";
 
 export function FriendsDashboard() {

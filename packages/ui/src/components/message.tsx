@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Avatar,
   AvatarFallback,
@@ -53,7 +53,7 @@ const customDateTimeFormatter = (date: Date) => {
   return `${datePart}, ${timePart}`;
 };
 
-export function Message({
+function Message({
   messageId,
   name,
   timestamp,
@@ -143,3 +143,4 @@ export function Message({
 }
 
 export type { MessageProps };
+export default React.memo(Message);

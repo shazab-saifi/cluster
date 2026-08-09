@@ -7,6 +7,9 @@ export type MessagesPage = {
   nextCursor: string | null;
 };
 
+export const getMessagesQueryKey = (channelId: string) =>
+  ["messages", channelId] as const;
+
 export const API_BASE_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:4000/api"
