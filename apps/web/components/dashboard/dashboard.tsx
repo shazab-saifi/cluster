@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { ActiveNow } from "./active-now";
 import { AddMemberDialog } from "./add-member/add-member-dialog";
@@ -19,6 +20,7 @@ type DashboardProps = {
 };
 
 export function Dashboard({ networkId }: DashboardProps) {
+  const router = useRouter();
   const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
@@ -73,7 +75,15 @@ export function Dashboard({ networkId }: DashboardProps) {
   }, [channels, isNetworkDetailsLoading, networkDetailsError]);
 
   const handleSignOut = async () => {
-    await authClient.signOut();
+    const { error } = await authClient.signOut();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    router.replace("/signin");
+    router.refresh();
   };
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { getFriends, getMe } from "./api";
@@ -9,6 +10,7 @@ import NetworkStrip from "./network-strip";
 import { getNetworkList } from "./utils";
 
 export function FriendsDashboard() {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["me"],
@@ -22,6 +24,18 @@ export function FriendsDashboard() {
   const user = profile?.userData;
   const networks = getNetworkList(user);
   const hasFriends = friends.length > 0;
+
+  const handleSignOut = async () => {
+    const { error } = await authClient.signOut();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    router.replace("/signin");
+    router.refresh();
+  };
 
   return (
     <main className="flex h-svh overflow-hidden bg-background text-foreground">
@@ -37,7 +51,7 @@ export function FriendsDashboard() {
         sessionUser={session?.user}
       />
       <section className="flex min-w-0 flex-1 flex-col">
-        <DashboardHeader onSignOut={() => authClient.signOut()} />
+        <DashboardHeader onSignOut={handleSignOut} />
         <div className="flex min-h-0 flex-1">
           <section className="flex min-w-0 flex-1 items-center justify-center p-6">
             {isLoading ? (

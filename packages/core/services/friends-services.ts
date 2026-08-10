@@ -44,3 +44,13 @@ export async function addFriend(userId: string, friendId: string) {
     },
   });
 }
+
+export async function findUserbyUsername(username: string) {
+  await prisma.user.findMany({
+    where: {
+      username: {
+        startsWith: username,
+      },
+    },
+  });
+}

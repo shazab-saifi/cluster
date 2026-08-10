@@ -3,6 +3,7 @@
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
+import { APP_BASE_URL } from "@/lib/utils";
 import {
   Field,
   FieldError,
@@ -38,8 +39,8 @@ export const SignUpForm = () => {
         const { error } = await authClient.signIn.magicLink({
           email: value.email.trim(),
           name: value.name.trim(),
-          callbackUrl: "/",
-          errorCallbackURL: "/error",
+          callbackUrl: `${APP_BASE_URL}/`,
+          errorCallbackURL: `${APP_BASE_URL}/error`,
         });
 
         if (error) {

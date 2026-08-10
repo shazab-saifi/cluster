@@ -3,6 +3,7 @@
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
+import { APP_BASE_URL } from "@/lib/utils";
 import { Field, FieldError, FieldLabel } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
@@ -27,8 +28,8 @@ export const SignInForm = () => {
         // @ts-expect-error magicLink showing a ts error for some reason but the configuration is correct and magic link auth is working fine
         const { error } = await authClient.signIn.magicLink({
           email: value.email.trim(),
-          callbackUrl: "/",
-          errorCallbackURL: "/error",
+          callbackUrl: `${APP_BASE_URL}/`,
+          errorCallbackURL: `${APP_BASE_URL}/error`,
         });
 
         if (error) {

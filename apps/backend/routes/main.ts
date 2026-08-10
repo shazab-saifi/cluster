@@ -7,6 +7,7 @@ import { friendshipRouter } from "./friendship";
 import { getInvitePreview, invitesRouter } from "./invites";
 import { s3PresignedRouter } from "./get-presigned-urls";
 import { notifRouter } from "./notifications";
+import { userRouter } from "./user";
 
 export const mainRouter: Router = express.Router();
 
@@ -22,3 +23,4 @@ mainRouter.use("/friendship", friendshipRouter);
 mainRouter.use("/invites", invitesRouter);
 mainRouter.use("/generate-presigned-url", s3PresignedRouter);
 mainRouter.use("/notifications", notifRouter);
+mainRouter.use("/user", userRouter);

@@ -10,6 +10,11 @@ export type MessagesPage = {
 export const getMessagesQueryKey = (channelId: string) =>
   ["messages", channelId] as const;
 
+export const APP_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://cluster.shazab.site";
+
 export const API_BASE_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:4000/api"

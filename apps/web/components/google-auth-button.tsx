@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import { APP_BASE_URL } from "@/lib/utils";
 import { Button } from "@workspace/ui/components/button";
 import Image from "next/image";
 
@@ -9,7 +10,7 @@ export const GoogleAuthButton = () => {
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: `${APP_BASE_URL}/`,
       });
 
       if (error) {
