@@ -7,7 +7,6 @@ import Message from "@workspace/ui/components/message";
 import EditInput from "./edit-input";
 import { authClient } from "@/lib/auth-client";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { LoaderCircle } from "lucide-react";
 import { fetchMessages, getMessagesQueryKey } from "@/lib/utils";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 
@@ -98,8 +97,10 @@ export const MessagesList = ({
 
   if (isLoading) {
     return (
-      <div className="flex h-full flex-1 items-center justify-center">
-        <LoaderCircle className="size-8 animate-spin text-neutral-400" />
+      <div className="flex h-full flex-1 flex-col gap-8 px-2">
+        {Array.from({ length: 8 }).map((_, idx) => (
+          <MessageSkeleton key={idx} />
+        ))}
       </div>
     );
   }

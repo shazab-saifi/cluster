@@ -82,7 +82,7 @@ function Message({
         "group relative z-0 flex items-start gap-3 rounded-lg px-2 transition-colors",
         endGroup && "mt-4 py-0.5",
         isActionsOpen && "z-10 bg-tertiary",
-        editingMsg && "bg-secondary py-2",
+        editingMsg && "bg-tertiary py-2",
         !editingMsg && "hover:z-10 hover:bg-tertiary",
         className
       )}

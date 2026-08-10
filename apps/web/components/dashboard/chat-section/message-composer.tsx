@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Smile, ArrowUp } from "lucide-react";
+import { ArrowUp, Plus } from "lucide-react";
+import { SmileyIcon } from "@phosphor-icons/react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import React, { useState } from "react";
@@ -53,7 +54,7 @@ export const MessageComposer = ({
           size="icon-lg"
           aria-label="Choose emoji"
         >
-          <Smile className="size-5" />
+          <SmileyIcon weight="fill" className="size-5 text-foreground" />
         </Button>
 
         <Input
@@ -67,7 +68,7 @@ export const MessageComposer = ({
         <Button
           type="submit"
           size="icon-lg"
-          className="hover:bg-indigo-400 dark:hover:bg-indigo-400"
+          className="bg-accent hover:bg-accent/80 dark:hover:bg-accent/80"
           aria-label="Send message"
         >
           <ArrowUp className="size-5 stroke-3" />

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { usePathname, useRouter } from "next/navigation";
 import { CirclePlus, Compass } from "lucide-react";
@@ -18,13 +18,24 @@ type NetworkStripProps = {
 
 function NetworkStrip({
   networks,
-  activeNetwork,
   isLoading,
   onCreateNetwork,
 }: NetworkStripProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isFriendsActive = pathname === "/friends";
+  const [isTransitioning, startTransition] = useTransition();
+
+  const routeNetworkId = pathname.startsWith("/networks/")
+    ? pathname.split("/").pop()
+    : undefined;
+
+  const [visualNetworkId, setVisualNetworkId] = useState(routeNetworkId);
+
+  useEffect(() => {
+    const set = () => setVisualNetworkId(routeNetworkId);
+    set();
+  }, [routeNetworkId]);
 
   return (
     <aside className="flex flex-col items-end gap-4 border-r bg-background py-3 pr-4">
@@ -35,8 +46,13 @@ function NetworkStrip({
         {isFriendsActive ? (
           <motion.span
             layoutId="network-strip-active-indicator"
-            className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
-            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-foreground will-change-transform"
+            transition={{
+              type: "spring",
+              stiffness: 700,
+              damping: 40,
+              mass: 0.6,
+            }}
           />
         ) : null}
         <span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
@@ -55,10 +71,12 @@ function NetworkStrip({
           <NetworkAvatar
             key={network.id}
             network={network}
-            active={network.id === activeNetwork?.id}
-            indicatorLayoutId="network-strip-active-indicator"
+            active={network.id === visualNetworkId}
             onClick={() => {
-              router.push("/networks/" + network.id);
+              setVisualNetworkId(network.id);
+              startTransition(() => {
+                router.push("/networks/" + network.id);
+              });
             }}
           />
         ))}

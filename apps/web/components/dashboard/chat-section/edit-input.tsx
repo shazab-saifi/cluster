@@ -37,14 +37,14 @@ const EditInput = ({
 
   return (
     <div className="w-full">
-      <div className="flex flex-1 items-center justify-between rounded-lg border-2 bg-muted p-2">
+      <div className="flex flex-1 items-center justify-between rounded-lg border-2 bg-background p-2">
         <input
           ref={inputRef}
           name="message-edit-input"
           autoFocus
           value={editedMessage}
           onChange={(e) => setEditedMessage(e.target.value)}
-          className="bg-transparen flex-1 px-1 focus:outline-none"
+          className="flex-1 bg-transparent px-1 focus:outline-none"
           onKeyDown={handleKeyDown}
         />
         <div className="flex gap-1">

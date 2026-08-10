@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@workspace/ui/lib/utils";
+import React from "react";
 
 const themeOptions = [
   {
@@ -24,7 +25,7 @@ const themeOptions = [
   },
 ] as const;
 
-export function ThemeToggle() {
+function ThemeToggleComponent() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -72,3 +73,5 @@ export function ThemeToggle() {
     </div>
   );
 }
+
+export const ThemeToggle = React.memo(ThemeToggleComponent);

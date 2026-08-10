@@ -5,14 +5,12 @@ import type { NetworkListItem } from "./types";
 type NetworkAvatarProps = {
   network: NetworkListItem;
   active: boolean;
-  indicatorLayoutId: string;
   onClick: () => void;
 };
 
 export function NetworkAvatar({
   network,
   active,
-  indicatorLayoutId,
   onClick,
 }: NetworkAvatarProps) {
   return (
@@ -26,9 +24,14 @@ export function NetworkAvatar({
     >
       {active ? (
         <motion.span
-          layoutId={indicatorLayoutId}
-          className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-foreground"
-          transition={{ type: "spring", stiffness: 400, damping: 35 }}
+          layoutId="network-strip-active-indicator"
+          className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-foreground will-change-transform"
+          transition={{
+            type: "spring",
+            stiffness: 700,
+            damping: 40,
+            mass: 0.6,
+          }}
         />
       ) : null}
       <span

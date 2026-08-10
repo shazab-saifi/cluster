@@ -106,7 +106,10 @@ export const MessageActions = ({
           aria-label="Add reaction"
           className={actionClassName}
         >
-          <Smile className="size-6" />
+          <Smile
+            size={28}
+            className="size-6 fill-muted-foreground stroke-secondary dark:stroke-tertiary dark:hover:fill-foreground"
+          />
         </button>
 
         <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpenChange}>
