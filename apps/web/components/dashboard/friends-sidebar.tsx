@@ -44,8 +44,8 @@ export function FriendsSidebar({
           type="button"
           className="flex w-full items-center gap-2 text-left text-base font-semibold tracking-tight"
         >
-          <span className="min-w-0 truncate">Friends</span>
           <Users className="size-5 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 truncate">Friends</span>
         </button>
         <p className="text-xs text-muted-foreground">
           {friends.length.toLocaleString()} Direct Messages

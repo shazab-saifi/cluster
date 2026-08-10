@@ -8,6 +8,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:4000",
+  user: {
+    additionalFields: {
+      username: {
+        type: "string",
+        required: true,
+        input: false,
+      },
+    },
+  },
   trustedOrigins: [
     process.env.NODE_ENV === "development"
       ? "http://localhost:3000"
@@ -42,5 +51,32 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          if (user.username) return;
+          let baseIdentifier = "user";
+
+          if (user.name) {
+            baseIdentifier = user.name.replace(/\s+/g, "").toLowerCase();
+          } else if (user.email) {
+            baseIdentifier =
+              user.email.split("@")[0]?.toLowerCase() ?? "John Doe";
+          }
+
+          const random = Math.floor(Math.random() * 9999);
+          const autoUsername = `@${baseIdentifier}${random}`;
+
+          return {
+            data: {
+              ...user,
+              username: autoUsername,
+            },
+          };
+        },
+      },
+    },
   },
 });
