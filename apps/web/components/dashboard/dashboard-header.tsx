@@ -1,5 +1,6 @@
-import { Bell, Hash, LogOut, Inbox, UserPlus, Users } from "lucide-react";
+import { Bell, Hash, LogOut, Inbox } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
+import { TabSelect } from "@workspace/ui/components/tab-select";
 import { ThemeToggle } from "./theme-toggle";
 
 type DashboardHeaderProps = {
@@ -27,24 +28,11 @@ export function DashboardHeader({
           </>
         ) : (
           <>
-            <Users className="size-5 text-muted-foreground" />
-            <h1 className="truncate font-semibold">Friends</h1>
-            <div className="hidden h-6 w-px bg-border sm:block" />
-            <div className="hidden items-center gap-1 sm:flex">
-              <Button variant="secondary" size="sm">
-                Online
-              </Button>
-              <Button variant="ghost" size="sm">
-                All
-              </Button>
-              <Button variant="ghost" size="sm">
-                Pending
-              </Button>
-              <Button size="sm">
-                <UserPlus className="size-4" />
-                Add Friend
-              </Button>
-            </div>
+            <TabSelect
+              tabs={["Online", "All", "Pending"]}
+              tabClassName="px-3 py-1.5"
+              gap="16px"
+            />
           </>
         )}
       </div>

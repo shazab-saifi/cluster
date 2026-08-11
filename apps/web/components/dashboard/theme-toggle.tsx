@@ -66,7 +66,9 @@ function ThemeToggleComponent() {
                 transition={{ type: "spring", stiffness: 500, damping: 38 }}
               />
             ) : null}
-            <Icon className="relative z-10 size-4" />
+            <Icon
+              className={`relative z-10 size-4 transition-colors ${isActive && "fill-foreground"}`}
+            />
           </button>
         );
       })}
