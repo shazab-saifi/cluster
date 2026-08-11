@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
+import { XButton } from "@workspace/ui/components/x-button";
 import type { NetworkListItem } from "../types";
 import { AddMemberForm } from "./add-member-form";
 
@@ -60,15 +59,7 @@ export function AddMemberDialog({
               Create an invite link for {network.name}.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Close"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="size-4" />
-          </Button>
+          <XButton onClick={() => onOpenChange(false)} />
         </div>
 
         <AddMemberForm

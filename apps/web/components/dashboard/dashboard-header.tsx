@@ -30,7 +30,7 @@ export function DashboardHeader({
           <>
             <TabSelect
               tabs={["Online", "All", "Pending"]}
-              tabClassName="px-3 py-1.5"
+              tabClassName="px-4 py-1.5"
               gap="16px"
             />
           </>

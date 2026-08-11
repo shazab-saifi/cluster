@@ -1,16 +1,19 @@
 "use client";
 
+import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { getFriends, getMe } from "./api";
 import { DashboardHeader } from "./dashboard-header";
 import { EmptyFriends, FriendsSidebar } from "./friends-sidebar";
+import { SearchUserDialog } from "./friends-tabs/search-user";
 import NetworkStrip from "./network-strip";
 import { getNetworkList } from "./utils";
 
 export function FriendsDashboard() {
   const router = useRouter();
+  const [isSearchUserOpen, setIsSearchUserOpen] = React.useState(false);
   const { data: session } = authClient.useSession();
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["me"],
@@ -49,6 +52,7 @@ export function FriendsDashboard() {
         isLoading={isLoading}
         user={user}
         sessionUser={session?.user}
+        onAddFriendClick={() => setIsSearchUserOpen(true)}
       />
       <section className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader onSignOut={handleSignOut} />
@@ -75,6 +79,10 @@ export function FriendsDashboard() {
           </aside>
         </div>
       </section>
+      <SearchUserDialog
+        open={isSearchUserOpen}
+        onOpenChange={setIsSearchUserOpen}
+      />
     </main>
   );
 }

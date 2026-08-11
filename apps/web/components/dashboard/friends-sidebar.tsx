@@ -14,6 +14,7 @@ type FriendsSidebarProps = {
     name?: string | null;
     image?: string | null;
   };
+  onAddFriendClick?: () => void;
 };
 
 function getFriend(friendship: Friendship, user?: DashboardUser) {
@@ -27,6 +28,7 @@ export function FriendsSidebar({
   isLoading,
   user,
   sessionUser,
+  onAddFriendClick,
 }: FriendsSidebarProps) {
   const [friendQuery, setFriendQuery] = React.useState("");
   const filteredFriends = friends.filter((friendship) => {
@@ -54,6 +56,7 @@ export function FriendsSidebar({
       <div className="space-y-2 border-b p-4">
         <button
           type="button"
+          onClick={onAddFriendClick}
           className="flex h-auto w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <UserPlus className="size-5" />
