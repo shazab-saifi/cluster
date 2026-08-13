@@ -208,6 +208,7 @@ model Notification {
   @@map("notification")
   @@index([senderId])
   @@index([receiverId])
+  @@unique([senderId, receiverId])
 }
 
 enum NotificationTypes {

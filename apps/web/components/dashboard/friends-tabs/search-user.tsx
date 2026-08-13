@@ -5,12 +5,18 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { XButton } from "@workspace/ui/components/x-button";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDebounce } from "@workspace/ui/hooks/useDebounce";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { API_BASE_URL } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
 
 type SearchUserResult = {
   id: string;
@@ -26,32 +32,29 @@ type SearchUserDialogProps = {
 const SearchUser = () => {
   const [query, setQuery] = useState("");
   const { debouncedValue } = useDebounce(query, 500);
-  const { data, isPending, error, isError } = useQuery<SearchUserResult[]>({
-    queryKey: ["seached username", debouncedValue],
-    queryFn: async () => {
+  const { data, isLoading, error, isError } = useQuery<SearchUserResult[]>({
+    queryKey: ["searched username", debouncedValue],
+    queryFn: async ({ signal }) => {
       const res = await axios.get<SearchUserResult[]>(
-        `${API_BASE_URL}/user/search?q=${debouncedValue}`,
+        `${API_BASE_URL}/user/search?q=${debouncedValue.trim()}`,
         {
           withCredentials: true,
+          signal,
         }
       );
       return res.data;
     },
+    enabled: debouncedValue.trim().length > 0,
   });
 
   return (
     <div className="flex h-full w-full flex-col gap-6">
       <div className="flex w-full flex-col gap-6">
         <div className="flex w-full flex-col gap-1">
-          <h2
-            id="search-user-title"
-            className="text-base font-semibold text-foreground"
-          >
-            Add Friends
-          </h2>
-          <p className="text-sm font-medium text-muted-foreground">
+          <DialogTitle>Add Friends</DialogTitle>
+          <DialogDescription>
             You can send friend request to people using their username
-          </p>
+          </DialogDescription>
         </div>
 
         <div className="flex w-full items-center justify-between rounded-xl border-2 border-border bg-background px-4 py-2 shadow-[0_0_8px_rgba(0,0,0,0.25)]">
@@ -85,7 +88,7 @@ const SearchUser = () => {
               <Link href="/networks">Explore Networks</Link>
             </Button>
           </div>
-        ) : isPending ? (
+        ) : isLoading ? (
           <SearchUserSkeleton />
         ) : isError ? (
           <div className="flex flex-col items-center gap-2 px-2 py-8">
@@ -107,20 +110,12 @@ const SearchUser = () => {
               className="flex w-full items-center justify-between gap-4 rounded-xl border-b border-border px-2 py-4"
             >
               <div className="flex min-w-0 items-center gap-4">
-                <div className="relative size-8 shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={user.image}
-                    alt=""
-                    className="size-8 rounded-full object-cover"
-                  />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/figma/friends-search/online-badge.svg"
-                    alt=""
-                    className="absolute top-0 left-6 size-2"
-                  />
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={user.image}
+                  alt=""
+                  className="size-10 rounded-full object-cover"
+                />
                 <span className="min-w-0 truncate text-sm font-medium text-foreground">
                   {user.username}
                 </span>
@@ -138,14 +133,14 @@ const SearchUser = () => {
 function SearchUserSkeleton() {
   return (
     <>
-      {Array.from({ length: 4 }).map((_, idx) => (
+      {Array.from({ length: 6 }).map((_, idx) => (
         <div
           key={idx}
           className="flex w-full items-center justify-between gap-4 rounded-xl border-b border-border px-2 py-4"
         >
           <div className="flex min-w-0 items-center gap-4">
             <div className="relative size-8 shrink-0">
-              <Skeleton className="size-8 rounded-full" />
+              <Skeleton className="size-10 rounded-full" />
               <Skeleton className="absolute top-0 left-6 size-2 rounded-full" />
             </div>
             <Skeleton className="h-4 w-32" />
@@ -161,46 +156,12 @@ export function SearchUserDialog({
   open,
   onOpenChange,
 }: SearchUserDialogProps) {
-  useEffect(() => {
-    if (!open) return;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onOpenChange(false);
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [onOpenChange, open]);
-
-  if (!open) return null;
-
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 grid place-items-center bg-background/80 px-4 backdrop-blur-sm"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onOpenChange(false);
-        }
-      }}
-    >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="search-user-title"
-        className="flex h-140 w-full max-w-180 flex-col rounded-lg border bg-card p-5 shadow-xl"
-      >
-        <div className="mb-2 flex justify-end">
-          <XButton onClick={() => onOpenChange(false)} />
-        </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="h-140 w-full max-w-180">
         <SearchUser />
-      </section>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

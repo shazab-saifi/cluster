@@ -1,4 +1,4 @@
-import { Bell, Hash, LogOut, Inbox } from "lucide-react";
+import { Bell, Hash, LogOut } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { TabSelect } from "@workspace/ui/components/tab-select";
 import { ThemeToggle } from "./theme-toggle";
@@ -36,14 +36,11 @@ export function DashboardHeader({
           </>
         )}
       </div>
-      <div className="flex items-center gap-1">
-        <ThemeToggle />
-        <Button variant="ghost" size="icon-sm" aria-label="Inbox">
-          <Inbox className="size-4" />
-        </Button>
+      <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon-sm" aria-label="Notifications">
-          <Bell className="size-4" />
+          <Bell className="size-5 fill-foreground" />
         </Button>
+        <ThemeToggle />
         <Button
           variant="ghost"
           size="icon-sm"

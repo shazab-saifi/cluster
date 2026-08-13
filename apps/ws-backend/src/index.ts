@@ -304,12 +304,12 @@ async function unsubscribeChannel(channelId: string) {
 }
 
 async function subscribeToNotification(ws: WebSocket) {
-  await subscriber.subscribe("notification", (data) => {
+  await subscriber.subscribe("persisted-notification-event", (data) => {
     const notification: NotificationType = JSON.parse(data);
     const isRecevier = userSocketData.get(ws);
 
     if (isRecevier?.userId === notification.receiverId) {
-      ws.send(String(notification));
+      ws.send(JSON.stringify(notification));
     }
   });
 }

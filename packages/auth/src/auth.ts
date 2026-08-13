@@ -25,6 +25,11 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  advanced: {
+    database: {
+      generateId: () => crypto.randomUUID(),
+    },
+  },
   socialProviders: {
     google: {
       prompt: "select_account consent",

@@ -37,6 +37,7 @@ export const inviteCreateSchema = z.object({
 });
 
 export const notificationSchema = z.object({
+  eventType: z.literal("NOTIFICATION"),
   type: z.enum(["FRIEND_REQUEST", "ACCEPTED_REQUEST"]),
   senderId: z.uuid(),
   receiverId: z.uuid(),
