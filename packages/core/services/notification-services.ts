@@ -1,28 +1,9 @@
-import { prisma } from "@workspace/db";
-import { publisher } from "@workspace/redis";
-import { BadRequestError } from "@workspace/core/errors";
-
-export interface NotificationType {
-  eventType: "NOTIFICATION";
-  type: "FRIEND_REQUEST" | "ACCEPTED_REQUEST";
-  senderId: string;
-  receiverId: string;
-}
-
-export async function createManyNotification(
-  notifications: NotificationType[]
-) {
-  await prisma.notification.createMany({
-    data: notifications.map((notif) => ({
-      ...notif,
-      isRead: false,
-    })),
-  });
-}
+import { Notification, prisma } from "@workspace/db";
+import { publisher, redisClient } from "@workspace/redis";
 
 export async function getNotifications(userId: string, cursor: string) {
   const firstPage = await prisma.notification.findMany({
-    where: { receiverId: userId },
+    where: { userId: userId },
     take: 10,
     orderBy: { createdAt: "desc" },
   });
@@ -30,7 +11,7 @@ export async function getNotifications(userId: string, cursor: string) {
   const lastPage = firstPage[firstPage.length - 1];
   const nextPage = firstPage
     ? await prisma.notification.findMany({
-        where: { receiverId: userId },
+        where: { userId: userId },
         take: 10,
         cursor: { id: cursor },
         orderBy: { createdAt: "desc" },
@@ -40,37 +21,40 @@ export async function getNotifications(userId: string, cursor: string) {
   return { nextPage, lastPage };
 }
 
-export async function createNotification(notification: NotificationType) {
-  const [sender, receiver] = await Promise.all([
-    prisma.user.findUnique({ where: { id: notification.senderId } }),
-    prisma.user.findUnique({ where: { id: notification.receiverId } }),
-  ]);
+export type NotificationType = Omit<
+  Notification,
+  "id" | "createdAt" | "read" | "data"
+> & {
+  data?: any;
+};
 
-  if (!sender) {
-    throw new BadRequestError(
-      "Invalid senderId",
-      "Sender user does not exist."
-    );
-  }
-  if (!receiver) {
-    throw new BadRequestError(
-      "Invalid receiverId",
-      "Receiver user does not exist."
-    );
-  }
-
-  await prisma.notification.create({
-    data: {
-      type: notification.type,
-      senderId: notification.senderId,
-      receiverId: notification.receiverId,
+export async function createManyNotification(data: NotificationType[]) {
+  const notifications = await prisma.notification.createManyAndReturn({
+    data,
+    select: {
+      actor: {
+        select: {
+          id: true,
+          username: true,
+          image: true,
+        },
+      },
+      entityId: true,
+      entityType: true,
+      data: true,
     },
   });
+
+  await publisher.publish(
+    "notification.created",
+    JSON.stringify(notifications)
+  );
 }
 
-export async function publishNotification(notification: NotificationType) {
-  await publisher.publish(
-    "persisted-notification-event",
-    JSON.stringify(notification)
+export async function createNotificationEvent(payload: NotificationType) {
+  await redisClient.xAdd(
+    "notification:stream",
+    "*",
+    JSON.parse(JSON.stringify(payload))
   );
 }

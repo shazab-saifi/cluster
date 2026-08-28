@@ -5,6 +5,7 @@ import {
   ValidationError,
 } from "@workspace/core/errors";
 import * as friendServices from "@workspace/core/services/friends-services";
+import { createNotificationEvent } from "@workspace/core/services/notification-services";
 import express, { Request, Response, Router } from "express";
 
 export const friendshipRouter: Router = express.Router();
@@ -38,9 +39,17 @@ friendshipRouter.post("/add/:friendId", async (req: Request, res: Response) => {
   }
 
   try {
-    // TODO: A friend request notification needs to go to the receiver user
-    // EDIT: Shifted the notification event trigger in addFriend function
-    await friendServices.addFriend(userId, parsedFriendId.data);
+    const friendShip = await friendServices.createFriendShip(
+      userId,
+      parsedFriendId.data
+    );
+    await createNotificationEvent({
+      type: "FRIEND_REQUEST",
+      entityType: "friend_request",
+      entityId: friendShip.id,
+      userId: friendShip.receiverId,
+      actorId: friendShip.senderId,
+    });
 
     res.json({ msg: "friend request sent successfully" });
   } catch (error) {

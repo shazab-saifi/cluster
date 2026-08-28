@@ -1,33 +1,28 @@
-import { notificationSchema, uuidSchema } from "@lib/zod.schemas";
+import { uuidSchema } from "@lib/zod.schemas";
 import { sendErrorResponse, ValidationError } from "@workspace/core/errors";
 import express, { Request, Response, Router } from "express";
-import {
-  createNotification,
-  getNotifications,
-  publishNotification,
-} from "@workspace/core/services/notification-services";
+import { getNotifications } from "@workspace/core/services/notification-services";
 
 export const notifRouter: Router = express.Router();
 
-notifRouter.post("/", async (req: Request, res: Response) => {
-  const { data, success, error } = notificationSchema.safeParse(req.body);
+// notifRouter.post("/", async (req: Request, res: Response) => {
+//   const { data, success, error } = notificationSchema.safeParse(req.body);
 
-  try {
-    if (!success) {
-      throw new ValidationError(
-        "Invalid inputs",
-        error.issues[0]?.message ?? "Please check the body"
-      );
-    }
+//   try {
+//     if (!success) {
+//       throw new ValidationError(
+//         "Invalid inputs",
+//         error.issues[0]?.message ?? "Please check the body"
+//       );
+//     }
 
-    await createNotification(data);
-    await publishNotification(data);
+//     await createNotification(data);
 
-    res.json({ msg: "Notification sent", data });
-  } catch (error) {
-    sendErrorResponse(res, error, { path: req.originalUrl });
-  }
-});
+//     res.json({ msg: "Notification sent", data });
+//   } catch (error) {
+//     sendErrorResponse(res, error, { path: req.originalUrl });
+//   }
+// });
 
 notifRouter.get("/", async (req: Request, res: Response) => {
   const parsedCursor = uuidSchema.safeParse(req.params.cursor);

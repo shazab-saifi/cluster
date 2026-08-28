@@ -7,10 +7,12 @@ import { XButton } from "@workspace/ui/components/x-button";
 import Link from "next/link";
 import { useState } from "react";
 import { useDebounce } from "@workspace/ui/hooks/useDebounce";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Skeleton } from "@workspace/ui/components/skeleton";
+import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +33,9 @@ type SearchUserDialogProps = {
 
 const SearchUser = () => {
   const [query, setQuery] = useState("");
+  const [sentToUserIds, setSentToUserIds] = useState<Set<string>>(new Set());
+  const { data: session } = authClient.useSession();
+  const currentUserId = session?.user?.id;
   const { debouncedValue } = useDebounce(query, 500);
   const { data, isLoading, error, isError } = useQuery<SearchUserResult[]>({
     queryKey: ["searched username", debouncedValue],
@@ -45,6 +50,27 @@ const SearchUser = () => {
       return res.data;
     },
     enabled: debouncedValue.trim().length > 0,
+  });
+
+  const sendFriendRequest = useMutation({
+    mutationFn: (receiverId: string) =>
+      axios.post(
+        `${API_BASE_URL}/notifications`,
+        {
+          eventType: "NOTIFICATION",
+          type: "FRIEND_REQUEST",
+          senderId: currentUserId,
+          receiverId,
+        },
+        { withCredentials: true }
+      ),
+    onSuccess: (_data, receiverId) => {
+      setSentToUserIds((prev) => new Set(prev).add(receiverId));
+      toast.success("Friend request sent.");
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "Could not send friend request."));
+    },
   });
 
   return (
@@ -104,31 +130,60 @@ const SearchUser = () => {
             No users found
           </p>
         ) : (
-          data?.map((user) => (
-            <div
-              key={user.id}
-              className="flex w-full items-center justify-between gap-4 rounded-xl border-b border-border px-2 py-4"
-            >
-              <div className="flex min-w-0 items-center gap-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={user.image}
-                  alt=""
-                  className="size-10 rounded-full object-cover"
-                />
-                <span className="min-w-0 truncate text-sm font-medium text-foreground">
-                  {user.username}
-                </span>
-              </div>
+          data?.map((user) => {
+            const isSent = sentToUserIds.has(user.id);
+            const isPending =
+              sendFriendRequest.isPending &&
+              sendFriendRequest.variables === user.id;
 
-              <Button type="button">Send Friend Request</Button>
-            </div>
-          ))
+            return (
+              <div
+                key={user.id}
+                className="flex w-full items-center justify-between gap-4 rounded-xl border-b border-border px-2 py-4"
+              >
+                <div className="flex min-w-0 items-center gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={user.image}
+                    alt=""
+                    className="size-10 rounded-full object-cover"
+                  />
+                  <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                    {user.username}
+                  </span>
+                </div>
+
+                <Button
+                  type="button"
+                  disabled={isSent || isPending}
+                  onClick={() => sendFriendRequest.mutate(user.id)}
+                >
+                  {isSent ? "Request Sent" : "Send Friend Request"}
+                </Button>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
   );
 };
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (
+    axios.isAxiosError<{ error?: { message?: string; suggestion?: string } }>(
+      error
+    )
+  ) {
+    return (
+      error.response?.data?.error?.message ??
+      error.response?.data?.error?.suggestion ??
+      fallback
+    );
+  }
+
+  return fallback;
+}
 
 function SearchUserSkeleton() {
   return (

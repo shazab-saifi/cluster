@@ -25,8 +25,8 @@ model User {
   sentFriendships        Friendship[]     @relation("sender")
   receivedFriendships    Friendship[]     @relation("receiver")
   createdInvites         Invite[]
-  sentNotifications      Notification[]   @relation("sender")
-  receivedNotifications  Notification[]   @relation("receiver")
+  sentNotifications      Notification[]   @relation("actor")
+  receivedNotifications  Notification[]   @relation("user")
 
   @@index([name])
   @@unique([email])
@@ -198,20 +198,25 @@ model Invite {
 model Notification {
   id         String            @id @default(uuid())
   type       NotificationTypes
-  isRead     Boolean           @default(false)
-  senderId   String
-  receiverId String
-  sender     User              @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver   User              @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  read       Boolean           @default(false)
+  actorId    String
+  userId     String
+  entityType String?
+  entityId   String?
+  data       Json?
   createdAt  DateTime          @default(now())
 
+  actor      User              @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
+  user       User              @relation("user", fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("notification")
-  @@index([senderId])
-  @@index([receiverId])
-  @@unique([senderId, receiverId])
+  @@index([actorId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@unique([actorId, userId])
 }
 
 enum NotificationTypes {
   FRIEND_REQUEST
-  ACCEPTED_REQUEST
+  MENTION
+  REACTION
 }
