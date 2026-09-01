@@ -122,3 +122,14 @@ export async function addMember(networkId: string, userId: string) {
     },
   });
 }
+
+export async function removeMember(networkId: string, userId: string) {
+  return await prisma.networkMembers.delete({
+    where: {
+      userId_networkId: {
+        networkId,
+        userId,
+      },
+    },
+  });
+}

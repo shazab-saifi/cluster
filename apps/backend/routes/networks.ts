@@ -76,19 +76,19 @@ networksRouter.get("/search", async (req: Request, res: Response) => {
 
 networksRouter.get("/:networkId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+  const networknetworkIdParsed = uuidSchema.safeParse(req.params.networkId);
 
-  if (!networkIdParsed.success) {
+  if (!networknetworkIdParsed.success) {
     throw new ValidationError(
       "Invalid network id",
-      networkIdParsed.error.issues[0]?.message ??
+      networknetworkIdParsed.error.issues[0]?.message ??
         "Param networkId should be a valid uuid"
     );
   }
 
   try {
     const network = await networksServices.getNetworkById(
-      networkIdParsed.data,
+      networknetworkIdParsed.data,
       userId
     );
 
@@ -100,16 +100,17 @@ networksRouter.get("/:networkId", async (req: Request, res: Response) => {
   }
 });
 
-networksRouter.patch("/:id", async (req: Request, res: Response) => {
+networksRouter.patch("/:networkId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
-  const idParsed = uuidSchema.safeParse(req.params.id);
+  const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
 
   const { success, error, data } = networkInfoUpdateSchema.safeParse(req.body);
 
-  if (!idParsed.success) {
+  if (!networkIdParsed.success) {
     throw new ValidationError(
       "Invalid network id",
-      idParsed.error.issues[0]?.message ?? "Param id should be a valid uuid"
+      networkIdParsed.error.issues[0]?.message ??
+        "Param id should be a valid uuid"
     );
   }
 
@@ -134,7 +135,7 @@ networksRouter.patch("/:id", async (req: Request, res: Response) => {
 
   try {
     const updatedData = await networksServices.updateNetworkInfo(
-      idParsed.data,
+      networkIdParsed.data,
       userId,
       newData
     );
@@ -146,3 +147,29 @@ networksRouter.patch("/:id", async (req: Request, res: Response) => {
     });
   }
 });
+
+networksRouter.delete(
+  "/:networkId/members/me",
+  async (req: Request, res: Response) => {
+    const userId = req.user?.id as string;
+    const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+
+    if (!networkIdParsed.success) {
+      throw new ValidationError(
+        "Invalid network id",
+        networkIdParsed.error.issues[0]?.message ??
+          "Param id should be a valid uuid"
+      );
+    }
+
+    try {
+      await networksServices.removeMember(networkIdParsed.data, userId);
+
+      res.json({ msg: "Left network successfuly" });
+    } catch (error) {
+      return sendErrorResponse(res, error, {
+        path: req.originalUrl,
+      });
+    }
+  }
+);

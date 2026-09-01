@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { ActiveNow } from "./active-now";
 import { AddMemberDialog } from "./add-member/add-member-dialog";
-import { getMe, getNetworkDetails } from "./api";
+import { getMe, getNetworkDetails, leaveNetwork } from "./api";
 import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import { DashboardHeader } from "./dashboard-header";
@@ -21,6 +22,7 @@ type DashboardProps = {
 
 export function Dashboard({ networkId }: DashboardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
@@ -50,6 +52,35 @@ export function Dashboard({ networkId }: DashboardProps) {
   const activeChannel = channels.find(
     (channel) => channel.id === activeChannelId
   );
+
+  const leaveNetworkMutation = useMutation({
+    mutationFn: leaveNetwork,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["network", networkId] });
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+
+      const refreshedMe = await queryClient.fetchQuery({
+        queryKey: ["me"],
+        queryFn: getMe,
+      });
+      const remainingNetworks = getNetworkList(refreshedMe.userData).filter(
+        (network) => network.id !== networkId
+      );
+
+      setActiveChannelId(undefined);
+      setIsAddMemberOpen(false);
+      setIsCreateChannelOpen(false);
+
+      toast.success("Left network.");
+
+      const nextNetwork = remainingNetworks[0];
+      router.replace(nextNetwork ? `/networks/${nextNetwork.id}` : "/friends");
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   React.useEffect(() => {
     const set = () => setActiveChannelId(undefined);
@@ -102,6 +133,8 @@ export function Dashboard({ networkId }: DashboardProps) {
         user={user}
         sessionUser={session?.user}
         onAddMember={() => setIsAddMemberOpen(true)}
+        onLeaveNetwork={() => leaveNetworkMutation.mutate(networkId)}
+        isLeavingNetwork={leaveNetworkMutation.isPending}
         onCreateChannel={() => setIsCreateChannelOpen(true)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
         setIsChatOpen={setActiveChannelId}

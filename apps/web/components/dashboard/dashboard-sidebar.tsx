@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  ChevronDown,
   CircleAlert,
   LoaderCircle,
   Plus,
@@ -10,6 +9,7 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { ChannelRow } from "./channel-actions/channel-row";
 import type { Channel, DashboardUser, NetworkListItem } from "./types";
+import { ActiveNetworkMenu } from "./active-network-menu";
 import { UserFooter } from "./user-footer";
 
 type DashboardSidebarProps = {
@@ -23,6 +23,8 @@ type DashboardSidebarProps = {
     image?: string | null;
   };
   onAddMember: () => void;
+  onLeaveNetwork: () => void;
+  isLeavingNetwork: boolean;
   activeChannelId?: string;
   onCreateChannel: () => void;
   onCreateNetwork: () => void;
@@ -37,6 +39,8 @@ export function DashboardSidebar({
   user,
   sessionUser,
   onAddMember,
+  onLeaveNetwork,
+  isLeavingNetwork,
   onCreateChannel,
   setIsChatOpen,
   activeChannelId,
@@ -49,15 +53,11 @@ export function DashboardSidebar({
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-background md:flex">
       <div className="space-y-2 border-b px-8 py-4">
-        <button
-          type="button"
-          className="flex w-full items-center gap-2 text-left text-base font-semibold tracking-tight"
-        >
-          <span className="min-w-0 truncate">
-            {activeNetwork?.name ?? "Network"}
-          </span>
-          <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
-        </button>
+        <ActiveNetworkMenu
+          activeNetwork={activeNetwork}
+          isLeaving={isLeavingNetwork}
+          onLeave={onLeaveNetwork}
+        />
         <p className="text-xs text-muted-foreground">
           {activeNetwork?.memberCount !== undefined &&
             activeNetwork.memberCount.toLocaleString()}{" "}
@@ -69,7 +69,7 @@ export function DashboardSidebar({
           type="button"
           className="flex h-auto w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           onClick={onAddMember}
-          disabled={!activeNetwork}
+          disabled={!activeNetwork || isLeavingNetwork}
         >
           <UserPlus className="size-5" />
           Invite to Network
@@ -95,7 +95,7 @@ export function DashboardSidebar({
             aria-label="Create channel"
             title="Create channel"
             className="rounded-md p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-            disabled={!activeNetwork}
+            disabled={!activeNetwork || isLeavingNetwork}
             onClick={onCreateChannel}
           >
             <Plus className="size-4" />

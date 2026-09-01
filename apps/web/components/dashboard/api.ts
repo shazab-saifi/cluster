@@ -44,3 +44,28 @@ export async function getFriends() {
     throw new Error("Could not load your friends.");
   }
 }
+
+export async function leaveNetwork(networkId: string) {
+  try {
+    const response = await axios.delete<{ msg: string }>(
+      `${API_BASE_URL}/networks/${networkId}/members/me`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not leave network."));
+  }
+}
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<{ message?: string; details?: string }>(error)) {
+    return (
+      error.response?.data?.details ?? error.response?.data?.message ?? fallback
+    );
+  }
+
+  return fallback;
+}
