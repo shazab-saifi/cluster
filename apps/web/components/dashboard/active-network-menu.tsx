@@ -55,15 +55,12 @@ export function ActiveNetworkMenu({
   }, [activeNetwork]);
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={activeNetwork ? openMenu : undefined}
-      onMouseLeave={activeNetwork ? closeMenu : undefined}
-      onFocus={activeNetwork ? openMenu : undefined}
-      onBlur={activeNetwork ? closeMenu : undefined}
-    >
-      <button
-        type="button"
+    <div className="relative">
+      <span
+        onMouseEnter={activeNetwork ? openMenu : undefined}
+        onMouseLeave={activeNetwork ? closeMenu : undefined}
+        onFocus={activeNetwork ? openMenu : undefined}
+        onBlur={activeNetwork ? closeMenu : undefined}
         className="flex w-fit items-center gap-2 text-left text-base font-semibold tracking-tight"
       >
         <span className="min-w-0 truncate">
@@ -75,7 +72,7 @@ export function ActiveNetworkMenu({
             isOpen && "rotate-180 text-foreground"
           )}
         />
-      </button>
+      </span>
       {activeNetwork && isOpen ? (
         <div
           className="absolute top-full left-0 z-20 mt-2 min-w-44 rounded-lg border bg-card p-1 text-card-foreground shadow-xl"

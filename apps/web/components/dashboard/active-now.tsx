@@ -1,5 +1,4 @@
 import { Hash } from "lucide-react";
-
 import type { NetworkListItem } from "./types";
 import { getInitials } from "@workspace/ui/lib/utils";
 
@@ -9,7 +8,7 @@ type ActiveNowProps = {
 
 export function ActiveNow({ activeNetwork }: ActiveNowProps) {
   return (
-    <aside className="hidden w-[360px] shrink-0 border-l p-5 xl:block">
+    <aside className="hidden w-90 shrink-0 border-l p-5 xl:block">
       <h2 className="mb-4 text-lg font-bold">Active Now</h2>
       <div className="rounded-lg border bg-card p-4">
         <div className="flex items-center gap-3">

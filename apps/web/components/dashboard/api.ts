@@ -15,6 +15,20 @@ export async function getMe() {
   }
 }
 
+export async function updateMe(
+  data: Partial<{ name: string; bio: string; image: string }>
+) {
+  try {
+    const response = await axios.patch<MeResponse>(`${API_BASE_URL}/me`, data, {
+      withCredentials: true,
+    });
+
+    return response.data;
+  } catch {
+    throw new Error("Could not update your profile.");
+  }
+}
+
 export async function getNetworkDetails(networkId: string) {
   try {
     const response = await axios.get<NetworkDetails>(

@@ -7,7 +7,8 @@
     "NODE_ENV",
     "BETTER_AUTH_URL",
     "RESEND_API_KEY",
-    "S3_BUCKET_NAME"
+    "S3_BUCKET_NAME",
+    "CLOUDFRONT_URL"
   ],
   "tasks": {
     "build": {

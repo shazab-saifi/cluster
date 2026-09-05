@@ -1,7 +1,8 @@
 import { ChevronsUpDown } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
-import type { DashboardUser } from "./types";
 import { getInitials } from "@workspace/ui/lib/utils";
+import { UserDialog } from "./user-manage/user-dialog";
+import type { DashboardUser } from "./types";
 
 type UserFooterProps = {
   user?: DashboardUser;
@@ -32,15 +33,21 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
         </span>
       </div>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-lg"
-        aria-label="Settings"
-        title="Settings"
-      >
-        <ChevronsUpDown className="size-5" />
-      </Button>
+      <UserDialog
+        user={user}
+        sessionUser={sessionUser}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-lg"
+            aria-label="Open profile settings"
+            title="Open profile settings"
+          >
+            <ChevronsUpDown className="size-5" />
+          </Button>
+        }
+      />
     </div>
   );
 }

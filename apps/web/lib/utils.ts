@@ -25,6 +25,8 @@ export const SOCKET_URL =
     ? "http://localhost:8080"
     : "https://cluster.shazab.site";
 
+export const CLOUDFRONT_URL = "d2kq9cu6475t3.cloudfront.net";
+
 export async function getPresignedUrl(filename: string, filetype: string) {
   const res = await axios.post(
     `${API_BASE_URL}/generate-presigned-url`,
@@ -45,7 +47,7 @@ export async function uploadToS3(presignedUrl: string, fileObject: File) {
     },
   });
 
-  return res;
+  return res.data;
 }
 
 export const contextFetcher = async <T>({
