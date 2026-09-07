@@ -8,12 +8,14 @@ import { getFriends, getMe } from "./api";
 import { DashboardHeader } from "./dashboard-header";
 import { EmptyFriends, FriendsSidebar } from "./friends-sidebar";
 import { SearchUserDialog } from "./friends-tabs/search-user";
+import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import NetworkStrip from "./network-strip";
 import { getNetworkList } from "./utils";
 
 export function FriendsDashboard() {
   const router = useRouter();
   const [isSearchUserOpen, setIsSearchUserOpen] = React.useState(false);
+  const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
   const { data: session } = authClient.useSession();
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["me"],
@@ -45,7 +47,7 @@ export function FriendsDashboard() {
       <NetworkStrip
         networks={networks}
         isLoading={isProfileLoading}
-        onCreateNetwork={() => {}}
+        onCreateNetwork={() => setIsCreateNetworkOpen(true)}
       />
       <FriendsSidebar
         friends={friends}
@@ -82,6 +84,10 @@ export function FriendsDashboard() {
       <SearchUserDialog
         open={isSearchUserOpen}
         onOpenChange={setIsSearchUserOpen}
+      />
+      <CreateNetworkDialog
+        open={isCreateNetworkOpen}
+        onOpenChange={setIsCreateNetworkOpen}
       />
     </main>
   );

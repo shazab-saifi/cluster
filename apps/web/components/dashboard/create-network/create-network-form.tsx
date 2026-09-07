@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
@@ -11,10 +12,29 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
-import { cn } from "@workspace/ui/lib/utils";
+import { Image } from "lucide-react";
+import { CameraIcon } from "@phosphor-icons/react";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
+import { cn, getInitials } from "@workspace/ui/lib/utils";
+import { AvatarCropper } from "../avatar-cropper";
 import { createNetwork } from "./api";
 import { createNetworkSchema, CreateNetworkValues } from "./schema";
 import { Textarea } from "@workspace/ui/components/textarea";
+
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [meta, base64] = dataUrl.split(",");
+  const mime = meta?.match(/data:(.*?);/)?.[1] ?? "image/jpeg";
+  const binary = atob(base64!);
+  const array = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    array[i] = binary.charCodeAt(i);
+  }
+  return new Blob([array], { type: mime });
+}
 
 type CreateNetworkFormProps = {
   onCancel: () => void;
@@ -39,6 +59,10 @@ export function CreateNetworkForm({
   onCreated,
 }: CreateNetworkFormProps) {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropSource, setCropSource] = useState<string | null>(null);
+  const [cropPreview, setCropPreview] = useState<string | null>(null);
+  const [isCropping, setIsCropping] = useState(false);
   const mutation = useMutation({
     mutationFn: createNetwork,
     onSuccess: async () => {
@@ -62,6 +86,12 @@ export function CreateNetworkForm({
     },
   });
 
+  const handleCropCancel = () => {
+    if (cropSource) URL.revokeObjectURL(cropSource);
+    setCropSource(null);
+    setIsCropping(false);
+  };
+
   return (
     <form
       id="create-network-form"
@@ -72,6 +102,79 @@ export function CreateNetworkForm({
       }}
     >
       <FieldGroup>
+        <form.Field name="image">
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+
+            return (
+              <Field data-invalid={isInvalid}>
+                <div className="flex justify-center">
+                  <input
+                    ref={fileInputRef}
+                    id={field.name}
+                    type="file"
+                    accept="image/png, image/jpeg, image/webp"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      setCropSource(URL.createObjectURL(file));
+                      setIsCropping(true);
+                      event.target.value = "";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Upload a network avatar"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="group relative shrink-0 cursor-pointer"
+                  >
+                    <Avatar className="size-20">
+                      <AvatarImage
+                        src={cropPreview ?? undefined}
+                        alt="Network avatar"
+                      />
+                      <AvatarFallback className="text-lg font-semibold text-foreground">
+                        {getInitials(form.state.values.name?.trim() ?? "") || (
+                          <Image className="size-6 text-muted-foreground" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                      <CameraIcon className="size-6 text-white" weight="bold" />
+                    </span>
+                  </button>
+                </div>
+                <FieldDescription className="text-center">
+                  Optional, select an avatar for the network and crop it.
+                </FieldDescription>
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+
+                {cropSource && isCropping && (
+                  <AvatarCropper
+                    open
+                    imageSrc={cropSource}
+                    onCancel={handleCropCancel}
+                    onConfirm={(dataUrl) => {
+                      const file = new File(
+                        [dataUrlToBlob(dataUrl)],
+                        "avatar.jpg",
+                        { type: "image/jpeg" }
+                      );
+                      field.handleChange(file);
+                      setCropPreview(dataUrl);
+                      if (cropSource) URL.revokeObjectURL(cropSource);
+                      setCropSource(null);
+                      setIsCropping(false);
+                    }}
+                  />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
+
         <form.Field name="name">
           {(field) => {
             const isInvalid =
@@ -93,32 +196,6 @@ export function CreateNetworkForm({
                 />
                 <FieldDescription>
                   Choose a short name that members will recognize.
-                </FieldDescription>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
-
-        <form.Field name="image">
-          {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
-
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Avatar</FieldLabel>
-                <Input
-                  id={field.name}
-                  type="file"
-                  accept="image/png, image/jpeg, image/webp"
-                  onChange={(event) => {
-                    if (!event.target.files) return;
-                    field.handleChange(event.target.files[0]);
-                  }}
-                />
-                <FieldDescription>
-                  Optional, Select an avatar for network.
                 </FieldDescription>
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>

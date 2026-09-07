@@ -33,6 +33,8 @@ export function Dashboard({ networkId }: DashboardProps) {
     queryFn: getMe,
   });
 
+  console.log(isCreateNetworkOpen);
+
   const user = data?.userData;
   const networks = React.useMemo(() => getNetworkList(user), [user]);
   const selectedNetwork = networks.find((network) => network.id === networkId);

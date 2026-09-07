@@ -84,7 +84,7 @@ function NetworkStrip({
           type="button"
           aria-label="Add a network"
           title="Add a network"
-          className="group grid size-11 place-items-center rounded-xl bg-secondary text-(--text-primary) transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="group grid size-11 cursor-pointer place-items-center rounded-xl bg-secondary text-(--text-primary) transition-colors hover:bg-primary hover:text-primary-foreground"
           onClick={onCreateNetwork}
         >
           <CirclePlus

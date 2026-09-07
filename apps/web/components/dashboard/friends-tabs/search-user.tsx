@@ -106,7 +106,7 @@ const SearchUser = () => {
       <div className="flex w-full flex-1 flex-col overflow-y-auto">
         {query.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-2 py-8">
-            <p className="max-w-xs text-center text-sm font-medium text-muted-foreground">
+            <p className="max-w-sm text-center text-sm font-medium text-balance text-muted-foreground">
               Don&apos;t know anyone? Discover communities through our networks
               page and connect to people
             </p>
