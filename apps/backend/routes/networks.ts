@@ -74,6 +74,46 @@ networksRouter.get("/search", async (req: Request, res: Response) => {
   }
 });
 
+networksRouter.get(
+  "/:networkId/members/search",
+  async (req: Request, res: Response) => {
+    const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+    const query = req.query.q;
+
+    if (!networkIdParsed.success) {
+      throw new ValidationError(
+        "Invalid network id",
+        networkIdParsed.error.issues[0]?.message ??
+          "Param networkId should be a valid uuid"
+      );
+    }
+
+    if (typeof query !== "string" || query.trim() === "") {
+      throw new BadRequestError(
+        "No 'q' query was provided in the URI!",
+        "Provide the q query parameter and try again."
+      );
+    }
+
+    const cursor =
+      typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+
+    try {
+      const result = await networksServices.searchNetworkMembers(
+        networkIdParsed.data,
+        query,
+        cursor
+      );
+
+      res.json(result);
+    } catch (error) {
+      return sendErrorResponse(res, error, {
+        path: req.originalUrl,
+      });
+    }
+  }
+);
+
 networksRouter.get("/:networkId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const networknetworkIdParsed = uuidSchema.safeParse(req.params.networkId);
