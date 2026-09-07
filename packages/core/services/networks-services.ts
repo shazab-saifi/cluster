@@ -123,6 +123,41 @@ export async function addMember(networkId: string, userId: string) {
   });
 }
 
+export async function searchNetworkMembers(
+  networkId: string,
+  query: string,
+  cursor?: string
+) {
+  const members = await prisma.networkMembers.findMany({
+    where: {
+      networkId,
+      user: {
+        username: {
+          startsWith: query,
+          mode: "insensitive",
+        },
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          image: true,
+        },
+      },
+    },
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : 0,
+    take: 50,
+  });
+
+  const nextCursor =
+    members.length === 50 ? members[members.length - 1]?.id : null;
+
+  return { members, nextCursor };
+}
+
 export async function removeMember(networkId: string, userId: string) {
   return await prisma.networkMembers.delete({
     where: {

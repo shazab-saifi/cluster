@@ -6,7 +6,7 @@ import { Input } from "@workspace/ui/components/input";
 import { XButton } from "@workspace/ui/components/x-button";
 import Link from "next/link";
 import { useState } from "react";
-import { useDebounce } from "@workspace/ui/hooks/useDebounce";
+import { useDebounce } from "@workspace/ui/hooks/use-debounce";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Skeleton } from "@workspace/ui/components/skeleton";

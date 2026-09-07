@@ -24,7 +24,7 @@ type UserDialogProps = {
   trigger: React.ReactNode;
 };
 
-export function UserDialog({ user, sessionUser, trigger }: UserDialogProps) {
+export function UserDialog({ user, trigger }: UserDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>("account");
   const [open, setOpen] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
