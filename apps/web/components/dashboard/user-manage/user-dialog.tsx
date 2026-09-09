@@ -1,16 +1,22 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { DashboardUser } from "../types";
+import { ArrowLeft } from "lucide-react";
+import type { DashboardUser, NetworkDetails } from "../types";
 import {
   Dialog,
   DialogContent,
+  DialogLayout,
+  DialogMain,
+  DialogSidebar,
+  DialogSidebarNav,
+  DialogSidebarTab,
+  DialogSidebarTitle,
   DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import { Button } from "@workspace/ui/components/button";
-import { SidebarNav } from "./sidebar-nav";
 import { ProfileForm, type ProfileFormHandle } from "../profile-form";
-import { NetworksContent } from "./networks-content";
+import { NetworksContent, NetworkDetailsContent } from "./networks-content";
 import { FriendsContent } from "./friends-content";
 import { SettingsContent } from "./settings-content";
 import { tabs, type TabId } from "./constants";
@@ -28,14 +34,49 @@ export function UserDialog({ user, trigger }: UserDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>("account");
   const [open, setOpen] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
+  const [isProfileDirty, setIsProfileDirty] = useState(false);
+  const [isNetworkDirty, setIsNetworkDirty] = useState(false);
+  const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(
+    null
+  );
   const profileFormRef = useRef<ProfileFormHandle>(null);
+  const networkFormRef = useRef<React.ComponentRef<
+    typeof NetworkDetailsContent
+  > | null>(null);
 
   if (!user) return null;
+
+  const selectedNetwork = selectedNetworkId
+    ? (user.networks.find((network) => network.id === selectedNetworkId) as
+        | NetworkDetails
+        | undefined)
+    : undefined;
+
+  const isNetworkDetails = activeTab === "networks" && !!selectedNetwork;
+
+  const activeLabel = isNetworkDetails
+    ? "Network Settings"
+    : tabs.find((tab) => tab.id === activeTab)?.label;
+
+  const activeDescription = isNetworkDetails
+    ? "Update your network details and manage channels."
+    : activeTab === "account"
+      ? "Review your public profile details."
+      : "Content for this section will be added next.";
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "networks":
-        return <NetworksContent />;
+        return isNetworkDetails && selectedNetwork ? (
+          <NetworkDetailsContent
+            network={selectedNetwork}
+            ref={networkFormRef}
+            onPendingChange={setIsMutating}
+            onDirtyChange={setIsNetworkDirty}
+          />
+        ) : (
+          <NetworksContent onManageNetwork={setSelectedNetworkId} />
+        );
       case "friends":
         return <FriendsContent />;
       case "settings":
@@ -46,6 +87,7 @@ export function UserDialog({ user, trigger }: UserDialogProps) {
             user={user}
             ref={profileFormRef}
             onPendingChange={setIsMutating}
+            onDirtyChange={setIsProfileDirty}
           />
         );
     }
@@ -59,19 +101,50 @@ export function UserDialog({ user, trigger }: UserDialogProps) {
         className="w-[min(960px,calc(100%-2rem))] max-w-4xl gap-0 overflow-hidden p-0"
         showCloseButton
       >
-        <div className="grid h-140 md:grid-cols-[220px_minmax(0,1fr)]">
-          <SidebarNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <DialogLayout>
+          <DialogSidebar>
+            <DialogSidebarTitle>Manage</DialogSidebarTitle>
+            <DialogSidebarNav>
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
 
-          <section className="custom-scrollbar flex flex-col overflow-y-auto p-6">
+                return (
+                  <DialogSidebarTab
+                    key={tab.id}
+                    active={activeTab === tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    <Icon className="size-5" />
+                    <span>{tab.label}</span>
+                  </DialogSidebarTab>
+                );
+              })}
+            </DialogSidebarNav>
+          </DialogSidebar>
+
+          <DialogMain>
             <div className="flex-1 space-y-4 pr-1">
+              {isNetworkDetails && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMutating(false);
+                    setIsNetworkDirty(false);
+                    setSelectedNetworkId(null);
+                  }}
+                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4" />
+                  Back to networks
+                </button>
+              )}
+
               <div>
                 <h2 className="text-lg font-semibold text-foreground">
-                  {tabs.find((tab) => tab.id === activeTab)?.label}
+                  {activeLabel}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {activeTab === "account"
-                    ? "Review your public profile details."
-                    : "Content for this section will be added next."}
+                  {activeDescription}
                 </p>
               </div>
 
@@ -89,14 +162,25 @@ export function UserDialog({ user, trigger }: UserDialogProps) {
               <Button
                 type="button"
                 variant="primary"
-                disabled={activeTab !== "account" || isMutating}
-                onClick={() => profileFormRef.current?.submit()}
+                disabled={
+                  (activeTab !== "account" && !isNetworkDetails) ||
+                  isMutating ||
+                  (activeTab === "account" && !isProfileDirty) ||
+                  (isNetworkDetails && !isNetworkDirty)
+                }
+                onClick={() => {
+                  if (isNetworkDetails) {
+                    networkFormRef.current?.submit();
+                  } else {
+                    profileFormRef.current?.submit();
+                  }
+                }}
               >
                 {isMutating ? "Updating..." : "Update"}
               </Button>
             </div>
-          </section>
-        </div>
+          </DialogMain>
+        </DialogLayout>
       </DialogContent>
     </Dialog>
   );

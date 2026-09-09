@@ -44,6 +44,25 @@ export async function getNetworkDetails(networkId: string) {
   }
 }
 
+export async function updateNetwork(
+  networkId: string,
+  data: Partial<{ name: string; desc: string; image: string }>
+) {
+  try {
+    const response = await axios.patch<NetworkDetails>(
+      `${API_BASE_URL}/networks/${networkId}`,
+      data,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not update network."));
+  }
+}
+
 export async function getFriends() {
   try {
     const response = await axios.get<Friendship[]>(

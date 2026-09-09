@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -52,16 +52,19 @@ const networkSchema = z.object({
 export type NetworkDetailsFormHandle = {
   submit: () => void;
   isPending: boolean;
+  isDirty: boolean;
 };
 
 export function NetworkDetailsForm({
   network,
   ref,
   onPendingChange,
+  onDirtyChange,
 }: {
   network: NetworkDetails;
   ref?: React.Ref<NetworkDetailsFormHandle>;
   onPendingChange?: (pending: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -86,10 +89,14 @@ export function NetworkDetailsForm({
         image,
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["me"] });
       await queryClient.invalidateQueries({
         queryKey: ["network", network.id],
+      });
+      form.reset({
+        name: data.name,
+        description: data.description ?? "",
       });
       toast.success("Network updated successfully.");
     },
@@ -133,6 +140,9 @@ export function NetworkDetailsForm({
     },
   });
 
+  const formIsDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = formIsDirty || !!avatarFile;
+
   useImperativeHandle(
     ref,
     () => ({
@@ -140,13 +150,18 @@ export function NetworkDetailsForm({
         form.handleSubmit();
       },
       isPending: mutation.isPending,
+      isDirty,
     }),
-    [form, mutation.isPending]
+    [form, mutation.isPending, isDirty]
   );
 
   useEffect(() => {
     onPendingChange?.(mutation.isPending);
   }, [mutation.isPending, onPendingChange]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const handleCropConfirm = (dataUrl: string) => {
     const file = new File([dataUrlToBlob(dataUrl)], "avatar.jpg", {

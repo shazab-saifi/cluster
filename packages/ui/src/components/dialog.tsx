@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { X } from "lucide-react";
-
 import { cn } from "@workspace/ui/lib/utils";
 
 function Dialog({
@@ -128,6 +127,87 @@ function DialogDescription({
   );
 }
 
+function DialogLayout({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-layout"
+      className={cn("grid h-140 md:grid-cols-[220px_minmax(0,1fr)]", className)}
+      {...props}
+    />
+  );
+}
+
+function DialogSidebar({ className, ...props }: React.ComponentProps<"aside">) {
+  return (
+    <aside
+      data-slot="dialog-sidebar"
+      className={cn("border-b p-2 md:border-r md:border-b-0", className)}
+      {...props}
+    />
+  );
+}
+
+function DialogSidebarTitle({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="dialog-sidebar-title"
+      className={cn("mx-3 text-sm font-medium text-foreground", className)}
+      {...props}
+    />
+  );
+}
+
+function DialogSidebarNav({
+  className,
+  ...props
+}: React.ComponentProps<"nav">) {
+  return (
+    <nav
+      data-slot="dialog-sidebar-nav"
+      className={cn("mt-2 flex flex-col gap-1", className)}
+      {...props}
+    />
+  );
+}
+
+function DialogSidebarTab({
+  className,
+  active,
+  ...props
+}: React.ComponentProps<"button"> & { active?: boolean }) {
+  return (
+    <button
+      type="button"
+      data-slot="dialog-sidebar-tab"
+      data-active={active ? "" : undefined}
+      className={cn(
+        "flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        active
+          ? "bg-secondary text-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function DialogMain({ className, ...props }: React.ComponentProps<"section">) {
+  return (
+    <section
+      data-slot="dialog-main"
+      className={cn(
+        "custom-scrollbar flex flex-col overflow-y-auto p-6",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
 export {
   Dialog,
   DialogClose,
@@ -135,8 +215,14 @@ export {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogLayout,
+  DialogMain,
   DialogOverlay,
   DialogPortal,
+  DialogSidebar,
+  DialogSidebarNav,
+  DialogSidebarTab,
+  DialogSidebarTitle,
   DialogTitle,
   DialogTrigger,
 };

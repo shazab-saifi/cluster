@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, Settings } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import type { NetworkListItem } from "./types";
 
@@ -9,12 +9,14 @@ type ActiveNetworkMenuProps = {
   activeNetwork?: NetworkListItem;
   isLeaving: boolean;
   onLeave: () => void;
+  onManageNetwork: () => void;
 };
 
 export function ActiveNetworkMenu({
   activeNetwork,
   isLeaving,
   onLeave,
+  onManageNetwork,
 }: ActiveNetworkMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const closeTimeoutRef = React.useRef<number | null>(null);
@@ -79,6 +81,17 @@ export function ActiveNetworkMenu({
           onMouseEnter={openMenu}
           onMouseLeave={closeMenu}
         >
+          {activeNetwork.role !== "MEMBER" && (
+            <button
+              type="button"
+              className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-foreground transition hover:bg-muted"
+              onClick={onManageNetwork}
+            >
+              <Settings className="size-4" />
+              Manage Network
+            </button>
+          )}
+          <div role="separator" className="my-1 h-px bg-border" />
           <button
             type="button"
             className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-destructive transition hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"

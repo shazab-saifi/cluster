@@ -75,12 +75,16 @@ export function DeleteChannelDialog({
       <DialogHeader
         titleId="delete-channel-title"
         title="Delete channel"
-        description={`You are about to delete #${channel.name}.`}
+        description={`You are about to delete channel.`}
         onClose={() => onOpenChange(false)}
         closeDisabled={mutation.isPending}
       />
 
       <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2.5 text-sm font-semibold text-foreground">
+          <span className="truncate"># {channel.name}</span>
+        </div>
+
         <p className="text-sm text-muted-foreground">
           This channel will be deleted permanently along with all of its data,
           including messages and images.

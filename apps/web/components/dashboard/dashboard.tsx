@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -12,9 +11,11 @@ import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
+import { NetworkManageDialog } from "./network-manage/network-manage-dialog";
 import NetworkStrip from "./network-strip";
 import { getNetworkList } from "./utils";
 import { ChatSection } from "./chat-section/chat-section";
+import { useEffect, useMemo, useState } from "react";
 
 type DashboardProps = {
   networkId: string;
@@ -23,10 +24,11 @@ type DashboardProps = {
 export function Dashboard({ networkId }: DashboardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isCreateChannelOpen, setIsCreateChannelOpen] = React.useState(false);
-  const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
-  const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
-  const [activeChannelId, setActiveChannelId] = React.useState<string>();
+  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
+  const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isManageNetworkOpen, setIsManageNetworkOpen] = useState(false);
+  const [activeChannelId, setActiveChannelId] = useState<string>();
   const { data: session } = authClient.useSession();
   const { data, isLoading } = useQuery({
     queryKey: ["me"],
@@ -36,7 +38,7 @@ export function Dashboard({ networkId }: DashboardProps) {
   console.log(isCreateNetworkOpen);
 
   const user = data?.userData;
-  const networks = React.useMemo(() => getNetworkList(user), [user]);
+  const networks = useMemo(() => getNetworkList(user), [user]);
   const selectedNetwork = networks.find((network) => network.id === networkId);
   const {
     data: networkDetails,
@@ -47,7 +49,7 @@ export function Dashboard({ networkId }: DashboardProps) {
     queryFn: () => getNetworkDetails(networkId),
     enabled: Boolean(networkId),
   });
-  const channels = React.useMemo(
+  const channels = useMemo(
     () => networkDetails?.channels ?? [],
     [networkDetails?.channels]
   );
@@ -72,6 +74,7 @@ export function Dashboard({ networkId }: DashboardProps) {
       setActiveChannelId(undefined);
       setIsAddMemberOpen(false);
       setIsCreateChannelOpen(false);
+      setIsManageNetworkOpen(false);
 
       toast.success("Left network.");
 
@@ -84,12 +87,12 @@ export function Dashboard({ networkId }: DashboardProps) {
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const set = () => setActiveChannelId(undefined);
     set();
   }, [networkId]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isNetworkDetailsLoading || networkDetailsError) return;
 
     const set = () =>
@@ -136,6 +139,7 @@ export function Dashboard({ networkId }: DashboardProps) {
         sessionUser={session?.user}
         onAddMember={() => setIsAddMemberOpen(true)}
         onLeaveNetwork={() => leaveNetworkMutation.mutate(networkId)}
+        onManageNetwork={() => setIsManageNetworkOpen(true)}
         isLeavingNetwork={leaveNetworkMutation.isPending}
         onCreateChannel={() => setIsCreateChannelOpen(true)}
         onCreateNetwork={() => setIsCreateNetworkOpen(true)}
@@ -179,6 +183,11 @@ export function Dashboard({ networkId }: DashboardProps) {
         network={selectedNetwork}
         open={isAddMemberOpen}
         onOpenChange={setIsAddMemberOpen}
+      />
+      <NetworkManageDialog
+        network={networkDetails}
+        open={isManageNetworkOpen}
+        onOpenChange={setIsManageNetworkOpen}
       />
     </main>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -52,16 +52,19 @@ const profileSchema = z.object({
 export type ProfileFormHandle = {
   submit: () => void;
   isPending: boolean;
+  isDirty: boolean;
 };
 
 export function ProfileForm({
   user,
   ref,
   onPendingChange,
+  onDirtyChange,
 }: {
   user: DashboardUser;
   ref?: React.Ref<ProfileFormHandle>;
   onPendingChange?: (pending: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,8 +85,12 @@ export function ProfileForm({
     }) => {
       return updateMe({ name, bio, image });
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["me"] });
+      form.reset({
+        name: data.userData.name,
+        bio: data.userData.bio ?? "",
+      });
       toast.success("Profile updated successfully.");
     },
     onError: (error) => {
@@ -131,6 +138,9 @@ export function ProfileForm({
     },
   });
 
+  const formIsDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = formIsDirty || !!avatarFile;
+
   useImperativeHandle(
     ref,
     () => ({
@@ -138,13 +148,18 @@ export function ProfileForm({
         form.handleSubmit();
       },
       isPending: mutation.isPending,
+      isDirty,
     }),
-    [form, mutation.isPending]
+    [form, mutation.isPending, isDirty]
   );
 
   useEffect(() => {
     onPendingChange?.(mutation.isPending);
   }, [mutation.isPending, onPendingChange]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const handleCropConfirm = (dataUrl: string) => {
     const file = new File([dataUrlToBlob(dataUrl)], "avatar.jpg", {

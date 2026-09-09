@@ -24,6 +24,7 @@ type DashboardSidebarProps = {
   };
   onAddMember: () => void;
   onLeaveNetwork: () => void;
+  onManageNetwork: () => void;
   isLeavingNetwork: boolean;
   activeChannelId?: string;
   onCreateChannel: () => void;
@@ -40,6 +41,7 @@ export function DashboardSidebar({
   sessionUser,
   onAddMember,
   onLeaveNetwork,
+  onManageNetwork,
   isLeavingNetwork,
   onCreateChannel,
   setIsChatOpen,
@@ -57,6 +59,7 @@ export function DashboardSidebar({
           activeNetwork={activeNetwork}
           isLeaving={isLeavingNetwork}
           onLeave={onLeaveNetwork}
+          onManageNetwork={onManageNetwork}
         />
         <p className="text-xs text-muted-foreground">
           {activeNetwork?.memberCount !== undefined &&

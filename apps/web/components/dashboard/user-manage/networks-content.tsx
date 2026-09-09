@@ -1,14 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { getInitials } from "@workspace/ui/lib/utils";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Button } from "@workspace/ui/components/button";
-import type { NetworkRole } from "../types";
-import { getMe, leaveNetwork } from "../api";
+import type { NetworkRole, NetworkDetails } from "../types";
+import { getMe, getNetworkDetails, leaveNetwork } from "../api";
 import { getNetworkList } from "../utils";
+import {
+  NetworkDetailsForm,
+  type NetworkDetailsFormHandle,
+} from "../network-update-form";
 
 const ROLE_BADGES: Record<Exclude<NetworkRole, "MEMBER">, string> = {
   OWNER: "bg-primary/10 text-primary",
@@ -22,7 +27,67 @@ const ROLE_LABELS: Record<Exclude<NetworkRole, "MEMBER">, string> = {
   MODERATOR: "Moderator",
 };
 
-export function NetworksContent() {
+export function NetworkDetailsContent({
+  network,
+  ref: formRef,
+  onPendingChange,
+  onDirtyChange,
+}: {
+  network: { id: string; name: string };
+  ref?: React.Ref<NetworkDetailsFormHandle>;
+  onPendingChange?: (pending: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
+  const [isMutating, setIsMutating] = useState(false);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["network", network.id],
+    queryFn: () => getNetworkDetails(network.id),
+  });
+
+  useEffect(() => {
+    onPendingChange?.(isMutating);
+  }, [isMutating, onPendingChange]);
+
+  return (
+    <>
+      {isLoading ? (
+        <div className="flex flex-col gap-5">
+          <div className="mx-auto w-fit">
+            <Skeleton className="size-24 rounded-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+        </div>
+      ) : isError || !data ? (
+        <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed bg-muted/10 p-6 text-sm text-muted-foreground">
+          Could not load network details.
+        </div>
+      ) : (
+        <>
+          <NetworkDetailsForm
+            network={data as NetworkDetails}
+            ref={formRef}
+            onPendingChange={setIsMutating}
+            onDirtyChange={onDirtyChange}
+          />
+        </>
+      )}
+    </>
+  );
+}
+
+export function NetworksContent({
+  onManageNetwork,
+}: {
+  onManageNetwork?: (networkId: string) => void;
+}) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["me"],
@@ -78,11 +143,15 @@ export function NetworksContent() {
     <div className="divide-y overflow-hidden rounded-xl border">
       {networks.map((network) => {
         const isLeader = network.role !== "MEMBER";
+        const isOwner = network.role === "OWNER";
 
         return (
           <div
             key={network.id}
-            className="flex min-h-16 items-center gap-3 px-3 transition hover:bg-muted/50"
+            className={`flex min-h-16 items-center gap-3 px-3 transition hover:bg-muted/50 ${
+              isOwner ? "cursor-pointer" : ""
+            }`}
+            onClick={isOwner ? () => onManageNetwork?.(network.id) : undefined}
           >
             <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-sm font-semibold text-muted-foreground">
               {network.image ? (
