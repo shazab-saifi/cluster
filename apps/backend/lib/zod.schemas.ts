@@ -36,6 +36,10 @@ export const inviteCreateSchema = z.object({
   expiresAt: z.coerce.date(),
 });
 
+export const memberRoleUpdateSchema = z.object({
+  role: z.enum(["ADMIN", "MODERATOR", "MEMBER"]),
+});
+
 export const notificationSchema = z.object({
   eventType: z.literal("NOTIFICATION"),
   type: z.enum(["FRIEND_REQUEST", "ACCEPTED_REQUEST"]),

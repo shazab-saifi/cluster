@@ -13,7 +13,8 @@ import {
   DialogSidebarTitle,
 } from "@workspace/ui/components/dialog";
 import { ChannelsContent } from "./channels-content";
-import type { NetworkDetails } from "../types";
+import { MembersContent } from "./members-content";
+import type { NetworkDetails, NetworkRole } from "../types";
 
 type TabId = "channels" | "members";
 
@@ -24,12 +25,14 @@ const tabs: { id: TabId; label: string; icon: typeof HashIcon }[] = [
 
 type NetworkManageDialogProps = {
   network?: NetworkDetails;
+  currentUserRole?: NetworkRole;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
 export function NetworkManageDialog({
   network,
+  currentUserRole,
   open,
   onOpenChange,
 }: NetworkManageDialogProps) {
@@ -80,9 +83,12 @@ export function NetworkManageDialog({
               {isChannels ? (
                 <ChannelsContent channels={network?.channels ?? []} />
               ) : (
-                <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed bg-muted/10 p-6 text-sm text-muted-foreground">
-                  Members management coming soon.
-                </div>
+                network && (
+                  <MembersContent
+                    networkId={network.id}
+                    currentUserRole={currentUserRole}
+                  />
+                )
               )}
             </div>
           </DialogMain>

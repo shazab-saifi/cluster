@@ -89,3 +89,31 @@ export async function hasOwnerPermissions(
     },
   });
 }
+
+export async function hasAdminPermissions(
+  networkId: string,
+  userId: string,
+  client?: DbClient
+) {
+  return (client ? client : prisma).networkMembers.findFirst({
+    where: {
+      networkId,
+      userId,
+      role: { in: ["OWNER", "ADMIN"] },
+    },
+  });
+}
+
+export async function hasModeratorPermissions(
+  networkId: string,
+  userId: string,
+  client?: DbClient
+) {
+  return (client ? client : prisma).networkMembers.findFirst({
+    where: {
+      networkId,
+      userId,
+      role: { in: ["OWNER", "ADMIN", "MODERATOR"] },
+    },
+  });
+}

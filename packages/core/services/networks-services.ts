@@ -1,5 +1,13 @@
 import { NetworkRole, prisma } from "@workspace/db";
+import { ForbiddenError, NotFoundError } from "../errors";
 export { NetworkRole };
+
+const ROLE_HIERARCHY: Record<NetworkRole, number> = {
+  OWNER: 3,
+  ADMIN: 2,
+  MODERATOR: 1,
+  MEMBER: 0,
+};
 
 export interface NetworkCreateType {
   name: string;
@@ -165,6 +173,100 @@ export async function removeMember(networkId: string, userId: string) {
         networkId,
         userId,
       },
+    },
+  });
+}
+
+async function fetchAndValidateMemberPair(
+  networkId: string,
+  requesterId: string,
+  targetUserId: string
+) {
+  const requester = await prisma.networkMembers.findUnique({
+    where: {
+      userId_networkId: { networkId, userId: requesterId },
+    },
+  });
+
+  if (!requester) {
+    throw new ForbiddenError("You are not a member of this network.");
+  }
+
+  const target = await prisma.networkMembers.findUnique({
+    where: {
+      userId_networkId: { networkId, userId: targetUserId },
+    },
+  });
+
+  if (!target) {
+    throw new NotFoundError("Member not found in this network.");
+  }
+
+  return { requester, target };
+}
+
+export async function updateMemberRole(
+  networkId: string,
+  targetUserId: string,
+  newRole: NetworkRole,
+  requesterId: string
+) {
+  const { requester, target } = await fetchAndValidateMemberPair(
+    networkId,
+    requesterId,
+    targetUserId
+  );
+
+  if (target.role === "OWNER") {
+    throw new ForbiddenError("Cannot change the owner's role.");
+  }
+
+  if (ROLE_HIERARCHY[requester.role] <= ROLE_HIERARCHY[target.role]) {
+    throw new ForbiddenError(
+      "You cannot change the role of someone with equal or higher rank."
+    );
+  }
+
+  if (requester.role !== "OWNER" && target.role === "ADMIN") {
+    throw new ForbiddenError("Only the owner can manage admin roles.");
+  }
+
+  if (requester.role !== "OWNER" && newRole === "ADMIN") {
+    throw new ForbiddenError("Only the owner can promote members to admin.");
+  }
+
+  return prisma.networkMembers.update({
+    where: {
+      userId_networkId: { networkId, userId: targetUserId },
+    },
+    data: { role: newRole },
+  });
+}
+
+export async function removeMemberById(
+  networkId: string,
+  targetUserId: string,
+  requesterId: string
+) {
+  const { requester, target } = await fetchAndValidateMemberPair(
+    networkId,
+    requesterId,
+    targetUserId
+  );
+
+  if (target.role === "OWNER") {
+    throw new ForbiddenError("Cannot remove the network owner.");
+  }
+
+  if (ROLE_HIERARCHY[requester.role] <= ROLE_HIERARCHY[target.role]) {
+    throw new ForbiddenError(
+      "You cannot remove someone with equal or higher rank."
+    );
+  }
+
+  return prisma.networkMembers.delete({
+    where: {
+      userId_networkId: { networkId, userId: targetUserId },
     },
   });
 }

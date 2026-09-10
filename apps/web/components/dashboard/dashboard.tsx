@@ -186,6 +186,7 @@ export function Dashboard({ networkId }: DashboardProps) {
       />
       <NetworkManageDialog
         network={networkDetails}
+        currentUserRole={selectedNetwork?.role}
         open={isManageNetworkOpen}
         onOpenChange={setIsManageNetworkOpen}
       />

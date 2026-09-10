@@ -4,6 +4,7 @@ import {
   ValidationError,
 } from "@workspace/core/errors";
 import {
+  memberRoleUpdateSchema,
   networkCreateSchema,
   networkInfoUpdateSchema,
   uuidSchema,
@@ -206,6 +207,97 @@ networksRouter.delete(
       await networksServices.removeMember(networkIdParsed.data, userId);
 
       res.json({ msg: "Left network successfuly" });
+    } catch (error) {
+      return sendErrorResponse(res, error, {
+        path: req.originalUrl,
+      });
+    }
+  }
+);
+
+networksRouter.patch(
+  "/:networkId/members/:memberId/role",
+  async (req: Request, res: Response) => {
+    const requesterId = req.user?.id as string;
+    const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+    const memberIdParsed = uuidSchema.safeParse(req.params.memberId);
+
+    if (!networkIdParsed.success) {
+      throw new ValidationError(
+        "Invalid network id",
+        networkIdParsed.error.issues[0]?.message ??
+          "Param networkId should be a valid uuid"
+      );
+    }
+
+    if (!memberIdParsed.success) {
+      throw new ValidationError(
+        "Invalid member id",
+        memberIdParsed.error.issues[0]?.message ??
+          "Param memberId should be a valid uuid"
+      );
+    }
+
+    const { success, data, error } = memberRoleUpdateSchema.safeParse(req.body);
+
+    if (!success) {
+      throw new ValidationError(
+        "Invalid inputs",
+        error.issues[0]?.message ?? "Check the request body and try again."
+      );
+    }
+
+    try {
+      const updatedMember = await networksServices.updateMemberRole(
+        networkIdParsed.data,
+        memberIdParsed.data,
+        data.role,
+        requesterId
+      );
+
+      res.json({
+        msg: "Member role updated successfully",
+        member: updatedMember,
+      });
+    } catch (error) {
+      return sendErrorResponse(res, error, {
+        path: req.originalUrl,
+      });
+    }
+  }
+);
+
+networksRouter.delete(
+  "/:networkId/members/:memberId",
+  async (req: Request, res: Response) => {
+    const requesterId = req.user?.id as string;
+    const networkIdParsed = uuidSchema.safeParse(req.params.networkId);
+    const memberIdParsed = uuidSchema.safeParse(req.params.memberId);
+
+    if (!networkIdParsed.success) {
+      throw new ValidationError(
+        "Invalid network id",
+        networkIdParsed.error.issues[0]?.message ??
+          "Param networkId should be a valid uuid"
+      );
+    }
+
+    if (!memberIdParsed.success) {
+      throw new ValidationError(
+        "Invalid member id",
+        memberIdParsed.error.issues[0]?.message ??
+          "Param memberId should be a valid uuid"
+      );
+    }
+
+    try {
+      await networksServices.removeMemberById(
+        networkIdParsed.data,
+        memberIdParsed.data,
+        requesterId
+      );
+
+      res.json({ msg: "Member removed successfully" });
     } catch (error) {
       return sendErrorResponse(res, error, {
         path: req.originalUrl,

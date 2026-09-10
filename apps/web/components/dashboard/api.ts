@@ -93,10 +93,57 @@ export async function leaveNetwork(networkId: string) {
   }
 }
 
+export async function updateMemberRole(
+  networkId: string,
+  memberId: string,
+  role: string
+) {
+  try {
+    const response = await axios.patch<{ msg: string }>(
+      `${API_BASE_URL}/networks/${networkId}/members/${memberId}/role`,
+      { role },
+      { withCredentials: true }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not update member role."));
+  }
+}
+
+export async function removeMemberFromNetwork(
+  networkId: string,
+  memberId: string
+) {
+  try {
+    const response = await axios.delete<{ msg: string }>(
+      `${API_BASE_URL}/networks/${networkId}/members/${memberId}`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not remove member."));
+  }
+}
+
 function getApiErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError<{ message?: string; details?: string }>(error)) {
+  if (
+    axios.isAxiosError<{
+      error?: { message?: string; suggestion?: string };
+      message?: string;
+      details?: string;
+    }>(error)
+  ) {
+    const data = error.response?.data;
     return (
-      error.response?.data?.details ?? error.response?.data?.message ?? fallback
+      data?.error?.suggestion ??
+      data?.error?.message ??
+      data?.details ??
+      data?.message ??
+      fallback
     );
   }
 
