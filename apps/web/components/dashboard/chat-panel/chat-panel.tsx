@@ -13,7 +13,7 @@ import { ServerEvent } from "../types";
 import { MessageComposer } from "./message-composer";
 import { MessagesList } from "./messages-list";
 
-export const ChatSection = ({ channelId }: { channelId: string }) => {
+export const ChatPanel = ({ channelId }: { channelId: string }) => {
   const { sendJsonMessage, lastJsonMessage } =
     useWebSocket<ServerEvent>(SOCKET_URL);
   const queryClient = useQueryClient();

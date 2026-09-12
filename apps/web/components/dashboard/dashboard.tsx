@@ -8,7 +8,7 @@ import { getMe, getNetworkDetails } from "./api";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import NetworkStrip from "./network-strip";
-import { ChatSection } from "./chat-section/chat-section";
+import { ChatPanel } from "./chat-panel/chat-panel";
 import { useEffect, useMemo, useState } from "react";
 import { getNetworkList } from "@/lib/utils";
 
@@ -96,7 +96,7 @@ export function Dashboard({ networkId }: { networkId: string }) {
         />
         <div className="flex min-h-0 flex-1">
           {activeChannel ? (
-            <ChatSection channelId={activeChannel.id} />
+            <ChatPanel channelId={activeChannel.id} />
           ) : (
             <section className="flex min-w-0 flex-1 items-center justify-center p-6">
               <p className="text-center text-sm text-muted-foreground">
