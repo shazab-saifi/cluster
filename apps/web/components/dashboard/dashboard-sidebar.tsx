@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CircleAlert,
   LoaderCircle,
@@ -20,8 +22,6 @@ type DashboardSidebarProps = {
   isChannelsLoading: boolean;
   hasChannelsError: boolean;
   user?: DashboardUser;
-  activeChannelId?: string;
-  setIsChatOpen: (val: string) => void;
 };
 
 export function DashboardSidebar({
@@ -30,8 +30,6 @@ export function DashboardSidebar({
   isChannelsLoading,
   hasChannelsError,
   user,
-  setIsChatOpen,
-  activeChannelId,
 }: DashboardSidebarProps) {
   const [channelQuery, setChannelQuery] = useState("");
   const filteredChannels = channels.filter((channel) =>
@@ -103,12 +101,7 @@ export function DashboardSidebar({
           {!isChannelsLoading &&
             !hasChannelsError &&
             filteredChannels.map((channel) => (
-              <ChannelRow
-                key={channel.id}
-                channel={channel}
-                setIsChatOpen={setIsChatOpen}
-                active={channel.id === activeChannelId}
-              />
+              <ChannelRow key={channel.id} channel={channel} />
             ))}
           {!isChannelsLoading &&
             !hasChannelsError &&

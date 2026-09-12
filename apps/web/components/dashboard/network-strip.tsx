@@ -23,7 +23,7 @@ function NetworkStrip({ networks, isLoading }: NetworkStripProps) {
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
 
   const routeNetworkId = pathname.startsWith("/networks/")
-    ? pathname.split("/").pop()
+    ? pathname.split("/")[2]
     : undefined;
 
   const [visualNetworkId, setVisualNetworkId] = useState(routeNetworkId);

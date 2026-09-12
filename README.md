@@ -91,7 +91,7 @@ flowchart TB
         UI["React Query cache · optimistic UI"]
     end
 
-    subgraph APITier[""]
+    subgraph APITier["API Tier"]
         Backend["apps/backend · Express (port 4000)"]
         WS["apps/ws-backend · WebSocket (port 8080)"]
     end
@@ -101,7 +101,7 @@ flowchart TB
         PubSub["Pub/Sub<br/>channel:<id> · notification.created"]
     end
 
-    subgraph Workers[""]
+    subgraph Workers["Workers"]
         Flush["msg-flush-worker"]
         Recovery["recovery-worker"]
         Notif["notification-worker"]

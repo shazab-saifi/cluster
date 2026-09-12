@@ -9,12 +9,17 @@ import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import NetworkStrip from "./network-strip";
 import { ChatPanel } from "./chat-panel/chat-panel";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { getNetworkList } from "@/lib/utils";
 
-export function Dashboard({ networkId }: { networkId: string }) {
+export function Dashboard({
+  networkId,
+  channelId,
+}: {
+  networkId: string;
+  channelId?: string;
+}) {
   const router = useRouter();
-  const [activeChannelId, setActiveChannelId] = useState<string>();
   const { data, isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
@@ -36,32 +41,27 @@ export function Dashboard({ networkId }: { networkId: string }) {
     () => networkDetails?.channels ?? [],
     [networkDetails?.channels]
   );
-  const activeChannel = channels.find(
-    (channel) => channel.id === activeChannelId
-  );
-
-  useEffect(() => {
-    const set = () => setActiveChannelId(undefined);
-    set();
-  }, [networkId]);
+  const activeChannel = channels.find((channel) => channel.id === channelId);
 
   useEffect(() => {
     if (isNetworkDetailsLoading || networkDetailsError) return;
 
-    const set = () =>
-      setActiveChannelId((currentChannelId) => {
-        if (
-          currentChannelId &&
-          channels.some((channel) => channel.id === currentChannelId)
-        ) {
-          return currentChannelId;
-        }
+    if (channelId && channels.some((channel) => channel.id === channelId)) {
+      return;
+    }
 
-        return channels[0]?.id;
-      });
-
-    set();
-  }, [channels, isNetworkDetailsLoading, networkDetailsError]);
+    const firstChannel = channels[0];
+    if (firstChannel) {
+      router.replace(`/networks/${networkId}/channels/${firstChannel.id}`);
+    }
+  }, [
+    channelId,
+    channels,
+    isNetworkDetailsLoading,
+    networkDetailsError,
+    networkId,
+    router,
+  ]);
 
   const handleSignOut = async () => {
     const { error } = await authClient.signOut();
@@ -84,8 +84,6 @@ export function Dashboard({ networkId }: { networkId: string }) {
         isChannelsLoading={isNetworkDetailsLoading}
         hasChannelsError={Boolean(networkDetailsError)}
         user={user}
-        setIsChatOpen={setActiveChannelId}
-        activeChannelId={activeChannel?.id}
       />
 
       <section className="flex min-w-0 flex-1 flex-col">
