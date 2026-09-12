@@ -8,23 +8,19 @@ import type { NetworkListItem } from "./types";
 import { NetworkAvatar } from "./network-avatar";
 import Image from "next/image";
 import Link from "next/link";
+import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 
 type NetworkStripProps = {
   networks: NetworkListItem[];
-  activeNetwork?: NetworkListItem;
   isLoading: boolean;
-  onCreateNetwork: () => void;
 };
 
-function NetworkStrip({
-  networks,
-  isLoading,
-  onCreateNetwork,
-}: NetworkStripProps) {
+function NetworkStrip({ networks, isLoading }: NetworkStripProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isFriendsActive = pathname === "/friends";
   const [isTransitioning, startTransition] = useTransition();
+  const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
 
   const routeNetworkId = pathname.startsWith("/networks/")
     ? pathname.split("/").pop()
@@ -85,7 +81,7 @@ function NetworkStrip({
           aria-label="Add a network"
           title="Add a network"
           className="group grid size-11 cursor-pointer place-items-center rounded-xl bg-secondary text-(--text-primary) transition-colors hover:bg-primary hover:text-primary-foreground"
-          onClick={onCreateNetwork}
+          onClick={() => setIsCreateNetworkOpen(true)}
         >
           <CirclePlus
             fill="currentColor"
@@ -105,6 +101,10 @@ function NetworkStrip({
           className="size-8 stroke-secondary transition-colors group-hover:stroke-primary"
         />
       </button>
+      <CreateNetworkDialog
+        open={isCreateNetworkOpen}
+        onOpenChange={setIsCreateNetworkOpen}
+      />
     </aside>
   );
 }

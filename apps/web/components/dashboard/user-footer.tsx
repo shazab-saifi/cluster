@@ -3,18 +3,12 @@ import { Button } from "@workspace/ui/components/button";
 import { getInitials } from "@workspace/ui/lib/utils";
 import { UserDialog } from "./user-manage/user-dialog";
 import type { DashboardUser } from "./types";
+import { authClient } from "@/lib/auth-client";
 
-type UserFooterProps = {
-  user?: DashboardUser;
-  sessionUser?: {
-    name?: string | null;
-    image?: string | null;
-  };
-};
-
-export function UserFooter({ user, sessionUser }: UserFooterProps) {
-  const image = user?.image ?? sessionUser?.image;
-  const name = user?.name ?? sessionUser?.name ?? "User";
+export function UserFooter({ user }: { user?: DashboardUser }) {
+  const { data: session } = authClient.useSession();
+  const image = user?.image ?? session?.user.image;
+  const name = user?.name ?? session?.user.name ?? "User";
 
   return (
     <div className="flex items-center gap-2 border-t bg-background/60 p-4">
@@ -35,7 +29,6 @@ export function UserFooter({ user, sessionUser }: UserFooterProps) {
 
       <UserDialog
         user={user}
-        sessionUser={sessionUser}
         trigger={
           <Button
             type="button"

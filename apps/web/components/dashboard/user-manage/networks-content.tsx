@@ -9,11 +9,11 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Button } from "@workspace/ui/components/button";
 import type { NetworkRole, NetworkDetails } from "../types";
 import { getMe, getNetworkDetails, leaveNetwork } from "../api";
-import { getNetworkList } from "../utils";
 import {
   NetworkDetailsForm,
   type NetworkDetailsFormHandle,
 } from "../network-update-form";
+import { getNetworkList } from "@/lib/utils";
 
 const ROLE_BADGES: Record<Exclude<NetworkRole, "MEMBER">, string> = {
   OWNER: "bg-primary/10 text-primary",

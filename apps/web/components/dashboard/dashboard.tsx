@@ -1,41 +1,24 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { ActiveNow } from "./active-now";
-import { AddMemberDialog } from "./add-member/add-member-dialog";
-import { getMe, getNetworkDetails, leaveNetwork } from "./api";
-import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
-import { CreateNetworkDialog } from "./create-network/create-network-dialog";
+import { getMe, getNetworkDetails } from "./api";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
-import { NetworkManageDialog } from "./network-manage/network-manage-dialog";
 import NetworkStrip from "./network-strip";
-import { getNetworkList } from "./utils";
 import { ChatSection } from "./chat-section/chat-section";
 import { useEffect, useMemo, useState } from "react";
+import { getNetworkList } from "@/lib/utils";
 
-type DashboardProps = {
-  networkId: string;
-};
-
-export function Dashboard({ networkId }: DashboardProps) {
+export function Dashboard({ networkId }: { networkId: string }) {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
-  const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [isManageNetworkOpen, setIsManageNetworkOpen] = useState(false);
   const [activeChannelId, setActiveChannelId] = useState<string>();
-  const { data: session } = authClient.useSession();
   const { data, isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
   });
-
-  console.log(isCreateNetworkOpen);
 
   const user = data?.userData;
   const networks = useMemo(() => getNetworkList(user), [user]);
@@ -56,36 +39,6 @@ export function Dashboard({ networkId }: DashboardProps) {
   const activeChannel = channels.find(
     (channel) => channel.id === activeChannelId
   );
-
-  const leaveNetworkMutation = useMutation({
-    mutationFn: leaveNetwork,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["network", networkId] });
-      await queryClient.invalidateQueries({ queryKey: ["me"] });
-
-      const refreshedMe = await queryClient.fetchQuery({
-        queryKey: ["me"],
-        queryFn: getMe,
-      });
-      const remainingNetworks = getNetworkList(refreshedMe.userData).filter(
-        (network) => network.id !== networkId
-      );
-
-      setActiveChannelId(undefined);
-      setIsAddMemberOpen(false);
-      setIsCreateChannelOpen(false);
-      setIsManageNetworkOpen(false);
-
-      toast.success("Left network.");
-
-      const nextNetwork = remainingNetworks[0];
-      router.replace(nextNetwork ? `/networks/${nextNetwork.id}` : "/friends");
-      router.refresh();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
 
   useEffect(() => {
     const set = () => setActiveChannelId(undefined);
@@ -124,25 +77,13 @@ export function Dashboard({ networkId }: DashboardProps) {
 
   return (
     <main className="flex h-svh overflow-hidden bg-background text-foreground">
-      <NetworkStrip
-        networks={networks}
-        activeNetwork={selectedNetwork}
-        isLoading={isLoading}
-        onCreateNetwork={() => setIsCreateNetworkOpen(true)}
-      />
+      <NetworkStrip networks={networks} isLoading={isLoading} />
       <DashboardSidebar
         activeNetwork={selectedNetwork}
         channels={channels}
         isChannelsLoading={isNetworkDetailsLoading}
         hasChannelsError={Boolean(networkDetailsError)}
         user={user}
-        sessionUser={session?.user}
-        onAddMember={() => setIsAddMemberOpen(true)}
-        onLeaveNetwork={() => leaveNetworkMutation.mutate(networkId)}
-        onManageNetwork={() => setIsManageNetworkOpen(true)}
-        isLeavingNetwork={leaveNetworkMutation.isPending}
-        onCreateChannel={() => setIsCreateChannelOpen(true)}
-        onCreateNetwork={() => setIsCreateNetworkOpen(true)}
         setIsChatOpen={setActiveChannelId}
         activeChannelId={activeChannel?.id}
       />
@@ -170,26 +111,6 @@ export function Dashboard({ networkId }: DashboardProps) {
           <ActiveNow activeNetwork={selectedNetwork} />
         </div>
       </section>
-      <CreateNetworkDialog
-        open={isCreateNetworkOpen}
-        onOpenChange={setIsCreateNetworkOpen}
-      />
-      <CreateChannelDialog
-        network={selectedNetwork}
-        open={isCreateChannelOpen}
-        onOpenChange={setIsCreateChannelOpen}
-      />
-      <AddMemberDialog
-        network={selectedNetwork}
-        open={isAddMemberOpen}
-        onOpenChange={setIsAddMemberOpen}
-      />
-      <NetworkManageDialog
-        network={networkDetails}
-        currentUserRole={selectedNetwork?.role}
-        open={isManageNetworkOpen}
-        onOpenChange={setIsManageNetworkOpen}
-      />
     </main>
   );
 }

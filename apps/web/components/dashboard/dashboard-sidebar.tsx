@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   CircleAlert,
   LoaderCircle,
@@ -11,6 +10,9 @@ import { ChannelRow } from "./channel-actions/channel-row";
 import type { Channel, DashboardUser, NetworkListItem } from "./types";
 import { ActiveNetworkMenu } from "./active-network-menu";
 import { UserFooter } from "./user-footer";
+import { CreateChannelDialog } from "./create-channel/create-channel-dialog";
+import { InviteToNetworkDialog } from "./invite-to-network/invite-to-network-dialog";
+import { useState } from "react";
 
 type DashboardSidebarProps = {
   activeNetwork?: NetworkListItem;
@@ -18,17 +20,7 @@ type DashboardSidebarProps = {
   isChannelsLoading: boolean;
   hasChannelsError: boolean;
   user?: DashboardUser;
-  sessionUser?: {
-    name?: string | null;
-    image?: string | null;
-  };
-  onAddMember: () => void;
-  onLeaveNetwork: () => void;
-  onManageNetwork: () => void;
-  isLeavingNetwork: boolean;
   activeChannelId?: string;
-  onCreateChannel: () => void;
-  onCreateNetwork: () => void;
   setIsChatOpen: (val: string) => void;
 };
 
@@ -38,29 +30,20 @@ export function DashboardSidebar({
   isChannelsLoading,
   hasChannelsError,
   user,
-  sessionUser,
-  onAddMember,
-  onLeaveNetwork,
-  onManageNetwork,
-  isLeavingNetwork,
-  onCreateChannel,
   setIsChatOpen,
   activeChannelId,
 }: DashboardSidebarProps) {
-  const [channelQuery, setChannelQuery] = React.useState("");
+  const [channelQuery, setChannelQuery] = useState("");
   const filteredChannels = channels.filter((channel) =>
     channel.name.toLowerCase().includes(channelQuery.toLowerCase())
   );
+  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-background md:flex">
       <div className="space-y-2 border-b px-8 py-4">
-        <ActiveNetworkMenu
-          activeNetwork={activeNetwork}
-          isLeaving={isLeavingNetwork}
-          onLeave={onLeaveNetwork}
-          onManageNetwork={onManageNetwork}
-        />
+        <ActiveNetworkMenu activeNetwork={activeNetwork} channels={channels} />
         <p className="text-xs text-muted-foreground">
           {activeNetwork?.memberCount !== undefined &&
             activeNetwork.memberCount.toLocaleString()}{" "}
@@ -71,8 +54,8 @@ export function DashboardSidebar({
         <button
           type="button"
           className="flex h-auto w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          onClick={onAddMember}
-          disabled={!activeNetwork || isLeavingNetwork}
+          onClick={() => setIsInviteOpen(true)}
+          disabled={!activeNetwork}
         >
           <UserPlus className="size-5" />
           Invite to Network
@@ -98,8 +81,8 @@ export function DashboardSidebar({
             aria-label="Create channel"
             title="Create channel"
             className="rounded-md p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-            disabled={!activeNetwork || isLeavingNetwork}
-            onClick={onCreateChannel}
+            disabled={!activeNetwork}
+            onClick={() => setIsCreateChannelOpen(true)}
           >
             <Plus className="size-4" />
           </button>
@@ -136,7 +119,17 @@ export function DashboardSidebar({
             )}
         </div>
       </nav>
-      <UserFooter user={user} sessionUser={sessionUser} />
+      <UserFooter user={user} />
+      <CreateChannelDialog
+        network={activeNetwork}
+        open={isCreateChannelOpen}
+        onOpenChange={setIsCreateChannelOpen}
+      />
+      <InviteToNetworkDialog
+        network={activeNetwork}
+        open={isInviteOpen}
+        onOpenChange={setIsInviteOpen}
+      />
     </aside>
   );
 }

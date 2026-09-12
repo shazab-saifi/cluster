@@ -23,10 +23,6 @@ import { tabs, type TabId } from "./constants";
 
 type UserDialogProps = {
   user?: DashboardUser;
-  sessionUser?: {
-    name?: string | null;
-    image?: string | null;
-  };
   trigger: React.ReactNode;
 };
 

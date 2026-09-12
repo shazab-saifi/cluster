@@ -1,108 +1,125 @@
 "use client";
 
-import * as React from "react";
 import { ChevronDown, LogOut, Settings } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
-import type { NetworkListItem } from "./types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
+import type { Channel, NetworkListItem } from "./types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getMe, leaveNetwork } from "./api";
+import { getNetworkList } from "@/lib/utils";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { NetworkManageDialog } from "./network-manage/network-manage-dialog";
 
 type ActiveNetworkMenuProps = {
   activeNetwork?: NetworkListItem;
-  isLeaving: boolean;
-  onLeave: () => void;
-  onManageNetwork: () => void;
+  channels: Channel[];
 };
 
 export function ActiveNetworkMenu({
   activeNetwork,
-  isLeaving,
-  onLeave,
-  onManageNetwork,
+  channels,
 }: ActiveNetworkMenuProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const closeTimeoutRef = React.useRef<number | null>(null);
-
-  const clearCloseTimeout = () => {
-    if (closeTimeoutRef.current !== null) {
-      window.clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-  };
+  const [isOpen, setIsOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const [isManageNetworkOpen, setIsManageNetworkOpen] = useState(false);
 
   const openMenu = () => {
-    clearCloseTimeout();
     setIsOpen(true);
   };
 
-  const closeMenu = () => {
-    clearCloseTimeout();
-    closeTimeoutRef.current = window.setTimeout(() => {
-      setIsOpen(false);
-      closeTimeoutRef.current = null;
-    }, 120);
-  };
-
-  React.useEffect(() => {
-    return () => {
-      if (closeTimeoutRef.current !== null) {
-        window.clearTimeout(closeTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (!activeNetwork) {
       const set = () => setIsOpen(false);
       set();
     }
   }, [activeNetwork]);
 
+  const leaveNetworkMutation = useMutation({
+    mutationFn: leaveNetwork,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["network", activeNetwork?.id],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+
+      const refreshedMe = await queryClient.fetchQuery({
+        queryKey: ["me"],
+        queryFn: getMe,
+      });
+      const remainingNetworks = getNetworkList(refreshedMe.userData).filter(
+        (network) => network.id !== activeNetwork?.id
+      );
+
+      toast.success("Left network.");
+
+      const nextNetwork = remainingNetworks[0];
+      router.replace(nextNetwork ? `/networks/${nextNetwork.id}` : "/friends");
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   return (
-    <div className="relative">
-      <span
-        onMouseEnter={activeNetwork ? openMenu : undefined}
-        onMouseLeave={activeNetwork ? closeMenu : undefined}
-        onFocus={activeNetwork ? openMenu : undefined}
-        onBlur={activeNetwork ? closeMenu : undefined}
-        className="flex w-fit items-center gap-2 text-left text-base font-semibold tracking-tight"
-      >
-        <span className="min-w-0 truncate">
-          {activeNetwork?.name ?? "Network"}
+    <DropdownMenu
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          setIsOpen(false);
+          return;
+        }
+        if (!activeNetwork) return;
+        openMenu();
+      }}
+    >
+      <DropdownMenuTrigger asChild>
+        <span className="flex w-fit items-center gap-2 text-left text-base font-semibold tracking-tight">
+          <span className="min-w-0 truncate">
+            {activeNetwork?.name ?? "Network"}
+          </span>
+          <ChevronDown
+            className={cn(
+              "size-5 shrink-0 text-muted-foreground transition-all",
+              isOpen && "rotate-180 text-foreground"
+            )}
+          />
         </span>
-        <ChevronDown
-          className={cn(
-            "size-5 shrink-0 text-muted-foreground transition-all",
-            isOpen && "rotate-180 text-foreground"
-          )}
-        />
-      </span>
-      {activeNetwork && isOpen ? (
-        <div
-          className="absolute top-full left-0 z-20 mt-2 min-w-44 rounded-lg border bg-card p-1 text-card-foreground shadow-xl"
-          onMouseEnter={openMenu}
-          onMouseLeave={closeMenu}
-        >
+      </DropdownMenuTrigger>
+      {activeNetwork && (
+        <DropdownMenuContent className="translate-x-5">
           {activeNetwork.role !== "MEMBER" && (
-            <button
-              type="button"
-              className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-foreground transition hover:bg-muted"
-              onClick={onManageNetwork}
-            >
-              <Settings className="size-4" />
+            <DropdownMenuItem onSelect={() => setIsManageNetworkOpen(true)}>
+              <Settings />
               Manage Network
-            </button>
+            </DropdownMenuItem>
           )}
-          <div role="separator" className="my-1 h-px bg-border" />
-          <button
-            type="button"
-            className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-destructive transition hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
-            onClick={onLeave}
-            disabled={isLeaving}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => leaveNetworkMutation.mutate(activeNetwork.id)}
+            disabled={leaveNetworkMutation.isPending}
           >
-            <LogOut className="size-4" />
-            {isLeaving ? "Leaving..." : "Leave network"}
-          </button>
-        </div>
-      ) : null}
-    </div>
+            <LogOut />
+            {leaveNetworkMutation.isPending ? "Leaving..." : "Leave network"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      )}
+      <NetworkManageDialog
+        network={{ ...activeNetwork, channels } as any}
+        currentUserRole={activeNetwork?.role}
+        open={isManageNetworkOpen}
+        onOpenChange={setIsManageNetworkOpen}
+      />
+    </DropdownMenu>
   );
 }

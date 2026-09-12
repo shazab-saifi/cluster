@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
@@ -10,12 +9,13 @@ import { EmptyFriends, FriendsSidebar } from "./friends-sidebar";
 import { SearchUserDialog } from "./friends-tabs/search-user";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import NetworkStrip from "./network-strip";
-import { getNetworkList } from "./utils";
+import { getNetworkList } from "@/lib/utils";
+import { useState } from "react";
 
 export function FriendsDashboard() {
   const router = useRouter();
-  const [isSearchUserOpen, setIsSearchUserOpen] = React.useState(false);
-  const [isCreateNetworkOpen, setIsCreateNetworkOpen] = React.useState(false);
+  const [isSearchUserOpen, setIsSearchUserOpen] = useState(false);
+  const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
   const { data: session } = authClient.useSession();
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["me"],
@@ -44,11 +44,7 @@ export function FriendsDashboard() {
 
   return (
     <main className="flex h-svh overflow-hidden bg-background text-foreground">
-      <NetworkStrip
-        networks={networks}
-        isLoading={isProfileLoading}
-        onCreateNetwork={() => setIsCreateNetworkOpen(true)}
-      />
+      <NetworkStrip networks={networks} isLoading={isProfileLoading} />
       <FriendsSidebar
         friends={friends}
         isLoading={isLoading}

@@ -2,7 +2,6 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { Button } from "@workspace/ui/components/button";
 import {
   Field,
@@ -12,7 +11,6 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
-
 import { createChannel } from "./api";
 import { createChannelSchema } from "./schema";
 
@@ -64,7 +62,9 @@ export function CreateChannelForm({
         <form.Field name="name">
           {(field) => {
             const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
+              field.state.meta.errors.length > 0 &&
+              (field.state.meta.isTouched ||
+                field.form.state.submissionAttempts > 0);
 
             return (
               <Field data-invalid={isInvalid}>
@@ -78,6 +78,7 @@ export function CreateChannelForm({
                   aria-invalid={isInvalid}
                   placeholder="announcements"
                   autoComplete="off"
+                  autoFocus
                 />
                 <FieldDescription>
                   Use a short topic members can recognize at a glance.
