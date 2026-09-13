@@ -10,7 +10,7 @@ A real-time messaging / chat platform (a Discord- or Slack-style app) built as a
 - Add **friends** and send **friend requests** (request → accept / block, DM-style messaging over `friendshipId`)
 - Create **invite links** for networks (limited use, expiring, revocable)
 - Receive **notifications** (friend requests, mentions, reactions) in real time
-- Sign in via **Google OAuth** or **email magic link** (better-auth + Resend)
+- Sign in via **Google OAuth** or **username + password** (better-auth + Resend for password resets)
 - Upload avatars via **S3 presigned URLs** served through CloudFront
 
 ## Tech stack
@@ -43,7 +43,7 @@ A real-time messaging / chat platform (a Discord- or Slack-style app) built as a
 | `@workspace/core`              | Shared domain services (messages, networks, channels, friends, invites, notifications, s3) + error system | —                                                                                                                                                                                                                                                                    |
 | `@workspace/db`                | Prisma client + schema + migrations + seed                                                                | **prisma** `^7.8.0`, **@prisma/client** `^7.8.0`, **@prisma/adapter-pg** `^7.8.0`, **pg** `^8.20.0`, **dotenv** `^17.4.2`; uses the `PrismaPg` driver adapter                                                                                                        |
 | `@workspace/redis`             | Redis client / publisher / subscriber singletons                                                          | **redis** (node-redis) `^5.12.1`                                                                                                                                                                                                                                     |
-| `@workspace/auth`              | better-auth config (Google + magic link), session helpers                                                 | **better-auth** `^1.6.9`, **resend** `^6.12.3`                                                                                                                                                                                                                       |
+| `@workspace/auth`              | better-auth config (Google + username/password), session helpers                                          | **better-auth** `^1.6.9`, **resend** `^6.12.3`                                                                                                                                                                                                                       |
 | `@workspace/aws`               | S3 client wrapper                                                                                         | **@aws-sdk/client-s3** `^3.1068.0`, **@aws-sdk/s3-request-presigner** `^3.1068.0`                                                                                                                                                                                    |
 | `@workspace/ui`                | Shared shadcn/ui components, Tailwind v4 globals                                                          | **tailwindcss** `^4.1.18`, **radix-ui** `^1.4.3`, **shadcn** `^4.5.0`, **class-variance-authority** `^0.7.1`, **clsx** `^2.1.1`, **tailwind-merge** `^3.5.0`, **tw-animate-css** `^1.4.0`, **sonner** `^2.0.7`, **zod** `^3.25.76` (note: zod v3 here, v4 elsewhere) |
 | `@workspace/eslint-config`     | Shared flat ESLint configs (`base`, `next-js`, `react-internal`)                                          | —                                                                                                                                                                                                                                                                    |
@@ -54,7 +54,7 @@ A real-time messaging / chat platform (a Discord- or Slack-style app) built as a
 - **PostgreSQL** — source of truth; Prisma (driver adapter) ORM
 - **Redis** — Redis Streams (durability + worker queues) and Pub/Sub (realtime broadcast)
 - **AWS S3 + CloudFront** — avatar uploads via presigned URLs
-- **Resend** — transactional email for magic links
+- **Resend** — transactional email for password resets
 
 ## Architecture
 
@@ -272,7 +272,7 @@ PostgreSQL schema in `packages/db/prisma/schema.prisma` (26 migrations, April 20
 
 - **Error handling**: `AppError` base class (`code`, `statusCode`, `status` `"fail"|"error"`, `suggestion`); concrete `BadRequestError`, `ValidationError`, `UnauthorizedError`, `NotFoundError`, `ForbiddenError`, `ResourceExpiredError`. `normalizeError()` maps Prisma (`P2002`, `P2003`, `P2011`, `P2025`, init/validation/rust-panic) and S3 errors into `AppError`. `sendErrorResponse()` returns a uniform shape: `{ success, status, statusCode, error: { code, message, timestamp, path, suggestion }, requestId }`.
 - **Validation**: every request/response payload is validated with **zod**; schemas centralized in `apps/backend/lib/zod.schemas.ts` and `apps/ws-backend/src/zod.schemas.ts` (zod v4). ID params validated with `z.uuid()`.
-- **Auth**: better-auth in `packages/auth` — Prisma adapter, Google OAuth + magic-link plugin (Resend, 5-min expiry), auto-generated unique `@username`, 7-day sessions. Express middleware and WS upgrade both use `getSessionFromHeaders`; `req.user` augmented via module declaration.
+- **Auth**: better-auth in `packages/auth` — Prisma adapter, Google OAuth + username/password (password resets via Resend), auto-generated unique `@username`, 7-day sessions. Express middleware and WS upgrade both use `getSessionFromHeaders`; `req.user` augmented via module declaration.
 - **Frontend**: never make a page itself a client component; use **react-query** for data fetching and **zustand** for global state; use **shadcn**, **tanstack forms**, and **zod**. Infinite message pagination via `useInfiniteQuery` (50/page) + `IntersectionObserver`. Realtime handled by `ChatSection` with `react-use-websocket`; `lastJsonMessage` switch directly mutates the react-query cache and `ERROR` frames surface a sonner toast.
 - **Styling**: Tailwind v4 via `@tailwindcss/postcss`; CSS variables from `packages/ui/src/styles/globals.css`; shadcn `radix-nova` style aliased into `@workspace/ui`.
 - **Docker**: multi-stage `FROM oven/bun:alpine` images using `bunx turbo prune <app> --docker`. Web uses Next standalone output. msg-flush-worker Dockerfile produces both `worker-runner` and `recovery-runner`.

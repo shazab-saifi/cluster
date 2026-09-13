@@ -8,28 +8,29 @@ datasource db {
 }
 
 model User {
-  id                     String           @id @default(uuid())
-  name                   String
-  username               String           @unique
-  email                  String
-  emailVerified          Boolean          @default(false)
-  image                  String?
-  bio                    String?
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
-  sessions               Session[]
-  accounts               Account[]
-  memberships            NetworkMembers[]
-  networks               Network[]
-  messages               Message[]
-  sentFriendships        Friendship[]     @relation("sender")
-  receivedFriendships    Friendship[]     @relation("receiver")
-  createdInvites         Invite[]
-  sentNotifications      Notification[]   @relation("actor")
-  receivedNotifications  Notification[]   @relation("user")
+  id                    String           @id @default(uuid())
+  name                  String
+  username              String           @unique
+  displayUsername       String?
+  email                 String
+  emailVerified         Boolean          @default(false)
+  image                 String?
+  bio                   String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  sessions              Session[]
+  accounts              Account[]
+  memberships           NetworkMembers[]
+  networks              Network[]
+  messages              Message[]
+  sentFriendships       Friendship[]     @relation("sender")
+  receivedFriendships   Friendship[]     @relation("receiver")
+  createdInvites        Invite[]
+  sentNotifications     Notification[]   @relation("actor")
+  receivedNotifications Notification[]   @relation("user")
 
-  @@index([name])
   @@unique([email])
+  @@index([name])
   @@map("user")
 }
 
@@ -83,7 +84,7 @@ model Verification {
 
 model Network {
   id          String           @id @default(uuid())
-  name        String           
+  name        String
   image       String?
   ownerId     String
   desc        String?
@@ -137,19 +138,19 @@ model Channel {
 }
 
 model Message {
-  id             String          @id
-  message        String
-  channelId      String?
-  friendshipId   String?
-  attachment     String?
-  senderId       String
-  edited         Boolean?        @default(false)
-  timestamp      DateTime
-  channel        Channel?        @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  friendship     Friendship?     @relation(fields: [friendshipId], references: [id], onDelete: Cascade)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id           String      @id
+  message      String
+  channelId    String?
+  friendshipId String?
+  attachment   String?
+  senderId     String
+  edited       Boolean?    @default(false)
+  timestamp    DateTime
+  channel      Channel?    @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender       User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  friendship   Friendship? @relation(fields: [friendshipId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@index([message])
   @@index([channelId, createdAt(sort: Desc)])
@@ -158,15 +159,15 @@ model Message {
 }
 
 model Friendship {
-  id           String           @id @default(uuid())
-  senderId     String
-  receiverId   String
-  status       FriendshipStatus @default(PENDING)
-  messages     Message[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  sender       User             @relation("sender", fields: [senderId], references: [id])
-  receiver     User             @relation("receiver", fields: [receiverId], references: [id])
+  id         String           @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendshipStatus @default(PENDING)
+  messages   Message[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  sender     User             @relation("sender", fields: [senderId], references: [id])
+  receiver   User             @relation("receiver", fields: [receiverId], references: [id])
 
   @@unique([senderId, receiverId])
   @@map("friendship")
@@ -181,8 +182,8 @@ enum FriendshipStatus {
 model Invite {
   id          String      @id @default(uuid())
   token       String      @unique
-  createdById String   
-  networkId   String   
+  createdById String
+  networkId   String
   maxUses     Int         @default(10)
   currentUses Int         @default(0)
   createdAt   DateTime    @default(now())
@@ -206,13 +207,13 @@ model Notification {
   data       Json?
   createdAt  DateTime          @default(now())
 
-  actor      User              @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
-  user       User              @relation("user", fields: [userId], references: [id], onDelete: Cascade)
+  actor User @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
+  user  User @relation("user", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("notification")
+  @@unique([actorId, userId])
   @@index([actorId])
   @@index([userId, createdAt(sort: Desc)])
-  @@unique([actorId, userId])
+  @@map("notification")
 }
 
 enum NotificationTypes {

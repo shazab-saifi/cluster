@@ -2,47 +2,58 @@
 
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { APP_BASE_URL } from "@/lib/utils";
-import { Field, FieldError, FieldLabel } from "@workspace/ui/components/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
 
-const SignInFormSchema = z.object({
-  email: z.email(),
+const PasswordSignInSchema = z.object({
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters.")
+    .max(30, "Username cannot be more than 30 characters."),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .max(128, "Password cannot be more than 128 characters."),
 });
 
 export const SignInForm = () => {
+  const router = useRouter();
+
   const form = useForm({
     defaultValues: {
-      email: "",
+      username: "",
+      password: "",
     },
     validators: {
-      onSubmit: SignInFormSchema,
+      onSubmit: PasswordSignInSchema,
     },
     onSubmit: async ({ value }) => {
-      if (value.email.length == 0) {
-        return alert("Please enter you email!");
-      }
       try {
-        // @ts-expect-error magicLink showing a ts error for some reason but the configuration is correct and magic link auth is working fine
-        const { error } = await authClient.signIn.magicLink({
-          email: value.email.trim(),
-          callbackUrl: `${APP_BASE_URL}/`,
-          errorCallbackURL: `${APP_BASE_URL}/error`,
+        const { error } = await authClient.signIn.username({
+          username: value.username.trim(),
+          password: value.password,
         });
 
         if (error) {
           console.error(error);
-          return alert(error.message);
+          return toast.error(error.message);
         }
+
+        router.push("/");
       } catch (error) {
-        console.error("Email sing-up failed!", error);
+        console.error("Username sign-in failed!", error);
         const message =
-          error instanceof Error
-            ? error.message
-            : "Unable to start Email sign-up";
-        alert(message);
+          error instanceof Error ? error.message : "Unable to sign in.";
+        toast.error(message);
       }
     },
   });
@@ -56,27 +67,54 @@ export const SignInForm = () => {
           form.handleSubmit();
         }}
       >
-        <form.Field name="email">
-          {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  aria-invalid={isInvalid}
-                  placeholder="Enter your email"
-                />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
+        <FieldGroup>
+          <form.Field name="username">
+            {(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel htmlFor={field.name}>Username</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="your_username"
+                    autoComplete="username"
+                  />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          </form.Field>
+          <form.Field name="password">
+            {(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="password"
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                    required
+                  />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          </form.Field>
+        </FieldGroup>
       </form>
       <Button
         type="submit"
