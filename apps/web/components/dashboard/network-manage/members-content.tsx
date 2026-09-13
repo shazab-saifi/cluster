@@ -22,7 +22,7 @@ import {
 import { cn, getInitials } from "@workspace/ui/lib/utils";
 import { API_BASE_URL } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
-import { removeMemberFromNetwork, updateMemberRole } from "../api";
+import { removeMemberFromNetwork, updateMemberRole } from "@/lib/api";
 import axios from "axios";
 import type { NetworkRole } from "../types";
 

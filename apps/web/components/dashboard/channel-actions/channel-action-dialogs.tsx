@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import type { Channel } from "../types";
-import { deleteChannel } from "./api";
+import { deleteChannel } from "@/lib/api";
 import { EditChannelForm } from "./edit-channel-form";
 
 type ChannelDialogProps = {

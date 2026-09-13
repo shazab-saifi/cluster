@@ -12,8 +12,8 @@ import {
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
 import type { Channel } from "../types";
-import { editChannel } from "./api";
-import { editChannelSchema } from "./schema";
+import { editChannel } from "@/lib/api";
+import { editChannelSchema } from "@/lib/schemas";
 
 type EditChannelFormProps = {
   channel: Channel;

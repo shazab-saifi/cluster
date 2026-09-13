@@ -1,125 +1,117 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { APP_BASE_URL } from "@/lib/utils";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@workspace/ui/components/field";
-import { Input } from "@workspace/ui/components/input";
-import { Button } from "@workspace/ui/components/button";
+import { croppedDataUrlToFile, uploadAvatar } from "@/lib/utils";
+import { AvatarCropper } from "@/components/dashboard/avatar-cropper";
+import { SignUpStepOne } from "./signup-step-1";
+import { SignUpStepTwo } from "./signup-step-2";
+import { useSignUpForm } from "@/lib/utils";
 
-const SignUpFormSchema = z.object({
-  email: z.email(),
-  name: z
-    .string()
-    .min(3, "Name should have atleast 3 characters")
-    .max(128, "Name cannot be more than 128 characters"),
-});
+function PasswordSignUpForm() {
+  const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [cropSource, setCropSource] = useState<string | null>(null);
+  const [isCropping, setIsCropping] = useState(false);
 
-export const SignUpForm = () => {
-  const form = useForm({
-    defaultValues: {
-      email: "",
-      name: "",
-    },
-    validators: {
-      onSubmit: SignUpFormSchema,
-    },
-    onSubmit: async ({ value }) => {
-      if (value.email.length == 0 || value.name.length == 0) {
-        return alert("Please enter you email!");
+  const form = useSignUpForm(async (value) => {
+    if (step === 1) {
+      setStep(2);
+      return;
+    }
+
+    try {
+      let image: string | undefined;
+
+      if (avatarFile) {
+        image = await uploadAvatar(avatarFile);
       }
-      try {
-        // @ts-expect-error magicLink showing a ts error for some reason but the configuration is correct but magic link auth is working fine
-        const { error } = await authClient.signIn.magicLink({
-          email: value.email.trim(),
-          name: value.name.trim(),
-          callbackUrl: `${APP_BASE_URL}/`,
-          errorCallbackURL: `${APP_BASE_URL}/error`,
-        });
 
-        if (error) {
-          console.error(error);
-          return alert(error.message);
-        }
-      } catch (error) {
-        console.error("Email sing-up failed!", error);
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Unable to start Email sign-up";
-        alert(message);
+      const { error } = await authClient.signUp.email({
+        name: value.name.trim(),
+        email: value.email.trim(),
+        username: value.username.trim(),
+        password: value.password,
+        bio: value.bio.trim() || undefined,
+        image,
+      });
+
+      if (error) {
+        console.error(error);
+        toast.error(error.message);
+        return;
       }
-    },
+
+      router.push("/");
+    } catch (error) {
+      console.error("Email sign-up failed!", error);
+      const message =
+        error instanceof Error ? error.message : "Unable to create account.";
+      toast.error(message);
+    }
   });
 
+  const handlePickFile = (file: File) => {
+    setCropSource(URL.createObjectURL(file));
+    setIsCropping(true);
+  };
+
+  const handleCropConfirm = (dataUrl: string) => {
+    const file = croppedDataUrlToFile(dataUrl);
+    if (cropSource) URL.revokeObjectURL(cropSource);
+    setAvatarFile(file);
+    setAvatarPreview(dataUrl);
+    setCropSource(null);
+    setIsCropping(false);
+  };
+
+  const handleCropCancel = () => {
+    if (cropSource) URL.revokeObjectURL(cropSource);
+    setCropSource(null);
+    setIsCropping(false);
+  };
+
   return (
-    <div>
+    <div className="relative">
+      <p className="text-xs font-medium tracking-[0.22em] text-muted-foreground uppercase">
+        Step {step} of 2
+      </p>
       <form
-        id="signup-form"
+        id="signup-password-form"
+        className="mt-2"
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit();
         }}
       >
-        <FieldGroup>
-          <form.Field name="email">
-            {(field) => {
-              const isInvalid =
-                field.state.meta.isTouched && !field.state.meta.isValid;
-              return (
-                <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={isInvalid}
-                    placeholder="Enter your email"
-                  />
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                </Field>
-              );
-            }}
-          </form.Field>
-          <form.Field name="name">
-            {(field) => {
-              const isInvalid =
-                field.state.meta.isTouched && !field.state.meta.isValid;
-              return (
-                <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={isInvalid}
-                    placeholder="Enter your name"
-                  />
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                </Field>
-              );
-            }}
-          </form.Field>
-        </FieldGroup>
+        {step === 1 ? (
+          <SignUpStepOne form={form} />
+        ) : (
+          <SignUpStepTwo
+            form={form}
+            fileInputRef={fileInputRef}
+            avatarPreview={avatarPreview}
+            onPickFile={handlePickFile}
+            onBack={() => setStep(1)}
+          />
+        )}
       </form>
-      <Button
-        type="submit"
-        form="signup-form"
-        className="mt-5 w-full"
-        size="lg"
-      >
-        Create Account
-      </Button>
+
+      {cropSource && isCropping && (
+        <AvatarCropper
+          open
+          imageSrc={cropSource}
+          onCancel={handleCropCancel}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </div>
   );
-};
+}
+
+export const SignUpForm = PasswordSignUpForm;

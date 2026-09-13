@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { getFriends, getMe } from "./api";
+import { getFriends, getMe } from "@/lib/api";
 import { DashboardHeader } from "./dashboard-header";
 import { EmptyFriends, FriendsSidebar } from "./friends-sidebar";
 import { SearchUserDialog } from "./friends-tabs/search-user";

@@ -8,7 +8,7 @@ import { getInitials } from "@workspace/ui/lib/utils";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Button } from "@workspace/ui/components/button";
 import type { NetworkRole, NetworkDetails } from "../types";
-import { getMe, getNetworkDetails, leaveNetwork } from "../api";
+import { getMe, getNetworkDetails, leaveNetwork } from "@/lib/api";
 import {
   NetworkDetailsForm,
   type NetworkDetailsFormHandle,

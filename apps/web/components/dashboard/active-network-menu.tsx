@@ -11,7 +11,7 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import type { Channel, NetworkListItem } from "./types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMe, leaveNetwork } from "./api";
+import { getMe, leaveNetwork } from "@/lib/api";
 import { getNetworkList } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";

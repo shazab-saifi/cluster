@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { ActiveNow } from "./active-now";
-import { getMe, getNetworkDetails } from "./api";
+import { getMe, getNetworkDetails } from "@/lib/api";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import NetworkStrip from "./network-strip";

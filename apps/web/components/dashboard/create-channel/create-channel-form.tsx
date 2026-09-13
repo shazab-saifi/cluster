@@ -11,8 +11,8 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
-import { createChannel } from "./api";
-import { createChannelSchema } from "./schema";
+import { createChannel } from "@/lib/api";
+import { createChannelSchema } from "@/lib/schemas";
 
 type CreateChannelFormProps = {
   networkId: string;

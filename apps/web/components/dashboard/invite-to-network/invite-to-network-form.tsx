@@ -17,8 +17,8 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@workspace/ui/components/radio-group";
-import { createInvite } from "./api";
-import { createInviteSchema, type InviteExpiry } from "./schema";
+import { createInvite } from "@/lib/api";
+import { createInviteSchema, type InviteExpiry } from "@/lib/schemas";
 
 type InviteToNetworkFormProps = {
   networkId: string;

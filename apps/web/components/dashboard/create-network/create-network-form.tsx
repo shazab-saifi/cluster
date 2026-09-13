@@ -21,20 +21,10 @@ import {
 } from "@workspace/ui/components/avatar";
 import { cn, getInitials } from "@workspace/ui/lib/utils";
 import { AvatarCropper } from "../avatar-cropper";
-import { createNetwork } from "./api";
-import { createNetworkSchema, CreateNetworkValues } from "./schema";
+import { croppedDataUrlToFile } from "@/lib/utils";
+import { createNetwork } from "@/lib/api";
+import { createNetworkSchema, type CreateNetworkValues } from "@/lib/schemas";
 import { Textarea } from "@workspace/ui/components/textarea";
-
-function dataUrlToBlob(dataUrl: string): Blob {
-  const [meta, base64] = dataUrl.split(",");
-  const mime = meta?.match(/data:(.*?);/)?.[1] ?? "image/jpeg";
-  const binary = atob(base64!);
-  const array = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    array[i] = binary.charCodeAt(i);
-  }
-  return new Blob([array], { type: mime });
-}
 
 type CreateNetworkFormProps = {
   onCancel: () => void;
@@ -157,12 +147,7 @@ export function CreateNetworkForm({
                     imageSrc={cropSource}
                     onCancel={handleCropCancel}
                     onConfirm={(dataUrl) => {
-                      const file = new File(
-                        [dataUrlToBlob(dataUrl)],
-                        "avatar.jpg",
-                        { type: "image/jpeg" }
-                      );
-                      field.handleChange(file);
+                      field.handleChange(croppedDataUrlToFile(dataUrl));
                       setCropPreview(dataUrl);
                       if (cropSource) URL.revokeObjectURL(cropSource);
                       setCropSource(null);

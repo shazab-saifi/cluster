@@ -7,8 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LoaderCircle } from "lucide-react";
 import { CameraIcon } from "@phosphor-icons/react";
-import { updateMe } from "./api";
-import { CLOUDFRONT_URL, getPresignedUrl, uploadToS3 } from "@/lib/utils";
+import { updateMe } from "@/lib/api";
+import { croppedDataUrlToFile, uploadAvatar } from "@/lib/utils";
 import { AvatarCropper } from "./avatar-cropper";
 import {
   Field,
@@ -26,17 +26,6 @@ import {
 } from "@workspace/ui/components/avatar";
 import { getInitials } from "@workspace/ui/lib/utils";
 import type { DashboardUser } from "./types";
-
-function dataUrlToBlob(dataUrl: string): Blob {
-  const [meta, base64] = dataUrl.split(",");
-  const mime = meta?.match(/data:(.*?);/)?.[1] ?? "image/jpeg";
-  const binary = atob(base64!);
-  const array = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    array[i] = binary.charCodeAt(i);
-  }
-  return new Blob([array], { type: mime });
-}
 
 const profileSchema = z.object({
   name: z
@@ -116,17 +105,7 @@ export function ProfileForm({
         payload.bio = value.bio;
       }
       if (avatarFile) {
-        const presignedUrl = await getPresignedUrl(
-          avatarFile.name,
-          avatarFile.type
-        );
-        console.log(presignedUrl.presignedUrl.url);
-        const result = await uploadToS3(
-          presignedUrl.presignedUrl.url,
-          avatarFile
-        );
-        console.log(result);
-        payload.image = `https://${CLOUDFRONT_URL}/${presignedUrl.presignedUrl.key}`;
+        payload.image = await uploadAvatar(avatarFile);
       }
 
       await mutation.mutateAsync(
@@ -162,9 +141,7 @@ export function ProfileForm({
   }, [isDirty, onDirtyChange]);
 
   const handleCropConfirm = (dataUrl: string) => {
-    const file = new File([dataUrlToBlob(dataUrl)], "avatar.jpg", {
-      type: "image/jpeg",
-    });
+    const file = croppedDataUrlToFile(dataUrl);
     if (cropSource) URL.revokeObjectURL(cropSource);
     setAvatarFile(file);
     setAvatarPreview(dataUrl);

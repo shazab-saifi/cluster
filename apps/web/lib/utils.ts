@@ -5,6 +5,8 @@ import type {
   MessageType,
   NetworkListItem,
 } from "@/components/dashboard/types";
+import { SignUpFormValues } from "./schemas";
+import { useForm } from "@tanstack/react-form";
 
 export type MessagesPage = {
   messages: MessageType[];
@@ -52,6 +54,31 @@ export async function uploadToS3(presignedUrl: string, fileObject: File) {
   });
 
   return res.data;
+}
+
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const [meta, base64] = dataUrl.split(",");
+  const mime = meta?.match(/data:(.*?);/)?.[1] ?? "image/jpeg";
+  const binary = atob(base64!);
+  const array = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    array[i] = binary.charCodeAt(i);
+  }
+  return new Blob([array], { type: mime });
+}
+
+export function croppedDataUrlToFile(dataUrl: string, fileName = "avatar.jpg") {
+  return new File([dataUrlToBlob(dataUrl)], fileName, { type: "image/jpeg" });
+}
+
+export function avatarUrlFromKey(key: string): string {
+  return `https://${CLOUDFRONT_URL}/${key}`;
+}
+
+export async function uploadAvatar(file: File): Promise<string> {
+  const presignedUrl = await getPresignedUrl(file.name, file.type);
+  await uploadToS3(presignedUrl.presignedUrl.url, file);
+  return avatarUrlFromKey(presignedUrl.presignedUrl.key);
 }
 
 export const contextFetcher = async <T>({
@@ -121,3 +148,21 @@ export function getNetworkList(user: DashboardUser | undefined) {
     ).values()
   );
 }
+
+export const signUpFormValues: SignUpFormValues = {
+  name: "",
+  email: "",
+  username: "",
+  password: "",
+  bio: "",
+};
+
+export const useSignUpForm = (
+  onSubmit: (values: SignUpFormValues) => Promise<void> | void
+) =>
+  useForm({
+    defaultValues: signUpFormValues,
+    onSubmit: ({ value }) => onSubmit(value),
+  });
+
+export type SignUpForm = ReturnType<typeof useSignUpForm>;
