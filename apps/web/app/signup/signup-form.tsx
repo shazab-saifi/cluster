@@ -4,11 +4,11 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { croppedDataUrlToFile, uploadAvatar } from "@/lib/utils";
+import { updateMe } from "@/lib/api";
+import { croppedDataUrlToFile, uploadAvatar, useSignUpForm } from "@/lib/utils";
 import { AvatarCropper } from "@/components/dashboard/avatar-cropper";
 import { SignUpStepOne } from "./signup-step-1";
 import { SignUpStepTwo } from "./signup-step-2";
-import { useSignUpForm } from "@/lib/utils";
 
 function PasswordSignUpForm() {
   const router = useRouter();
@@ -20,38 +20,42 @@ function PasswordSignUpForm() {
   const [isCropping, setIsCropping] = useState(false);
 
   const form = useSignUpForm(async (value) => {
-    if (step === 1) {
-      setStep(2);
-      return;
-    }
-
     try {
+      if (step === 1) {
+        const { error } = await authClient.signUp.email({
+          name: "",
+          email: value.email.trim(),
+          username: value.username.trim(),
+          password: value.password,
+        });
+
+        if (error) {
+          console.error(error);
+          toast.error(error.message);
+          return;
+        }
+
+        setStep(2);
+        return;
+      }
+
       let image: string | undefined;
 
       if (avatarFile) {
         image = await uploadAvatar(avatarFile);
       }
 
-      const { error } = await authClient.signUp.email({
+      await updateMe({
         name: value.name.trim(),
-        email: value.email.trim(),
-        username: value.username.trim(),
-        password: value.password,
         bio: value.bio.trim() || undefined,
         image,
       });
-
-      if (error) {
-        console.error(error);
-        toast.error(error.message);
-        return;
-      }
 
       router.push("/");
     } catch (error) {
       console.error("Email sign-up failed!", error);
       const message =
-        error instanceof Error ? error.message : "Unable to create account.";
+        error instanceof Error ? error.message : "Could not create account.";
       toast.error(message);
     }
   });

@@ -16,7 +16,7 @@ import {
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@workspace/ui/components/textarea";
-import { bioSchema, nameSchema, usernameSchema } from "@/lib/schemas";
+import { bioSchema, nameSchema } from "@/lib/schemas";
 import { SignUpForm } from "@/lib/utils";
 
 type SignUpStepTwoProps = {
@@ -88,31 +88,12 @@ export function SignUpStepTwo({
                   autoComplete="name"
                   required
                 />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
-        <form.Field name="username" validators={{ onSubmit: usernameSchema }}>
-          {(field) => {
-            const isInvalid = !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name} required>
-                  Username
-                </FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  aria-invalid={isInvalid}
-                  placeholder="your_username"
-                  autoComplete="username"
-                  required
-                />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                {isInvalid && (
+                  <FieldError
+                    className="text-xs"
+                    errors={field.state.meta.errors}
+                  />
+                )}
               </Field>
             );
           }}
@@ -135,7 +116,12 @@ export function SignUpStepTwo({
                   maxLength={160}
                   rows={3}
                 />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                {isInvalid && (
+                  <FieldError
+                    className="text-xs"
+                    errors={field.state.meta.errors}
+                  />
+                )}
               </Field>
             );
           }}

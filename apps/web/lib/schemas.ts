@@ -78,8 +78,8 @@ export const usernameSchema = z
   .min(3, "Username must be at least 3 characters.")
   .max(30, "Username cannot be more than 30 characters.")
   .regex(
-    /^[a-zA-Z0-9_.]+$/,
-    "Username can only contain letters, numbers, underscores, and dots."
+    /^@[a-zA-Z0-9_.]+$/,
+    "Username must start with @ and can only contain letters, numbers, underscores, and dots after that."
   );
 
 export const passwordSchema = z

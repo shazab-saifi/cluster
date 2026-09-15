@@ -12,13 +12,18 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
+import { PasswordInput } from "@workspace/ui/components/password-input";
 import { Button } from "@workspace/ui/components/button";
 
 const PasswordSignInSchema = z.object({
   username: z
     .string()
     .min(3, "Username must be at least 3 characters.")
-    .max(30, "Username cannot be more than 30 characters."),
+    .max(30, "Username cannot be more than 30 characters.")
+    .regex(
+      /^@[a-zA-Z0-9_.]+$/,
+      "Username must start with @ and can only contain letters, numbers, underscores, and dots after that."
+    ),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters.")
@@ -82,10 +87,15 @@ export const SignInForm = () => {
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     aria-invalid={isInvalid}
-                    placeholder="your_username"
+                    placeholder="@your_username"
                     autoComplete="username"
                   />
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  {isInvalid && (
+                    <FieldError
+                      className="text-xs"
+                      errors={field.state.meta.errors}
+                    />
+                  )}
                 </Field>
               );
             }}
@@ -97,9 +107,8 @@ export const SignInForm = () => {
               return (
                 <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                  <Input
+                  <PasswordInput
                     id={field.name}
-                    type="password"
                     name={field.name}
                     value={field.state.value}
                     onBlur={field.handleBlur}
@@ -109,7 +118,12 @@ export const SignInForm = () => {
                     autoComplete="current-password"
                     required
                   />
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  {isInvalid && (
+                    <FieldError
+                      className="text-xs"
+                      errors={field.state.meta.errors}
+                    />
+                  )}
                 </Field>
               );
             }}

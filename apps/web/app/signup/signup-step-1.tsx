@@ -7,9 +7,11 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field";
 import { Input } from "@workspace/ui/components/input";
+import { PasswordInput } from "@workspace/ui/components/password-input";
 import { Button } from "@workspace/ui/components/button";
 import { Separator } from "@workspace/ui/components/separator";
 import { GoogleAuthButton } from "@/components/google-auth-button";
+import { UsernameField } from "@/components/signup/username-field";
 import { emailSchema, passwordSchema } from "@/lib/schemas";
 import { SignUpForm } from "@/lib/utils";
 
@@ -51,7 +53,12 @@ export function SignUpStepOne({ form }: { form: SignUpForm }) {
                   autoComplete="email"
                   required
                 />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                {isInvalid && (
+                  <FieldError
+                    className="text-xs"
+                    errors={field.state.meta.errors}
+                  />
+                )}
               </Field>
             );
           }}
@@ -64,9 +71,8 @@ export function SignUpStepOne({ form }: { form: SignUpForm }) {
                 <FieldLabel htmlFor={field.name} required>
                   Password
                 </FieldLabel>
-                <Input
+                <PasswordInput
                   id={field.name}
-                  type="password"
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
@@ -76,11 +82,17 @@ export function SignUpStepOne({ form }: { form: SignUpForm }) {
                   autoComplete="new-password"
                   required
                 />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                {isInvalid && (
+                  <FieldError
+                    className="text-xs"
+                    errors={field.state.meta.errors}
+                  />
+                )}
               </Field>
             );
           }}
         </form.Field>
+        <UsernameField form={form} />
       </FieldGroup>
 
       <Button type="submit" className="mt-5 w-full" size="lg">

@@ -177,7 +177,7 @@ function MemberRow({
           value={member.role}
           disabled={isUpdatingRole}
           onValueChange={(value) =>
-            onRoleChange(member.id, value as NetworkRole)
+            onRoleChange(member.userId, value as NetworkRole)
           }
         >
           <SelectTrigger

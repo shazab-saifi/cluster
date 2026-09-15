@@ -18,7 +18,7 @@ export async function getMe(userId: string) {
 
 export async function updateMe(
   userId: string,
-  data: { name?: string; image?: string }
+  data: { name?: string; image?: string; bio?: string; username?: string }
 ) {
   return prisma.user.update({
     where: {
@@ -26,4 +26,13 @@ export async function updateMe(
     },
     data,
   });
+}
+
+export async function isUsernameAvailable(username: string) {
+  const existing = await prisma.user.findUnique({
+    where: { username: username.toLowerCase() },
+    select: { id: true },
+  });
+
+  return { available: !existing };
 }

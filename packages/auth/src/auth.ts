@@ -64,7 +64,11 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [username()],
+  plugins: [
+    username({
+      usernameValidator: (username) => /^@[a-zA-Z0-9_.]+$/.test(username),
+    }),
+  ],
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
@@ -83,7 +87,7 @@ export const auth = betterAuth({
           }
 
           const random = Math.floor(Math.random() * 9999);
-          const autoUsername = `${baseIdentifier}${random}`;
+          const autoUsername = `@${baseIdentifier}${random}`;
 
           return {
             data: {

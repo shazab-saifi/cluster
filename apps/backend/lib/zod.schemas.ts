@@ -10,7 +10,14 @@ export const meInfoUpdateSchema = z.object({
   name: z.string().min(3).max(128).optional(),
   image: z.string().max(1000).optional(),
   bio: z.string().max(255).optional(),
-  username: z.string().max(16).optional(),
+  username: z
+    .string()
+    .max(30)
+    .regex(
+      /^@[a-zA-Z0-9_.]+$/,
+      "Username must start with @ and can only contain letters, numbers, underscores, and dots after that."
+    )
+    .optional(),
 });
 
 export const messageCreateSchema = z.object({

@@ -176,7 +176,7 @@ wss.on("connection", async (ws, req) => {
             message: data.message,
             sender: {
               id: userId,
-              name: user.name,
+              name: user.name ?? "",
               image: user.image,
             },
             timestamp,

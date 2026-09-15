@@ -283,6 +283,15 @@ export async function createNetwork(values: CreateNetworkValues) {
   }
 }
 
+export async function checkUsernameAvailable(username: string) {
+  const response = await axios.get<{ available: boolean }>(
+    `${API_BASE_URL}/user/username-available`,
+    { params: { username }, withCredentials: true }
+  );
+
+  return response.data;
+}
+
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (
     axios.isAxiosError<{
