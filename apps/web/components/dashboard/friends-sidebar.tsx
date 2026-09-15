@@ -10,10 +10,6 @@ type FriendsSidebarProps = {
   friends: Friendship[];
   isLoading: boolean;
   user?: DashboardUser;
-  sessionUser?: {
-    name?: string | null;
-    image?: string | null;
-  };
   onAddFriendClick?: () => void;
 };
 
@@ -27,7 +23,6 @@ export function FriendsSidebar({
   friends,
   isLoading,
   user,
-  sessionUser,
   onAddFriendClick,
 }: FriendsSidebarProps) {
   const [friendQuery, setFriendQuery] = React.useState("");
@@ -70,6 +65,7 @@ export function FriendsSidebar({
             value={friendQuery}
             onChange={(event) => setFriendQuery(event.target.value)}
             className="border-none bg-transparent py-0 text-sm placeholder:text-sm placeholder:text-muted-foreground dark:bg-transparent"
+            variant="ghost"
           />
         </div>
       </div>
@@ -118,7 +114,7 @@ export function FriendsSidebar({
           <EmptyFriends compact showAction={false} />
         )}
       </nav>
-      <UserFooter user={user} sessionUser={sessionUser} />
+      <UserFooter user={user} />
     </aside>
   );
 }

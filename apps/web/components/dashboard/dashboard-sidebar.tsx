@@ -40,9 +40,9 @@ export function DashboardSidebar({
 
   return (
     <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-background md:flex">
-      <div className="space-y-2 border-b px-8 py-4">
+      <div className="space-y-2 border-b px-4 py-4">
         <ActiveNetworkMenu activeNetwork={activeNetwork} channels={channels} />
-        <p className="text-xs text-muted-foreground">
+        <p className="px-4 text-xs text-muted-foreground">
           {activeNetwork?.memberCount !== undefined &&
             activeNetwork.memberCount.toLocaleString()}{" "}
           Members
@@ -62,10 +62,11 @@ export function DashboardSidebar({
           <Search className="pointer-events-none size-5 text-muted-foreground" />
           <Input
             aria-label="Search channels"
-            placeholder="Search Channel"
+            placeholder="Search Channels"
             value={channelQuery}
             onChange={(event) => setChannelQuery(event.target.value)}
             className="border-none bg-transparent py-0 text-sm placeholder:text-sm placeholder:text-muted-foreground dark:bg-transparent"
+            variant="ghost"
           />
         </div>
       </div>

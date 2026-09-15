@@ -234,7 +234,7 @@ export function MembersContent({
   const { data, isLoading } = useQuery({
     queryKey: ["network-members", networkId, debouncedValue],
     queryFn: ({ signal }) => searchMembers(networkId, debouncedValue, signal),
-    enabled: debouncedValue.trim().length > 0,
+    enabled: debouncedValue.trim().length > 1,
   });
 
   const updateRoleMutation = useMutation({

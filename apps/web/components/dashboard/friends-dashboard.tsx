@@ -16,7 +16,6 @@ export function FriendsDashboard() {
   const router = useRouter();
   const [isSearchUserOpen, setIsSearchUserOpen] = useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
-  const { data: session } = authClient.useSession();
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
@@ -49,7 +48,6 @@ export function FriendsDashboard() {
         friends={friends}
         isLoading={isLoading}
         user={user}
-        sessionUser={session?.user}
         onAddFriendClick={() => setIsSearchUserOpen(true)}
       />
       <section className="flex min-w-0 flex-1 flex-col">

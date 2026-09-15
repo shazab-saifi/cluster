@@ -93,6 +93,7 @@ const SearchUser = () => {
               placeholder="@username"
               onChange={(event) => setQuery(event.target.value)}
               className="border-none bg-transparent p-0 text-base font-medium text-foreground shadow-none focus-visible:border-transparent dark:bg-transparent dark:focus-visible:border-transparent"
+              variant="ghost"
             />
           </div>
           <XButton

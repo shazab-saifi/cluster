@@ -83,7 +83,7 @@ export function ActiveNetworkMenu({
       }}
     >
       <DropdownMenuTrigger asChild>
-        <span className="flex w-fit items-center gap-2 text-left text-base font-semibold tracking-tight">
+        <span className="flex w-fit items-center gap-2 px-4 text-left text-base font-semibold tracking-tight">
           <span className="min-w-0 truncate">
             {activeNetwork?.name ?? "Network"}
           </span>
@@ -96,7 +96,7 @@ export function ActiveNetworkMenu({
         </span>
       </DropdownMenuTrigger>
       {activeNetwork && (
-        <DropdownMenuContent className="translate-x-5">
+        <DropdownMenuContent align="start">
           {activeNetwork.role !== "MEMBER" && (
             <DropdownMenuItem onSelect={() => setIsManageNetworkOpen(true)}>
               <Settings />

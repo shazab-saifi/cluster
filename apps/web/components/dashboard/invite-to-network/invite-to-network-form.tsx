@@ -19,6 +19,7 @@ import {
 } from "@workspace/ui/components/radio-group";
 import { createInvite } from "@/lib/api";
 import { createInviteSchema, type InviteExpiry } from "@/lib/schemas";
+import { Input } from "@workspace/ui/components/input";
 
 type InviteToNetworkFormProps = {
   networkId: string;
@@ -126,9 +127,12 @@ export function InviteToNetworkForm({
         <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3">
           <p className="text-sm font-medium">Invite link</p>
           <div className="flex gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-md bg-background px-3 py-2 text-xs">
-              {inviteLink}
-            </code>
+            <Input
+              className="rounded-md bg-background px-3 py-2 text-xs"
+              value={inviteLink}
+              readOnly
+            />
+
             <Button
               type="button"
               variant="outline"
