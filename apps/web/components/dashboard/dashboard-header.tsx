@@ -7,12 +7,16 @@ type DashboardHeaderProps = {
   onSignOut: () => void;
   activeChannelName?: string | null;
   variant?: "friends" | "network";
+  activeFriendsTab?: string;
+  onFriendsTabChange?: (tab: string) => void;
 };
 
 export function DashboardHeader({
   onSignOut,
   activeChannelName,
   variant = "friends",
+  activeFriendsTab,
+  onFriendsTabChange,
 }: DashboardHeaderProps) {
   const isNetworkHeader = variant === "network";
 
@@ -30,6 +34,8 @@ export function DashboardHeader({
           <>
             <TabSelect
               tabs={["Online", "All", "Pending"]}
+              activeTab={activeFriendsTab}
+              setActiveTab={onFriendsTabChange}
               tabClassName="px-4 py-1.5"
               gap="16px"
             />

@@ -17,6 +17,24 @@ export async function getAllFriends(userId: string) {
   });
 }
 
+export async function getPendingFriendRequests(userId: string) {
+  return prisma.friendship.findMany({
+    where: {
+      status: "PENDING",
+      senderId: userId,
+    },
+    include: {
+      sender: {
+        select: { id: true, name: true, username: true, image: true },
+      },
+      receiver: {
+        select: { id: true, name: true, username: true, image: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function createFriendShip(userId: string, friendId: string) {
   return await prisma.friendship.create({
     data: {

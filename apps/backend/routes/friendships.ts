@@ -26,6 +26,18 @@ friendshipRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
+friendshipRouter.get("/pending", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+
+  try {
+    const pending = await friendServices.getPendingFriendRequests(userId);
+
+    res.json(pending);
+  } catch (error) {
+    sendErrorResponse(res, error, { path: req.originalUrl });
+  }
+});
+
 friendshipRouter.post("/add/:friendId", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const parsedFriendId = uuidSchema.safeParse(req.params.friendId);

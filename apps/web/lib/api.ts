@@ -124,6 +124,21 @@ export async function getFriends() {
   }
 }
 
+export async function getPendingFriendRequests() {
+  try {
+    const response = await axios.get<Friendship[]>(
+      `${API_BASE_URL}/friendships/pending`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch {
+    throw new Error("Could not load your pending friend requests.");
+  }
+}
+
 export async function leaveNetwork(networkId: string) {
   try {
     const response = await axios.delete<{ msg: string }>(
