@@ -167,14 +167,35 @@ export async function searchNetworkMembers(
 }
 
 export async function removeMember(networkId: string, userId: string) {
-  return await prisma.networkMembers.delete({
+  const member = await prisma.networkMembers.findUnique({
     where: {
-      userId_networkId: {
-        networkId,
-        userId,
-      },
+      userId_networkId: { networkId, userId },
     },
+    select: { role: true },
   });
+
+  if (!member) {
+    throw new NotFoundError("You are not a member of this network.");
+  }
+
+  if (member.role === "OWNER") {
+    throw new ForbiddenError("The owner cannot leave the network.");
+  }
+
+  return await prisma.$transaction([
+    prisma.network.update({
+      where: { id: networkId },
+      data: { memberCount: { decrement: 1 } },
+    }),
+    prisma.networkMembers.delete({
+      where: {
+        userId_networkId: {
+          networkId,
+          userId,
+        },
+      },
+    }),
+  ]);
 }
 
 async function fetchAndValidateMemberPair(
@@ -264,9 +285,15 @@ export async function removeMemberById(
     );
   }
 
-  return prisma.networkMembers.delete({
-    where: {
-      userId_networkId: { networkId, userId: targetUserId },
-    },
-  });
+  return prisma.$transaction([
+    prisma.network.update({
+      where: { id: networkId },
+      data: { memberCount: { decrement: 1 } },
+    }),
+    prisma.networkMembers.delete({
+      where: {
+        userId_networkId: { networkId, userId: targetUserId },
+      },
+    }),
+  ]);
 }

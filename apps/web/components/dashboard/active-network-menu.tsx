@@ -104,14 +104,16 @@ export function ActiveNetworkMenu({
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => leaveNetworkMutation.mutate(activeNetwork.id)}
-            disabled={leaveNetworkMutation.isPending}
-          >
-            <LogOut />
-            {leaveNetworkMutation.isPending ? "Leaving..." : "Leave network"}
-          </DropdownMenuItem>
+          {activeNetwork.role !== "OWNER" && (
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => leaveNetworkMutation.mutate(activeNetwork.id)}
+              disabled={leaveNetworkMutation.isPending}
+            >
+              <LogOut />
+              {leaveNetworkMutation.isPending ? "Leaving..." : "Leave network"}
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       )}
       <NetworkManageDialog
