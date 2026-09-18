@@ -25,24 +25,24 @@ export const notifRouter: Router = express.Router();
 // });
 
 notifRouter.get("/", async (req: Request, res: Response) => {
-  const parsedCursor = uuidSchema.safeParse(req.params.cursor);
   const userId = req.user?.id as string;
+  const cursor =
+    typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+
+  if (cursor !== undefined && !uuidSchema.safeParse(cursor).success) {
+    throw new ValidationError(
+      "Invalid cursor param",
+      "Please make sure cursor param is a valid uuid"
+    );
+  }
 
   try {
-    if (!parsedCursor.success) {
-      throw new ValidationError(
-        "Invalid cursor param",
-        parsedCursor.error.issues[0]?.message ??
-          "Please make sure cursor param is a valid uuid"
-      );
-    }
-
-    const { nextPage, lastPage } = await getNotifications(
+    const { notifications, nextCursor } = await getNotifications(
       userId,
-      parsedCursor.data
+      cursor
     );
 
-    res.json({ nextPage, lastPage });
+    res.json({ notifications, nextCursor });
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }

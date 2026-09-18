@@ -7,12 +7,12 @@ import { XButton } from "@workspace/ui/components/x-button";
 import Link from "next/link";
 import { useState } from "react";
 import { useDebounce } from "@workspace/ui/hooks/use-debounce";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/utils";
-import { authClient } from "@/lib/auth-client";
+import { acceptFriendRequest } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,10 @@ import {
 
 type SearchUserResult = {
   id: string;
-  image: string;
+  image: string | null;
   username: string;
+  status: "FRIENDS" | "PENDING_RECEIVED" | "NONE";
+  friendshipId: string | null;
 };
 
 type SearchUserDialogProps = {
@@ -33,9 +35,7 @@ type SearchUserDialogProps = {
 
 const SearchUser = () => {
   const [query, setQuery] = useState("");
-  const [sentToUserIds, setSentToUserIds] = useState<Set<string>>(new Set());
-  const { data: session } = authClient.useSession();
-  const currentUserId = session?.user?.id;
+  const queryClient = useQueryClient();
   const { debouncedValue } = useDebounce(query, 500);
   const { data, isLoading, error, isError } = useQuery<SearchUserResult[]>({
     queryKey: ["searched username", debouncedValue],
@@ -52,24 +52,37 @@ const SearchUser = () => {
     enabled: debouncedValue.trim().length > 0,
   });
 
+  const invalidateSearch = () =>
+    queryClient.invalidateQueries({
+      queryKey: ["searched username", debouncedValue],
+    });
+
   const sendFriendRequest = useMutation({
     mutationFn: (receiverId: string) =>
       axios.post(
-        `${API_BASE_URL}/notifications`,
-        {
-          eventType: "NOTIFICATION",
-          type: "FRIEND_REQUEST",
-          senderId: currentUserId,
-          receiverId,
-        },
+        `${API_BASE_URL}/friendships/add/${receiverId}`,
+        {},
         { withCredentials: true }
       ),
-    onSuccess: (_data, receiverId) => {
-      setSentToUserIds((prev) => new Set(prev).add(receiverId));
+    onSuccess: () => {
+      invalidateSearch();
       toast.success("Friend request sent.");
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "Could not send friend request."));
+    },
+  });
+
+  const acceptRequest = useMutation({
+    mutationFn: (friendshipId: string) => acceptFriendRequest(friendshipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-friend-requests"] });
+      invalidateSearch();
+      toast.success("Friend request accepted.");
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -79,7 +92,7 @@ const SearchUser = () => {
         <div className="flex w-full flex-col gap-1">
           <DialogTitle>Add Friends</DialogTitle>
           <DialogDescription>
-            You can send friend request to people using their username
+            Find people by username, send requests, and accept incoming ones
           </DialogDescription>
         </div>
 
@@ -132,10 +145,33 @@ const SearchUser = () => {
           </p>
         ) : (
           data?.map((user) => {
-            const isSent = sentToUserIds.has(user.id);
-            const isPending =
+            const isSendingRequest =
               sendFriendRequest.isPending &&
               sendFriendRequest.variables === user.id;
+            const isAccepting =
+              acceptRequest.isPending &&
+              acceptRequest.variables === user.friendshipId;
+
+            let buttonLabel = "Send Friend Request";
+            let buttonDisabled = isSendingRequest;
+            let buttonOnClick = () => sendFriendRequest.mutate(user.id);
+
+            if (user.status === "FRIENDS") {
+              buttonLabel = "Friends";
+              buttonDisabled = true;
+            } else if (user.status === "PENDING_RECEIVED") {
+              const friendshipId = user.friendshipId;
+              if (!friendshipId) {
+                buttonLabel = "Pending";
+                buttonDisabled = true;
+              } else {
+                buttonLabel = isAccepting ? "Accepting..." : "Accept Request";
+                buttonDisabled = isAccepting;
+                buttonOnClick = () => acceptRequest.mutate(friendshipId);
+              }
+            } else if (isSendingRequest) {
+              buttonLabel = "Sending...";
+            }
 
             return (
               <div
@@ -145,7 +181,7 @@ const SearchUser = () => {
                 <div className="flex min-w-0 items-center gap-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={user.image}
+                    src={user.image ?? ""}
                     alt=""
                     className="size-10 rounded-full object-cover"
                   />
@@ -156,10 +192,10 @@ const SearchUser = () => {
 
                 <Button
                   type="button"
-                  disabled={isSent || isPending}
-                  onClick={() => sendFriendRequest.mutate(user.id)}
+                  disabled={buttonDisabled}
+                  onClick={buttonOnClick}
                 >
-                  {isSent ? "Request Sent" : "Send Friend Request"}
+                  {buttonLabel}
                 </Button>
               </div>
             );

@@ -9,7 +9,8 @@ import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import NetworkStrip from "./network-strip";
 import { ChatPanel } from "./chat-panel/chat-panel";
-import { useEffect, useMemo } from "react";
+import { NotificationPanel } from "./notification-panel/notification-panel";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { getNetworkList } from "@/lib/utils";
 
 export function Dashboard({
@@ -75,6 +76,16 @@ export function Dashboard({
     router.refresh();
   };
 
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const toggleNotifications = useCallback(() => {
+    setShowNotifications((open) => {
+      if (!open) setUnreadCount(0);
+      return !open;
+    });
+  }, []);
+
   return (
     <main className="flex h-svh overflow-hidden bg-background text-foreground">
       <NetworkStrip networks={networks} isLoading={isLoading} />
@@ -91,8 +102,11 @@ export function Dashboard({
           variant="network"
           activeChannelName={activeChannel?.name}
           onSignOut={handleSignOut}
+          onNotificationsClick={toggleNotifications}
+          showNotifications={showNotifications}
+          unreadCount={unreadCount}
         />
-        <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1">
           {activeChannel ? (
             <ChatPanel channelId={activeChannel.id} />
           ) : (
@@ -107,6 +121,11 @@ export function Dashboard({
             </section>
           )}
           <ActiveNow activeNetwork={selectedNetwork} />
+          <NotificationPanel
+            open={showNotifications}
+            onClose={() => setShowNotifications(false)}
+            onNewNotification={() => setUnreadCount((c) => c + 1)}
+          />
         </div>
       </section>
     </main>

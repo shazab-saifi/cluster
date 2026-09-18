@@ -10,7 +10,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { InputPayloadUnion } from "./zod.schemas";
 import { assertHasMembership } from "@workspace/core/services/validation";
 import { publisher, subscriber } from "@workspace/redis";
-import { NotificationType } from "@workspace/core/services/notification-services";
+import { NotificationEvent } from "@workspace/core/services/notification-services";
 import { getMe } from "@workspace/core/services/me-services";
 import * as messageServices from "@workspace/core/services/messages-services";
 
@@ -57,6 +57,8 @@ const userSocketData = new WeakMap<
 >();
 const channels = new Map<string, Set<WebSocket>>();
 const subscribedChannels = new Set<string>();
+const userNotificationSockets = new Map<string, Set<WebSocket>>();
+let notificationEventsSubscribed = false;
 
 type RequestType =
   | "JOIN_CHANNEL"
@@ -100,13 +102,16 @@ function sendError(
 
 wss.on("connection", async (ws, req) => {
   userSocketData.set(ws, { userId: req.userId as string, channels: new Set() });
-  await subscribeToNotification(ws);
+  registerSocketForNotifications(req.userId as string, ws);
+  await subscribeToNotificationEvents();
 
   ws.on("error", (error) => console.error("Error in error event: ", error));
 
   ws.on("close", async () => {
     const socket = userSocketData.get(ws);
     if (!socket) return;
+
+    unregisterSocketFromNotifications(socket.userId, ws);
 
     try {
       await Promise.all(
@@ -303,13 +308,48 @@ async function unsubscribeChannel(channelId: string) {
   subscribedChannels.delete(channelId);
 }
 
-async function subscribeToNotification(ws: WebSocket) {
-  await subscriber.subscribe("persisted-notification-event", (data) => {
-    const notification: NotificationType = JSON.parse(data);
-    const isRecevier = userSocketData.get(ws);
+async function subscribeToNotificationEvents() {
+  if (notificationEventsSubscribed) return;
 
-    if (isRecevier?.userId === notification.receiverId) {
-      ws.send(JSON.stringify(notification));
+  await subscriber.subscribe("persisted-notification-events", (data) => {
+    let events: NotificationEvent | NotificationEvent[];
+
+    try {
+      events = JSON.parse(data);
+    } catch {
+      return;
+    }
+
+    for (const notification of Array.isArray(events) ? events : [events]) {
+      if (!notification?.userId || !notification.type) continue;
+
+      const sockets = userNotificationSockets.get(notification.userId);
+      if (!sockets) continue;
+
+      for (const ws of sockets) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(notification));
+        }
+      }
     }
   });
+
+  notificationEventsSubscribed = true;
+}
+
+function registerSocketForNotifications(userId: string, ws: WebSocket) {
+  if (!userNotificationSockets.has(userId)) {
+    userNotificationSockets.set(userId, new Set());
+  }
+  userNotificationSockets.get(userId)?.add(ws);
+}
+
+function unregisterSocketFromNotifications(userId: string, ws: WebSocket) {
+  const sockets = userNotificationSockets.get(userId);
+  if (!sockets) return;
+
+  sockets.delete(ws);
+  if (sockets.size === 0) {
+    userNotificationSockets.delete(userId);
+  }
 }

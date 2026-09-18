@@ -1,5 +1,6 @@
 export type NetworkRole = "OWNER" | "ADMIN" | "MODERATOR" | "MEMBER";
 export type NetworkType = "PUBLIC" | "PRIVATE";
+export type FriendsTab = "Online" | "All" | "Pending";
 
 export type Network = {
   id: string;
@@ -117,6 +118,27 @@ type DeleteMessageEvent = {
   type: "DELETE_MESSAGE";
   channelId: string;
   messageId: string;
+};
+
+export type NotificationActor = {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+};
+
+export type NotificationType = "FRIEND_REQUEST" | "MENTION" | "REACTION";
+
+export type NotificationEvent = {
+  id: string;
+  type: NotificationType;
+  actorId: string;
+  userId: string;
+  entityType: string | null;
+  entityId: string | null;
+  data: { mutualFriends?: number } | null;
+  createdAt: string;
+  actor: NotificationActor | null;
 };
 
 export type ServerEvent =

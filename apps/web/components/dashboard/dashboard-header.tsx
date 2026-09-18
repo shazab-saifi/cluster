@@ -2,13 +2,18 @@ import { Bell, Hash, LogOut } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { TabSelect } from "@workspace/ui/components/tab-select";
 import { ThemeToggle } from "./theme-toggle";
+import { cn } from "@workspace/ui/lib/utils";
+import type { FriendsTab } from "./types";
 
 type DashboardHeaderProps = {
   onSignOut: () => void;
   activeChannelName?: string | null;
   variant?: "friends" | "network";
-  activeFriendsTab?: string;
-  onFriendsTabChange?: (tab: string) => void;
+  activeFriendsTab?: FriendsTab;
+  onFriendsTabChange?: (tab: FriendsTab) => void;
+  onNotificationsClick?: () => void;
+  showNotifications?: boolean;
+  unreadCount?: number;
 };
 
 export function DashboardHeader({
@@ -17,6 +22,9 @@ export function DashboardHeader({
   variant = "friends",
   activeFriendsTab,
   onFriendsTabChange,
+  onNotificationsClick,
+  showNotifications,
+  unreadCount = 0,
 }: DashboardHeaderProps) {
   const isNetworkHeader = variant === "network";
 
@@ -35,7 +43,9 @@ export function DashboardHeader({
             <TabSelect
               tabs={["Online", "All", "Pending"]}
               activeTab={activeFriendsTab}
-              setActiveTab={onFriendsTabChange}
+              setActiveTab={(tab: string) =>
+                onFriendsTabChange?.(tab as FriendsTab)
+              }
               tabClassName="px-4 py-1.5"
               gap="16px"
             />
@@ -43,8 +53,22 @@ export function DashboardHeader({
         )}
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon-sm" aria-label="Notifications">
-          <Bell className="size-5 fill-foreground" />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Notifications"
+          onClick={onNotificationsClick}
+          className={cn(showNotifications && "bg-muted text-foreground")}
+        >
+          <span className="relative size-5">
+            <Bell className="size-5" />
+            {unreadCount > 0 ? (
+              <span className="absolute -top-1 -right-1 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-medium text-primary-foreground">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            ) : null}
+          </span>
         </Button>
         <ThemeToggle />
         <Button

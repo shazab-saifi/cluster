@@ -7,13 +7,14 @@ export const userRouter: Router = express.Router();
 
 userRouter.get("/search", async (req: Request, res: Response) => {
   const username = req.query.q;
+  const userId = req.user?.id as string;
 
   if (!username) {
     throw new BadRequestError("Query 'q' must be provided");
   }
 
   try {
-    const result = await findUserbyUsername(username as string);
+    const result = await findUserbyUsername(username as string, userId);
 
     res.json(result);
   } catch (error) {

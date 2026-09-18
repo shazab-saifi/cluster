@@ -7,6 +7,7 @@ import type {
   MeResponse,
   Network,
   NetworkDetails,
+  NotificationEvent,
 } from "@/components/dashboard/types";
 import type {
   CreateChannelValues,
@@ -136,6 +137,43 @@ export async function getPendingFriendRequests() {
     return response.data;
   } catch {
     throw new Error("Could not load your pending friend requests.");
+  }
+}
+
+export type NotificationsPage = {
+  notifications: NotificationEvent[];
+  nextCursor: string | null;
+};
+
+export async function getNotifications(cursor?: string) {
+  try {
+    const response = await axios.get<NotificationsPage>(
+      `${API_BASE_URL}/notifications`,
+      {
+        params: cursor ? { cursor } : undefined,
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch {
+    throw new Error("Could not load your notifications.");
+  }
+}
+
+export async function acceptFriendRequest(friendshipId: string) {
+  try {
+    const response = await axios.patch<{ friendship: Friendship }>(
+      `${API_BASE_URL}/friendships/${friendshipId}`,
+      {},
+      { withCredentials: true }
+    );
+
+    return response.data.friendship;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "Could not accept friend request.")
+    );
   }
 }
 

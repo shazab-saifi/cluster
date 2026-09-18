@@ -55,16 +55,48 @@ friendshipRouter.post("/add/:friendId", async (req: Request, res: Response) => {
       userId,
       parsedFriendId.data
     );
+    const mutualFriends = await friendServices.getMutualFriends(
+      friendShip.senderId,
+      friendShip.receiverId
+    );
     await createNotificationEvent({
       type: "FRIEND_REQUEST",
       entityType: "friend_request",
       entityId: friendShip.id,
       userId: friendShip.receiverId,
       actorId: friendShip.senderId,
+      data: { mutualFriends },
     });
 
-    res.json({ msg: "friend request sent successfully" });
+    res.json({ msg: "friend request sent successfully", friendShip });
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }
 });
+
+friendshipRouter.patch(
+  "/:friendshipId",
+  async (req: Request, res: Response) => {
+    const userId = req.user?.id as string;
+    const parsedFriendshipId = uuidSchema.safeParse(req.params.friendshipId);
+
+    if (!parsedFriendshipId.success) {
+      throw new ValidationError(
+        "Invalid friendship id",
+        parsedFriendshipId.error.issues[0]?.message ??
+          "Param friendshipId should be a valid uuid"
+      );
+    }
+
+    try {
+      const friendship = await friendServices.acceptFriendRequest(
+        parsedFriendshipId.data,
+        userId
+      );
+
+      res.json({ friendship });
+    } catch (error) {
+      sendErrorResponse(res, error, { path: req.originalUrl });
+    }
+  }
+);

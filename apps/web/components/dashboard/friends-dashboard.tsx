@@ -9,13 +9,12 @@ import { EmptyFriends, FriendsSidebar } from "./friends-sidebar";
 import { SearchUserDialog } from "./friends-tabs/search-user";
 import { CreateNetworkDialog } from "./create-network/create-network-dialog";
 import NetworkStrip from "./network-strip";
+import { NotificationPanel } from "./notification-panel/notification-panel";
 import { getNetworkList } from "@/lib/utils";
 import { getInitials } from "@workspace/ui/lib/utils";
 import { LoaderCircle } from "lucide-react";
-import { useState } from "react";
-import type { DashboardUser, Friendship } from "./types";
-
-type FriendsTab = "Online" | "All" | "Pending";
+import { useState, useCallback } from "react";
+import type { DashboardUser, Friendship, FriendsTab } from "./types";
 
 export function FriendsDashboard() {
   const router = useRouter();
@@ -39,7 +38,6 @@ export function FriendsDashboard() {
   const user = profile?.userData;
   const networks = getNetworkList(user);
   const hasFriends = friends.length > 0;
-  const hasPending = pendingRequests.length > 0;
 
   const handleSignOut = async () => {
     const { error } = await authClient.signOut();
@@ -52,6 +50,16 @@ export function FriendsDashboard() {
     router.replace("/signin");
     router.refresh();
   };
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const toggleNotifications = useCallback(() => {
+    setShowNotifications((open) => {
+      if (!open) setUnreadCount(0);
+      return !open;
+    });
+  }, []);
 
   return (
     <main className="flex h-svh overflow-hidden bg-background text-foreground">
@@ -67,8 +75,11 @@ export function FriendsDashboard() {
           onSignOut={handleSignOut}
           activeFriendsTab={activeTab}
           onFriendsTabChange={setActiveTab}
+          onNotificationsClick={toggleNotifications}
+          showNotifications={showNotifications}
+          unreadCount={unreadCount}
         />
-        <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1">
           <section className="flex min-w-0 flex-1 items-center justify-center p-6">
             {activeTab === "Pending" ? (
               <PendingRequests
@@ -95,6 +106,11 @@ export function FriendsDashboard() {
               <EmptyFriends showAction={false} />
             )}
           </aside>
+          <NotificationPanel
+            open={showNotifications}
+            onClose={() => setShowNotifications(false)}
+            onNewNotification={() => setUnreadCount((c) => c + 1)}
+          />
         </div>
       </section>
       <SearchUserDialog
