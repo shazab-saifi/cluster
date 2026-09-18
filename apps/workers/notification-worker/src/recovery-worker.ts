@@ -3,8 +3,10 @@ import {
   NotificationType,
 } from "@workspace/core/services/notification-services";
 import { publisher, redisClient } from "@workspace/redis";
-import os from "os";
 import { z } from "zod";
+
+const RECOVERY_MIN_IDLE_MS = 1000;
+const RECOVERY_DELAY_MS = 30000;
 
 const NotificationSchema = z.object({
   type: z.enum(["FRIEND_REQUEST", "MENTION", "REACTION"]),
@@ -15,25 +17,23 @@ const NotificationSchema = z.object({
   data: z.unknown().nullable().optional(),
 });
 
-async function notificationWorker() {
+async function notificationRecovery() {
   while (true) {
-    const workerName = `${os.hostname()}:${process.pid}`;
-
     try {
-      const notifications = await redisClient.xReadGroup(
+      const pendingNotifications = await redisClient.XAUTOCLAIM(
+        "notification:stream",
         "notification-group",
-        workerName,
-        { key: "notification:stream", id: ">" },
-        { COUNT: 10, BLOCK: 5000 }
+        "notification-recovery-worker",
+        RECOVERY_MIN_IDLE_MS,
+        "0-0"
       );
 
-      if (!notifications?.length) {
-        continue;
-      }
-
-      for (const notification of notifications) {
-        for (const message of notification.messages) {
-          const parsedMessage = NotificationSchema.safeParse(message.message);
+      for (const notification of pendingNotifications.messages) {
+        if (!notification) continue;
+        try {
+          const parsedMessage = NotificationSchema.safeParse(
+            notification.message
+          );
 
           if (!parsedMessage.success) {
             console.error(
@@ -43,7 +43,7 @@ async function notificationWorker() {
             await redisClient.xAck(
               "notification:stream",
               "notification-group",
-              message.id
+              notification.id
             );
             continue;
           }
@@ -60,7 +60,7 @@ async function notificationWorker() {
               await redisClient.xAck(
                 "notification:stream",
                 "notification-group",
-                message.id
+                notification.id
               );
               continue;
             }
@@ -75,55 +75,33 @@ async function notificationWorker() {
             data,
           };
 
-          try {
-            const created = await upsertNotification(structuredNotif);
+          const created = await upsertNotification(structuredNotif);
+          await publisher.publish(
+            "persisted-notification-events",
+            JSON.stringify(created)
+          );
 
-            await publisher.publish(
-              "persisted-notification-events",
-              JSON.stringify(created)
-            );
-
-            await redisClient.xAck(
-              "notification:stream",
-              "notification-group",
-              message.id
-            );
-          } catch (error) {
-            // Leave the event in the PEL for the recovery worker.
-            console.error("Failed to persist notification: ", error);
-          }
+          await redisClient.xAck(
+            "notification:stream",
+            "notification-group",
+            notification.id
+          );
+        } catch (error) {
+          // Keep failed events in the PEL for a later recovery attempt.
+          console.error("Failed to recover notification event: ", error);
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error("Could not claim pending notification events: ", error);
     }
-  }
-}
 
-async function ensureConsumerGroup() {
-  try {
-    await redisClient.xGroupCreate(
-      "notification:stream",
-      "notification-group",
-      "$",
-      {
-        MKSTREAM: true,
-      }
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-
-    if (!message.includes("BUSYGROUP")) {
-      throw error;
-    }
+    await Bun.sleep(RECOVERY_DELAY_MS);
   }
 }
 
 try {
-  await ensureConsumerGroup();
-  await notificationWorker();
-  console.log("Notification worker is running");
+  await notificationRecovery();
 } catch (error) {
-  console.error(error);
+  console.error("notification recovery worker startup failed", error);
   process.exit(1);
 }

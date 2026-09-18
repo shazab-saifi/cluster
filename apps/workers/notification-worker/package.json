@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "bun src/worker.ts",
     "start": "bun dist/worker.js",
+    "recovery:dev": "bun run --watch src/recovery-worker.ts",
+    "recovery:start": "bun dist/recovery-worker.js",
     "build": "tsc"
   },
   "devDependencies": {
