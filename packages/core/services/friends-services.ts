@@ -18,7 +18,25 @@ export async function getAllFriends(userId: string) {
   });
 }
 
-export async function getPendingFriendRequests(userId: string) {
+export async function getIncomingFriendRequests(userId: string) {
+  return prisma.friendship.findMany({
+    where: {
+      status: "PENDING",
+      receiverId: userId,
+    },
+    include: {
+      sender: {
+        select: { id: true, name: true, username: true, image: true },
+      },
+      receiver: {
+        select: { id: true, name: true, username: true, image: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getOutgoingFriendRequests(userId: string) {
   return prisma.friendship.findMany({
     where: {
       status: "PENDING",
@@ -34,6 +52,40 @@ export async function getPendingFriendRequests(userId: string) {
     },
     orderBy: { createdAt: "desc" },
   });
+}
+
+export async function removeFriendRequest(
+  friendshipId: string,
+  userId: string
+) {
+  const friendship = await prisma.friendship.findUnique({
+    where: { id: friendshipId },
+  });
+
+  if (!friendship) {
+    throw new NotFoundError(
+      "Friend request not found.",
+      "The friend request may have been revoked or already removed."
+    );
+  }
+
+  if (friendship.senderId !== userId && friendship.receiverId !== userId) {
+    throw new ForbiddenError(
+      "You can only cancel or decline your own friend requests.",
+      "Only the sender can cancel a request, and only the recipient can decline it."
+    );
+  }
+
+  if (friendship.status !== "PENDING") {
+    throw new BadRequestError(
+      "This friend request is no longer pending.",
+      "The request has already been accepted or removed."
+    );
+  }
+
+  await prisma.friendship.delete({ where: { id: friendshipId } });
+
+  return { msg: "Friend request removed." };
 }
 
 export async function createFriendShip(userId: string, friendId: string) {

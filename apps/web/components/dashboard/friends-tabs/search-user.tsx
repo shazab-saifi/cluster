@@ -66,6 +66,7 @@ const SearchUser = () => {
       ),
     onSuccess: () => {
       invalidateSearch();
+      queryClient.invalidateQueries({ queryKey: ["outgoing-friend-requests"] });
       toast.success("Friend request sent.");
     },
     onError: (error) => {
@@ -77,7 +78,7 @@ const SearchUser = () => {
     mutationFn: (friendshipId: string) => acceptFriendRequest(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
-      queryClient.invalidateQueries({ queryKey: ["pending-friend-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["incoming-friend-requests"] });
       invalidateSearch();
       toast.success("Friend request accepted.");
     },

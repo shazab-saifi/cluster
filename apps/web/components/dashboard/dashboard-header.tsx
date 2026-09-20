@@ -41,7 +41,7 @@ export function DashboardHeader({
         ) : (
           <>
             <TabSelect
-              tabs={["Online", "All", "Pending"]}
+              tabs={["Online", "All", "Incoming", "Outgoing"]}
               activeTab={activeFriendsTab}
               setActiveTab={(tab: string) =>
                 onFriendsTabChange?.(tab as FriendsTab)

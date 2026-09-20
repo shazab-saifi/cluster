@@ -28,7 +28,7 @@ export function FriendRequestCard({
     mutationFn: () => acceptFriendRequest(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
-      queryClient.invalidateQueries({ queryKey: ["pending-friend-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["incoming-friend-requests"] });
       toast.success(`You are now friends with ${name}.`);
     },
     onError: (error) => {

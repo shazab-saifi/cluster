@@ -1,6 +1,6 @@
 export type NetworkRole = "OWNER" | "ADMIN" | "MODERATOR" | "MEMBER";
 export type NetworkType = "PUBLIC" | "PRIVATE";
-export type FriendsTab = "Online" | "All" | "Pending";
+export type FriendsTab = "Online" | "All" | "Incoming" | "Outgoing";
 
 export type Network = {
   id: string;

@@ -26,13 +26,25 @@ friendshipRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-friendshipRouter.get("/pending", async (req: Request, res: Response) => {
+friendshipRouter.get("/outgoing", async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
 
   try {
-    const pending = await friendServices.getPendingFriendRequests(userId);
+    const outgoing = await friendServices.getOutgoingFriendRequests(userId);
 
-    res.json(pending);
+    res.json(outgoing);
+  } catch (error) {
+    sendErrorResponse(res, error, { path: req.originalUrl });
+  }
+});
+
+friendshipRouter.get("/incoming", async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+
+  try {
+    const incoming = await friendServices.getIncomingFriendRequests(userId);
+
+    res.json(incoming);
   } catch (error) {
     sendErrorResponse(res, error, { path: req.originalUrl });
   }
@@ -95,6 +107,33 @@ friendshipRouter.patch(
       );
 
       res.json({ friendship });
+    } catch (error) {
+      sendErrorResponse(res, error, { path: req.originalUrl });
+    }
+  }
+);
+
+friendshipRouter.delete(
+  "/:friendshipId",
+  async (req: Request, res: Response) => {
+    const userId = req.user?.id as string;
+    const parsedFriendshipId = uuidSchema.safeParse(req.params.friendshipId);
+
+    if (!parsedFriendshipId.success) {
+      throw new ValidationError(
+        "Invalid friendship id",
+        parsedFriendshipId.error.issues[0]?.message ??
+          "Param friendshipId should be a valid uuid"
+      );
+    }
+
+    try {
+      const removed = await friendServices.removeFriendRequest(
+        parsedFriendshipId.data,
+        userId
+      );
+
+      res.json(removed);
     } catch (error) {
       sendErrorResponse(res, error, { path: req.originalUrl });
     }

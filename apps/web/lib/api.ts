@@ -113,7 +113,7 @@ export async function updateNetwork(
 export async function getFriends() {
   try {
     const response = await axios.get<Friendship[]>(
-      `${API_BASE_URL}/friendship`,
+      `${API_BASE_URL}/friendships`,
       {
         withCredentials: true,
       }
@@ -125,10 +125,10 @@ export async function getFriends() {
   }
 }
 
-export async function getPendingFriendRequests() {
+export async function getIncomingFriendRequests() {
   try {
     const response = await axios.get<Friendship[]>(
-      `${API_BASE_URL}/friendships/pending`,
+      `${API_BASE_URL}/friendships/incoming`,
       {
         withCredentials: true,
       }
@@ -136,7 +136,39 @@ export async function getPendingFriendRequests() {
 
     return response.data;
   } catch {
-    throw new Error("Could not load your pending friend requests.");
+    throw new Error("Could not load your incoming friend requests.");
+  }
+}
+
+export async function getOutgoingFriendRequests() {
+  try {
+    const response = await axios.get<Friendship[]>(
+      `${API_BASE_URL}/friendships/outgoing`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch {
+    throw new Error("Could not load your outgoing friend requests.");
+  }
+}
+
+export async function cancelFriendRequest(friendshipId: string) {
+  try {
+    const response = await axios.delete<{ msg: string }>(
+      `${API_BASE_URL}/friendships/${friendshipId}`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "Could not remove friend request.")
+    );
   }
 }
 
