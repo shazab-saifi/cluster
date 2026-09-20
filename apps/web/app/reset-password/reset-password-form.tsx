@@ -1,52 +1,46 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { toast } from "sonner";
+import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
+import { passwordSchema } from "@/lib/schemas";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@workspace/ui/components/field";
-import { Input } from "@workspace/ui/components/input";
 import { PasswordInput } from "@workspace/ui/components/password-input";
 import { Button } from "@workspace/ui/components/button";
 
-const PasswordSignInSchema = z.object({
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters.")
-    .max(30, "Username cannot be more than 30 characters.")
-    .regex(
-      /^@[a-zA-Z0-9_.]+$/,
-      "Username must start with @ and can only contain letters, numbers, underscores, and dots after that."
-    ),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters.")
-    .max(128, "Password cannot be more than 128 characters."),
-});
+const ResetPasswordSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
 
-export const SignInForm = () => {
+export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
 
   const form = useForm({
     defaultValues: {
-      username: "",
       password: "",
+      confirmPassword: "",
     },
     validators: {
-      onSubmit: PasswordSignInSchema,
+      onSubmit: ResetPasswordSchema,
     },
     onSubmit: async ({ value }) => {
       try {
-        const { error } = await authClient.signIn.username({
-          username: value.username.trim(),
-          password: value.password,
+        const { error } = await authClient.resetPassword({
+          newPassword: value.password,
+          token,
         });
 
         if (error) {
@@ -54,11 +48,12 @@ export const SignInForm = () => {
           return toast.error(error.message);
         }
 
-        router.push("/");
+        toast.success("Password updated. Please sign in.");
+        router.push("/signin");
       } catch (error) {
-        console.error("Username sign-in failed!", error);
+        console.error("Resetting password failed!", error);
         const message =
-          error instanceof Error ? error.message : "Unable to sign in.";
+          error instanceof Error ? error.message : "Could not reset password.";
         toast.error(message);
       }
     },
@@ -67,29 +62,30 @@ export const SignInForm = () => {
   return (
     <div>
       <form
-        id="signin-form"
+        id="reset-password-form"
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit();
         }}
       >
         <FieldGroup>
-          <form.Field name="username">
+          <form.Field name="password">
             {(field) => {
               const isInvalid =
                 field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>Username</FieldLabel>
-                  <Input
+                  <FieldLabel htmlFor={field.name}>New password</FieldLabel>
+                  <PasswordInput
                     id={field.name}
                     name={field.name}
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     aria-invalid={isInvalid}
-                    placeholder="@your_username"
-                    autoComplete="username"
+                    placeholder="At least 8 characters"
+                    autoComplete="new-password"
+                    required
                   />
                   {isInvalid && (
                     <FieldError
@@ -101,13 +97,13 @@ export const SignInForm = () => {
               );
             }}
           </form.Field>
-          <form.Field name="password">
+          <form.Field name="confirmPassword">
             {(field) => {
               const isInvalid =
                 field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Confirm password</FieldLabel>
                   <PasswordInput
                     id={field.name}
                     name={field.name}
@@ -115,8 +111,8 @@ export const SignInForm = () => {
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     aria-invalid={isInvalid}
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
+                    placeholder="Re-enter your new password"
+                    autoComplete="new-password"
                     required
                   />
                   {isInvalid && (
@@ -130,21 +126,15 @@ export const SignInForm = () => {
             }}
           </form.Field>
         </FieldGroup>
-        <Link
-          href="/forgot-password"
-          className="mt-3 block text-right text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
-        >
-          Forgot password?
-        </Link>
       </form>
       <Button
         type="submit"
-        form="signin-form"
+        form="reset-password-form"
         className="mt-5 w-full"
         size="lg"
       >
-        Sign In
+        Reset password
       </Button>
     </div>
   );
-};
+}
