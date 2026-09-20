@@ -235,6 +235,7 @@ export function MembersContent({
     queryKey: ["network-members", networkId, debouncedValue],
     queryFn: ({ signal }) => searchMembers(networkId, debouncedValue, signal),
     enabled: debouncedValue.trim().length > 1,
+    meta: { requiresAuth: true },
   });
 
   const updateRoleMutation = useMutation({

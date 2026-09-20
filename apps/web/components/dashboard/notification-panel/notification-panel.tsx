@@ -98,6 +98,7 @@ export function NotificationPanel({
     queryFn: ({ pageParam }) => getNotifications(pageParam ?? undefined),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    meta: { requiresAuth: true },
   });
 
   const notifications = useMemo(

@@ -1,8 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { authClient } from "@/lib/auth-client";
 import {
   getFriends,
   getIncomingFriendRequests,
@@ -22,46 +20,37 @@ import { useState, useCallback } from "react";
 import type { FriendsTab } from "./types";
 
 export function FriendsDashboard() {
-  const router = useRouter();
   const [isSearchUserOpen, setIsSearchUserOpen] = useState(false);
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<FriendsTab>("Online");
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
+    meta: { requiresAuth: true },
   });
   const { data: friends = [], isLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: getFriends,
+    meta: { requiresAuth: true },
   });
   const { data: incomingRequests = [], isLoading: isIncomingLoading } =
     useQuery({
       queryKey: ["incoming-friend-requests"],
       queryFn: getIncomingFriendRequests,
       enabled: activeTab === "Incoming",
+      meta: { requiresAuth: true },
     });
   const { data: outgoingRequests = [], isLoading: isOutgoingLoading } =
     useQuery({
       queryKey: ["outgoing-friend-requests"],
       queryFn: getOutgoingFriendRequests,
       enabled: activeTab === "Outgoing",
+      meta: { requiresAuth: true },
     });
 
   const user = profile?.userData;
   const networks = getNetworkList(user);
   const hasFriends = friends.length > 0;
-
-  const handleSignOut = async () => {
-    const { error } = await authClient.signOut();
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    router.replace("/signin");
-    router.refresh();
-  };
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -84,7 +73,6 @@ export function FriendsDashboard() {
       />
       <section className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader
-          onSignOut={handleSignOut}
           activeFriendsTab={activeTab}
           onFriendsTabChange={setActiveTab}
           onNotificationsClick={toggleNotifications}

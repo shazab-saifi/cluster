@@ -50,6 +50,7 @@ const SearchUser = () => {
       return res.data;
     },
     enabled: debouncedValue.trim().length > 0,
+    meta: { requiresAuth: true },
   });
 
   const invalidateSearch = () =>

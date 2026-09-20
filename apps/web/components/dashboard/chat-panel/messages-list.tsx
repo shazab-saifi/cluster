@@ -61,6 +61,7 @@ export const MessagesList = ({
     getNextPageParam: (lastPage) => {
       return lastPage.nextCursor;
     },
+    meta: { requiresAuth: true },
   });
 
   const sortedMessages = useMemo(

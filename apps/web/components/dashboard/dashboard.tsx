@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
 import { ActiveNow } from "./active-now";
 import { getMe, getNetworkDetails } from "@/lib/api";
 import { DashboardHeader } from "./dashboard-header";
@@ -24,6 +23,7 @@ export function Dashboard({
   const { data, isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
+    meta: { requiresAuth: true },
   });
 
   const user = data?.userData;
@@ -37,6 +37,7 @@ export function Dashboard({
     queryKey: ["network", networkId],
     queryFn: () => getNetworkDetails(networkId),
     enabled: Boolean(networkId),
+    meta: { requiresAuth: true },
   });
   const channels = useMemo(
     () => networkDetails?.channels ?? [],
@@ -64,18 +65,6 @@ export function Dashboard({
     router,
   ]);
 
-  const handleSignOut = async () => {
-    const { error } = await authClient.signOut();
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    router.replace("/signin");
-    router.refresh();
-  };
-
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -101,7 +90,6 @@ export function Dashboard({
         <DashboardHeader
           variant="network"
           activeChannelName={activeChannel?.name}
-          onSignOut={handleSignOut}
           onNotificationsClick={toggleNotifications}
           showNotifications={showNotifications}
           unreadCount={unreadCount}

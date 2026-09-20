@@ -1,12 +1,14 @@
+"use client";
+
 import { Bell, Hash, LogOut } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { TabSelect } from "@workspace/ui/components/tab-select";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@workspace/ui/lib/utils";
+import { useHandleSignOut } from "@/lib/use-handle-sign-out";
 import type { FriendsTab } from "./types";
 
 type DashboardHeaderProps = {
-  onSignOut: () => void;
   activeChannelName?: string | null;
   variant?: "friends" | "network";
   activeFriendsTab?: FriendsTab;
@@ -17,7 +19,6 @@ type DashboardHeaderProps = {
 };
 
 export function DashboardHeader({
-  onSignOut,
   activeChannelName,
   variant = "friends",
   activeFriendsTab,
@@ -26,6 +27,7 @@ export function DashboardHeader({
   showNotifications,
   unreadCount = 0,
 }: DashboardHeaderProps) {
+  const handleSignOut = useHandleSignOut();
   const isNetworkHeader = variant === "network";
 
   return (
@@ -75,7 +77,7 @@ export function DashboardHeader({
           variant="ghost"
           size="icon-sm"
           aria-label="Sign out"
-          onClick={onSignOut}
+          onClick={handleSignOut}
         >
           <LogOut className="size-4" />
         </Button>

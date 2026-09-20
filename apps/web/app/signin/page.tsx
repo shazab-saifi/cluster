@@ -12,15 +12,6 @@ export default function SigninPage() {
         <div className="mb-6 space-y-2 text-center">
           <Logo />
           <TypographyH4>Welcome back to Cluster</TypographyH4>
-          <p className="text-sm text-neutral-400">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/signup"
-              className="underline transition-colors hover:text-neutral-300"
-            >
-              Sign up
-            </Link>
-          </p>
         </div>
 
         <SignInForm />
@@ -34,6 +25,15 @@ export default function SigninPage() {
 
           <GoogleAuthButton />
         </div>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="underline transition-colors hover:text-foreground"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </main>
   );

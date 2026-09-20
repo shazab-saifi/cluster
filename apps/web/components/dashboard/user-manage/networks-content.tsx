@@ -43,6 +43,7 @@ export function NetworkDetailsContent({
   const { data, isLoading, isError } = useQuery({
     queryKey: ["network", network.id],
     queryFn: () => getNetworkDetails(network.id),
+    meta: { requiresAuth: true },
   });
 
   useEffect(() => {
@@ -92,6 +93,7 @@ export function NetworksContent({
   const { data, isLoading, isError } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
+    meta: { requiresAuth: true },
   });
   const networks = getNetworkList(data?.userData);
 
