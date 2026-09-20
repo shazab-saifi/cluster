@@ -80,7 +80,11 @@ async function MsgFlushWorker() {
                 data: {
                   id: msgEvent.message.messageId as string,
                   senderId: msgEvent.message.senderId as string,
-                  channelId: msgEvent.message.channelId as string,
+                  channelId:
+                    (msgEvent.message.channelId as string | undefined) ?? null,
+                  friendshipId:
+                    (msgEvent.message.friendshipId as string | undefined) ??
+                    null,
                   message: msgEvent.message.message as string,
                   attachment: msgEvent.message.attachment ?? null,
                   timestamp: msgEvent.message.timestamp as unknown as Date,

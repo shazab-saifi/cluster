@@ -49,14 +49,14 @@ export async function assertHasFriendship(
   friendshipId: string,
   userId: string
 ) {
-  const friendship = await prisma.friendship.findUnique({
+  const friendship = await prisma.friendship.findFirst({
     where: {
       id: friendshipId,
       OR: [{ receiverId: userId }, { senderId: userId }],
     },
   });
 
-  if (!friendship) {
+  if (!friendship || friendship.status !== "ACCEPTED") {
     throw new NotFoundError("friend not found");
   }
 

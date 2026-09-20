@@ -1,14 +1,22 @@
+"use client";
+
 import * as React from "react";
-import { LoaderCircle, Search, UserPlus, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, UserPlus, Users } from "lucide-react";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn, getInitials } from "@workspace/ui/lib/utils";
+import { getFriends } from "@/lib/api";
 import type { DashboardUser, Friendship } from "./types";
 import { UserFooter } from "./user-footer";
 
 type FriendsSidebarProps = {
-  friends: Friendship[];
-  isLoading: boolean;
   user?: DashboardUser;
   onAddFriendClick?: () => void;
 };
@@ -20,11 +28,14 @@ function getFriend(friendship: Friendship, user?: DashboardUser) {
 }
 
 export function FriendsSidebar({
-  friends,
-  isLoading,
   user,
   onAddFriendClick,
 }: FriendsSidebarProps) {
+  const { data: friends = [], isLoading } = useQuery({
+    queryKey: ["friends"],
+    queryFn: getFriends,
+    meta: { requiresAuth: true },
+  });
   const [friendQuery, setFriendQuery] = React.useState("");
   const filteredFriends = friends.filter((friendship) => {
     const friend = getFriend(friendship, user);
@@ -64,21 +75,28 @@ export function FriendsSidebar({
             placeholder="Search Friend"
             value={friendQuery}
             onChange={(event) => setFriendQuery(event.target.value)}
-            className="border-none bg-transparent py-0 text-sm placeholder:text-sm placeholder:text-muted-foreground dark:bg-transparent"
+            className="placeholder:text-muted-foNo outgoing friend requestsreground border-none bg-transparent py-0 text-sm placeholder:text-sm dark:bg-transparent"
             variant="ghost"
           />
         </div>
       </div>
       <nav className="custom-scrollbar flex flex-1 flex-col overflow-y-auto scroll-smooth p-4">
-        <div className="mb-4 flex items-center justify-between pl-4">
-          <span className="text-xs font-medium text-muted-foreground">
+        <div className="mb-4 flex items-center justify-between">
+          <span className="pl-4 text-xs font-medium text-muted-foreground">
             Direct Messages
           </span>
         </div>
         {isLoading ? (
-          <div className="mx-auto flex h-10 flex-col items-center gap-3 rounded-lg px-2 text-sm text-muted-foreground">
-            <LoaderCircle className="size-5 shrink-0 animate-spin" />
-            Loading friends...
+          <div className="flex flex-col gap-1">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 rounded-lg px-4 py-2"
+              >
+                <Skeleton className="size-8 shrink-0 rounded-full" />
+                <Skeleton className="h-3.5 w-24" />
+              </div>
+            ))}
           </div>
         ) : hasFriends ? (
           <div className="flex flex-col gap-1">
@@ -89,20 +107,16 @@ export function FriendsSidebar({
               return (
                 <div
                   key={friendship.id}
-                  className="flex min-h-10 items-center gap-3 rounded-lg px-2 py-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-4 py-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  <div className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-xs font-semibold">
+                  <Avatar className="shrink-0">
                     {friend?.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={friend.image}
-                        alt=""
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      getInitials(name)
-                    )}
-                  </div>
+                      <AvatarImage src={friend.image} alt="" />
+                    ) : null}
+                    <AvatarFallback className="text-xs font-semibold">
+                      {getInitials(name)}
+                    </AvatarFallback>
+                  </Avatar>
                   <span className="min-w-0 truncate text-sm font-medium">
                     {name}
                   </span>

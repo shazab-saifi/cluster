@@ -5,6 +5,11 @@ import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { acceptFriendRequest, cancelFriendRequest } from "@/lib/api";
 import { getInitials } from "@workspace/ui/lib/utils";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
 import { Button } from "@workspace/ui/components/button";
 import type { Friendship } from "../types";
 
@@ -73,14 +78,10 @@ function IncomingRequestRow({ friendship }: { friendship: Friendship }) {
 
   return (
     <div className="flex h-16 items-center gap-3 px-4">
-      <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-sm font-semibold">
-        {sender?.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={sender.image} alt="" className="size-full object-cover" />
-        ) : (
-          getInitials(name)
-        )}
-      </div>
+      <Avatar size="lg" className="shrink-0">
+        {sender?.image ? <AvatarImage src={sender.image} alt="" /> : null}
+        <AvatarFallback>{getInitials(name)}</AvatarFallback>
+      </Avatar>
       <span className="min-w-0 truncate font-medium">{name}</span>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <Button

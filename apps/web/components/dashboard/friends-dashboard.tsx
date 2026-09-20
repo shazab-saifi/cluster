@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  getFriends,
   getIncomingFriendRequests,
   getMe,
   getOutgoingFriendRequests,
@@ -28,11 +27,6 @@ export function FriendsDashboard() {
     queryFn: getMe,
     meta: { requiresAuth: true },
   });
-  const { data: friends = [], isLoading } = useQuery({
-    queryKey: ["friends"],
-    queryFn: getFriends,
-    meta: { requiresAuth: true },
-  });
   const { data: incomingRequests = [], isLoading: isIncomingLoading } =
     useQuery({
       queryKey: ["incoming-friend-requests"],
@@ -50,7 +44,6 @@ export function FriendsDashboard() {
 
   const user = profile?.userData;
   const networks = getNetworkList(user);
-  const hasFriends = friends.length > 0;
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -66,8 +59,6 @@ export function FriendsDashboard() {
     <main className="flex h-svh overflow-hidden bg-background text-foreground">
       <NetworkStrip networks={networks} isLoading={isProfileLoading} />
       <FriendsSidebar
-        friends={friends}
-        isLoading={isLoading}
         user={user}
         onAddFriendClick={() => setIsSearchUserOpen(true)}
       />
@@ -91,24 +82,14 @@ export function FriendsDashboard() {
                 requests={outgoingRequests}
                 isLoading={isOutgoingLoading}
               />
-            ) : isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading friends</p>
-            ) : hasFriends ? (
-              <p className="text-center text-sm text-muted-foreground">
-                Select a friend to start a conversation.
-              </p>
             ) : (
-              <EmptyFriends />
+              <p className="text-center text-sm text-muted-foreground">
+                Seems like no one is online
+              </p>
             )}
           </section>
           <aside className="hidden w-90 shrink-0 items-center justify-center border-l p-6 xl:flex">
-            {hasFriends ? (
-              <p className="text-center text-sm text-muted-foreground">
-                Friend activity will appear here.
-              </p>
-            ) : (
-              <EmptyFriends showAction={false} />
-            )}
+            <EmptyFriends showAction={false} />
           </aside>
           <NotificationPanel
             open={showNotifications}

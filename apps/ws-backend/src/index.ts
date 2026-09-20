@@ -8,7 +8,10 @@ import {
 } from "@workspace/core/errors";
 import { WebSocketServer, WebSocket } from "ws";
 import { InputPayloadUnion } from "./zod.schemas";
-import { assertHasMembership } from "@workspace/core/services/validation";
+import {
+  assertHasFriendship,
+  assertHasMembership,
+} from "@workspace/core/services/validation";
 import { publisher, subscriber } from "@workspace/redis";
 import { NotificationEvent } from "@workspace/core/services/notification-services";
 import { getMe } from "@workspace/core/services/me-services";
@@ -53,15 +56,24 @@ server.on("upgrade", async (req, socket, head) => {
 
 const userSocketData = new WeakMap<
   WebSocket,
-  { userId: string; channels: Set<string> }
+  { userId: string; rooms: Set<string> }
 >();
-const channels = new Map<string, Set<WebSocket>>();
-const subscribedChannels = new Set<string>();
+const rooms = new Map<string, Set<WebSocket>>();
+const subscribedRooms = new Set<string>();
 const userNotificationSockets = new Map<string, Set<WebSocket>>();
 let notificationEventsSubscribed = false;
 
+function getRoomKey(kind: "channel" | "friendship", id: string) {
+  return `${kind}:${id}`;
+}
+
+function getRoomTopic(roomKey: string) {
+  return roomKey.slice(roomKey.indexOf(":") + 1);
+}
+
 type RequestType =
   | "JOIN_CHANNEL"
+  | "JOIN_FRIENDSHIP"
   | "NEW_MESSAGE"
   | "EDIT_MESSAGE"
   | "DELETE_MESSAGE"
@@ -101,7 +113,7 @@ function sendError(
 }
 
 wss.on("connection", async (ws, req) => {
-  userSocketData.set(ws, { userId: req.userId as string, channels: new Set() });
+  userSocketData.set(ws, { userId: req.userId as string, rooms: new Set() });
   registerSocketForNotifications(req.userId as string, ws);
   await subscribeToNotificationEvents();
 
@@ -115,9 +127,7 @@ wss.on("connection", async (ws, req) => {
 
     try {
       await Promise.all(
-        [...socket.channels].map((channelId) =>
-          removeSocketFromChannel(channelId, ws)
-        )
+        [...socket.rooms].map((roomKey) => removeSocketFromRoom(roomKey, ws))
       );
     } catch (error) {
       console.error("Error in close event: ", error);
@@ -135,6 +145,7 @@ wss.on("connection", async (ws, req) => {
         if (typeof payload.type === "string") {
           requestType = [
             "JOIN_CHANNEL",
+            "JOIN_FRIENDSHIP",
             "NEW_MESSAGE",
             "EDIT_MESSAGE",
             "DELETE_MESSAGE",
@@ -160,13 +171,28 @@ wss.on("connection", async (ws, req) => {
       const data = parsed.data;
       requestType = data.type;
       clientRequestId =
-        data.type === "JOIN_CHANNEL" ? undefined : data.clientRequestId;
+        data.type === "JOIN_CHANNEL" || data.type === "JOIN_FRIENDSHIP"
+          ? undefined
+          : data.clientRequestId;
       const userId = req.userId as string;
-      const channelId = data.channelId;
+      const roomId =
+        data.type === "JOIN_FRIENDSHIP" ? data.friendshipId : data.channelId;
+
+      if (!roomId) {
+        throw new BadRequestError(
+          "Invalid Inputs",
+          "Exactly one of channelId or friendshipId is required"
+        );
+      }
 
       switch (data.type) {
         case "JOIN_CHANNEL": {
-          await joinChannel(channelId, userId, ws);
+          await joinRoom("channel", roomId, userId, ws);
+          sendSuccess(ws, data.type);
+          break;
+        }
+        case "JOIN_FRIENDSHIP": {
+          await joinRoom("friendship", roomId, userId, ws);
           sendSuccess(ws, data.type);
           break;
         }
@@ -174,10 +200,13 @@ wss.on("connection", async (ws, req) => {
           const user = await getMe(userId);
           const timestamp = new Date().toISOString();
           const messageId = crypto.randomUUID();
+          const target = data.channelId
+            ? { channelId: data.channelId }
+            : { friendshipId: data.friendshipId };
           const messagePayloadForPublisher = {
             type: "NEW_MESSAGE" as const,
             id: messageId,
-            channelId,
+            ...target,
             message: data.message,
             sender: {
               id: userId,
@@ -193,7 +222,7 @@ wss.on("connection", async (ws, req) => {
             type: "NEW_MESSAGE" as const,
             messageId,
             senderId: userId,
-            channelId,
+            ...target,
             timestamp,
             message: data.message,
             ...(data.attachment !== undefined
@@ -203,25 +232,28 @@ wss.on("connection", async (ws, req) => {
 
           await messageServices.newMsgEvent(messagePayloadForStream);
           await publisher.publish(
-            channelId,
+            roomId,
             JSON.stringify(messagePayloadForPublisher)
           );
           sendSuccess(ws, data.type, clientRequestId);
           break;
         }
         case "EDIT_MESSAGE": {
+          const target = data.channelId
+            ? { channelId: data.channelId }
+            : { friendshipId: data.friendshipId };
           await messageServices.editMsgEvent({
             type: "EDIT_MESSAGE",
             messageId: data.messageId,
             senderId: userId,
-            channelId,
+            ...target,
             editedMessage: data.editedMessage,
           });
           await publisher.publish(
-            channelId,
+            roomId,
             JSON.stringify({
               type: "EDIT_MESSAGE",
-              channelId,
+              ...target,
               messageId: data.messageId,
               editedMessage: data.editedMessage,
             })
@@ -230,17 +262,20 @@ wss.on("connection", async (ws, req) => {
           break;
         }
         case "DELETE_MESSAGE": {
+          const target = data.channelId
+            ? { channelId: data.channelId }
+            : { friendshipId: data.friendshipId };
           await messageServices.deleteMsgEvent({
             type: "DELETE_MESSAGE",
             messageId: data.messageId,
             senderId: userId,
-            channelId,
+            ...target,
           });
           await publisher.publish(
-            channelId,
+            roomId,
             JSON.stringify({
               type: "DELETE_MESSAGE",
-              channelId,
+              ...target,
               messageId: data.messageId,
             })
           );
@@ -260,52 +295,64 @@ server.listen(8080, () => {
   console.log("ws-server is running on port 8080");
 });
 
-async function joinChannel(channelId: string, userId: string, ws: WebSocket) {
-  await assertHasMembership(channelId, userId);
-  if (!channels.has(channelId)) {
-    channels.set(channelId, new Set());
-    await subscribeToPublishers(channelId);
+async function joinRoom(
+  kind: "channel" | "friendship",
+  roomId: string,
+  userId: string,
+  ws: WebSocket
+) {
+  if (kind === "channel") {
+    await assertHasMembership(roomId, userId);
+  } else {
+    await assertHasFriendship(roomId, userId);
   }
 
-  if (channels.get(channelId)?.has(ws)) return;
+  const roomKey = getRoomKey(kind, roomId);
+  if (!rooms.has(roomKey)) {
+    rooms.set(roomKey, new Set());
+    await subscribeToRoom(roomKey);
+  }
 
-  channels.get(channelId)?.add(ws);
-  userSocketData.get(ws)?.channels.add(channelId);
+  if (rooms.get(roomKey)?.has(ws)) return;
+
+  rooms.get(roomKey)?.add(ws);
+  userSocketData.get(ws)?.rooms.add(roomKey);
 }
 
-async function subscribeToPublishers(channelId: string) {
-  if (subscribedChannels.has(channelId)) return;
+async function subscribeToRoom(roomKey: string) {
+  if (subscribedRooms.has(roomKey)) return;
 
-  await subscriber.subscribe(`${channelId}`, (data) => {
-    const channel = channels.get(channelId);
-    if (!channel) return;
-    for (const ws of channel) {
+  const topic = getRoomTopic(roomKey);
+  await subscriber.subscribe(topic, (data) => {
+    const room = rooms.get(roomKey);
+    if (!room) return;
+    for (const ws of room) {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(data);
       }
     }
   });
 
-  subscribedChannels.add(channelId);
+  subscribedRooms.add(roomKey);
 }
 
-async function removeSocketFromChannel(channelId: string, ws: WebSocket) {
-  const channel = channels.get(channelId);
+async function removeSocketFromRoom(roomKey: string, ws: WebSocket) {
+  const room = rooms.get(roomKey);
 
-  if (!channel) return;
+  if (!room) return;
 
-  channel.delete(ws);
+  room.delete(ws);
 
-  if (channel.size > 0) return;
-  channels.delete(channelId);
-  await unsubscribeChannel(channelId);
+  if (room.size > 0) return;
+  rooms.delete(roomKey);
+  await unsubscribeRoom(roomKey);
 }
 
-async function unsubscribeChannel(channelId: string) {
-  if (!subscribedChannels.has(channelId)) return;
+async function unsubscribeRoom(roomKey: string) {
+  if (!subscribedRooms.has(roomKey)) return;
 
-  await subscriber.unsubscribe(channelId);
-  subscribedChannels.delete(channelId);
+  await subscriber.unsubscribe(getRoomTopic(roomKey));
+  subscribedRooms.delete(roomKey);
 }
 
 async function subscribeToNotificationEvents() {
