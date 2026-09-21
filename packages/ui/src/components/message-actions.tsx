@@ -17,27 +17,19 @@ import { cn } from "@workspace/ui/lib/utils";
 import { toast } from "sonner";
 
 type MessageActionsProps = {
-  messageId: string;
   isOpen: boolean;
   message: string;
   onOpenChange: (open: boolean) => void;
-  handleMsgDelete: (messageId: string) => void;
-  setIsEditing: ({
-    messageId,
-    message,
-  }: {
-    messageId: string;
-    message: string;
-  }) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 };
 
 export const MessageActions = ({
-  messageId,
   isOpen,
   message,
   onOpenChange,
-  handleMsgDelete,
-  setIsEditing,
+  onEdit,
+  onDelete,
 }: MessageActionsProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [isTooltipSuppressed, setIsTooltipSuppressed] = useState(false);
@@ -144,9 +136,7 @@ export const MessageActions = ({
             <DropdownMenuItem
               onSelect={() => {
                 handleItemPointerDown();
-                requestAnimationFrame(() => {
-                  setIsEditing({ messageId, message });
-                });
+                requestAnimationFrame(onEdit);
               }}
             >
               <Pencil />
@@ -163,7 +153,7 @@ export const MessageActions = ({
               variant="destructive"
               onPointerDown={() => {
                 handleItemPointerDown();
-                handleMsgDelete(messageId);
+                onDelete();
               }}
             >
               <Trash2 />

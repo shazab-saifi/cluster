@@ -8,28 +8,29 @@ import {
 } from "@workspace/ui/components/avatar";
 import { cn, getInitials } from "@workspace/ui/lib/utils";
 import { MessageActions } from "./message-actions";
+import EditInput from "./edit-input";
+
+type MessageSender = {
+  id?: string;
+  name: string;
+  image: string | null;
+};
+
+type MessageData = {
+  id: string;
+  message: string;
+  sender: MessageSender;
+  timestamp: Date | string;
+  edited?: boolean;
+};
 
 type MessageProps = {
-  messageId?: string;
-  name: string;
-  timestamp: Date | string;
-  message: string;
+  message: MessageData;
   isSender: boolean;
-  avatarUrl?: string | null;
-  avatarAlt?: string;
   className?: string;
-  endGroup?: boolean;
-  edited?: boolean;
-  handleMsgDelete: (messageId: string) => void;
-  isEditing: { messageId: string; message: string } | null;
-  setIsEditing: ({
-    messageId,
-    message,
-  }: {
-    messageId: string;
-    message: string;
-  }) => void;
-  EditInputComponent: React.ReactNode;
+  showHeader?: boolean;
+  onDelete?: (messageId: string) => void;
+  onEdit?: (messageId: string, editedMessage: string) => void;
 };
 
 const getLocale = () =>
@@ -54,51 +55,51 @@ const customDateTimeFormatter = (date: Date) => {
 };
 
 function Message({
-  messageId,
-  name,
-  timestamp,
   message,
   isSender,
-  avatarUrl,
-  avatarAlt,
   className,
-  endGroup,
-  edited = false,
-  handleMsgDelete,
-  isEditing,
-  setIsEditing,
-  EditInputComponent,
+  showHeader,
+  onDelete,
+  onEdit,
 }: MessageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const { id, sender, timestamp, edited = false } = message;
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
   const hasValidTimestamp =
     date instanceof Date && !Number.isNaN(date.getTime());
-  const editingMsg =
-    messageId !== undefined && isEditing?.messageId === messageId;
+  const editingMsg = isEditing;
+
+  const handleSaveEdit = (editedMessage: string) => {
+    onEdit?.(id, editedMessage);
+    setIsEditing(false);
+  };
 
   return (
     <article
       className={cn(
         "group relative z-0 flex items-start gap-3 rounded-lg px-2 transition-colors",
-        endGroup && "mt-4 py-0.5",
+        showHeader && "mt-4 py-0.5",
         isActionsOpen && "z-10 bg-tertiary",
         editingMsg && "bg-tertiary py-2",
         !editingMsg && "hover:z-10 hover:bg-tertiary",
         className
       )}
     >
-      {endGroup && (
-        <Avatar size="lg" aria-label={avatarAlt ?? "'s avatar"}>
-          {avatarUrl ? <AvatarImage src={avatarUrl} alt={avatarAlt} /> : null}
-          <AvatarFallback>{getInitials(name)}</AvatarFallback>
+      {showHeader && (
+        <Avatar size="lg" aria-label={`avatar-${sender.name}`}>
+          {sender.image ? (
+            <AvatarImage src={sender.image} alt={`avatar-${sender.name}`} />
+          ) : null}
+          <AvatarFallback>{getInitials(sender.name)}</AvatarFallback>
         </Avatar>
       )}
 
-      <div className={cn("min-w-0 flex-1", !endGroup && "pl-13")}>
-        {endGroup && (
+      <div className={cn("min-w-0 flex-1", !showHeader && "pl-13")}>
+        {showHeader && (
           <header className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <p className="truncate text-sm font-semibold text-foreground">
-              {name}
+              {sender.name}
             </p>
             {hasValidTimestamp ? (
               <time
@@ -114,10 +115,15 @@ function Message({
 
         <div className="flex flex-1 items-center justify-between">
           {editingMsg ? (
-            EditInputComponent
+            <EditInput
+              message={message.message}
+              messageId={id}
+              onSave={handleSaveEdit}
+              onCancel={() => setIsEditing(false)}
+            />
           ) : (
             <p className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground/90">
-              {message}
+              {message.message}
               {edited ? (
                 <span className="ml-1 text-xs text-muted-foreground">
                   (edited)
@@ -126,14 +132,13 @@ function Message({
             </p>
           )}
 
-          {!editingMsg && isSender && messageId && (
+          {!editingMsg && isSender && (
             <MessageActions
-              messageId={messageId}
               isOpen={isActionsOpen}
-              message={message}
+              message={message.message}
               onOpenChange={setIsActionsOpen}
-              handleMsgDelete={handleMsgDelete}
-              setIsEditing={setIsEditing}
+              onDelete={() => onDelete?.(id)}
+              onEdit={() => setIsEditing(true)}
             />
           )}
         </div>
@@ -142,5 +147,5 @@ function Message({
   );
 }
 
-export type { MessageProps };
+export type { MessageData, MessageProps };
 export default React.memo(Message);

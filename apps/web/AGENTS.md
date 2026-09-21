@@ -13,6 +13,18 @@ Always consult matching skill files before making changes.
 
 - Never make the page itself a client component, use client components
 
+# Component logic
+
+Logic that belongs to a component lives **inside that component**, not in its parent. Keep the container/presentational split: containers (`messages-list.tsx`, `chat-panel.tsx`) own data fetching, websocket sends, session, pagination, and layout; presentational components (`@workspace/ui/components/message.tsx`) own their own interaction state (edit mode, hover, dropdown open/close) and receive behavior through callbacks.
+
+Only lift logic out of a component when one of these exceptions applies:
+
+- **Shared by siblings** — the state/logic is needed by more than one sibling, so a common ancestor owns it.
+- **Sibling-aware / list-level** — the logic needs adjacent items (e.g. day dividers and message grouping compare a message to its neighbor), so it stays in the list container.
+- **Cross-cutting app concerns** — session/auth, websocket transport, query cache, routing. These never leak into shared `packages/ui` components.
+
+Moving logic inside must not increase the number of props or the prop surface. Prefer callbacks (`onEdit`, `onDelete`) over exposing setter/state objects. Shared `packages/ui` components must stay presentational: never import `authClient`, websocket hooks, or react-query into them.
+
 # Data fetching and state management
 
 - Use react-query

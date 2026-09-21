@@ -1,3 +1,5 @@
+"use client";
+
 import { Smile, X } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import React, { useLayoutEffect, useRef, useState } from "react";
@@ -5,15 +7,15 @@ import React, { useLayoutEffect, useRef, useState } from "react";
 interface EditInputProps {
   message: string;
   messageId: string;
-  handleEdit: (messageId: string, message: string) => void;
-  setIsEditing: (value: { messageId: string; message: string } | null) => void;
+  onSave: (editedMessage: string) => void;
+  onCancel: () => void;
 }
 
 const EditInput = ({
   message,
   messageId,
-  handleEdit,
-  setIsEditing,
+  onSave,
+  onCancel,
 }: EditInputProps) => {
   const [editedMessage, setEditedMessage] = useState<string>(message);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,9 +31,9 @@ const EditInput = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && editedMessage.trim().length > 0) {
-      handleEdit(messageId, editedMessage.trim());
+      onSave(editedMessage.trim());
     } else if (e.key === "Escape") {
-      setIsEditing(null);
+      onCancel();
     }
   };
 
@@ -63,7 +65,7 @@ const EditInput = ({
             size="icon-lg"
             aria-label="Cancel edit"
             className="text-muted-foreground hover:text-foreground"
-            onClick={() => setIsEditing(null)}
+            onClick={onCancel}
           >
             <X />
           </Button>
@@ -77,4 +79,5 @@ const EditInput = ({
   );
 };
 
+export type { EditInputProps };
 export default React.memo(EditInput);

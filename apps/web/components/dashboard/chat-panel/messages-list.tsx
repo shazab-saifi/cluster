@@ -1,16 +1,13 @@
 "use client";
 
 import { MessageSkeleton } from "@workspace/ui/components/message-skeleton";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { ChatRoom, MessageType } from "../types";
 import Message from "@workspace/ui/components/message";
-import EditInput from "./edit-input";
 import { authClient } from "@/lib/auth-client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchMessages, getMessagesQueryKey } from "@/lib/utils";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
-
-const getMessageTimestamp = (message: MessageType) => message.timestamp;
 
 const isSameCalendarDay = (left: Date, right: Date) =>
   left.getFullYear() === right.getFullYear() &&
@@ -39,10 +36,6 @@ interface MessagesListProps {
 export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
   const { data: session } = authClient.useSession();
   const loadMoreRef = useRef(null);
-  const [isEditing, setIsEditing] = useState<{
-    messageId: string;
-    message: string;
-  } | null>(null);
   const {
     data,
     fetchNextPage,
@@ -139,7 +132,6 @@ export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
       editedMessage,
       clientRequestId: crypto.randomUUID(),
     });
-    setIsEditing(null);
   };
 
   return (
@@ -156,26 +148,11 @@ export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
           return (
             <React.Fragment key={message.id}>
               <Message
-                messageId={message.id}
-                message={message.message}
+                message={message}
                 isSender={session?.user.id === message.sender.id}
-                name={message.sender.name}
-                avatarUrl={message.sender.image}
-                avatarAlt={`avatar-${message.sender.name}`}
-                edited={message.edited}
-                timestamp={getMessageTimestamp(message)}
-                endGroup={startsNewDay || endsGroup}
-                handleMsgDelete={handleDeleteMessage}
-                isEditing={isEditing}
-                setIsEditing={setIsEditing}
-                EditInputComponent={
-                  <EditInput
-                    message={message.message}
-                    messageId={message.id}
-                    handleEdit={handleEditMessage}
-                    setIsEditing={setIsEditing}
-                  />
-                }
+                showHeader={startsNewDay || endsGroup}
+                onDelete={handleDeleteMessage}
+                onEdit={handleEditMessage}
               />
               {startsNewDay && (
                 <div className="mt-4 flex items-center gap-2">
