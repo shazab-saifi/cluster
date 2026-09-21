@@ -32,7 +32,7 @@ messagesRouter.get("/", async (req: Request, res: Response) => {
       );
     }
   } else {
-    parsedFriendshipId = uuidSchema.safeDecode(friendshipId as string);
+    parsedFriendshipId = uuidSchema.safeParse(friendshipId as string);
 
     if (!parsedFriendshipId.success) {
       throw new ValidationError(

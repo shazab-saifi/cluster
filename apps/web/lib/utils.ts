@@ -13,8 +13,10 @@ export type MessagesPage = {
   nextCursor: string | null;
 };
 
-export const getMessagesQueryKey = (channelId: string) =>
-  ["messages", channelId] as const;
+export const getMessagesQueryKey = (
+  kind: "channel" | "friendship",
+  roomId: string
+) => ["messages", kind, roomId] as const;
 
 export const APP_BASE_URL =
   process.env.NODE_ENV === "development"
@@ -103,11 +105,12 @@ export async function fetchMessages({
   readonly string[],
   string | null
 >): Promise<MessagesPage> {
-  const [, channelId] = queryKey;
+  const [, kind, roomId] = queryKey;
+  const basePath = kind === "channel" ? "channels" : "friendships";
 
   try {
     const res = await axios.get(
-      `${API_BASE_URL}/channels/${channelId}/messages?cursor=${pageParam ?? ""}`,
+      `${API_BASE_URL}/${basePath}/${roomId}/messages?cursor=${pageParam ?? ""}`,
       {
         withCredentials: true,
       }
@@ -115,7 +118,7 @@ export async function fetchMessages({
 
     return res.data;
   } catch (error) {
-    console.error(`Error while fetching ${channelId} messages`, error);
+    console.error(`Error while fetching ${roomId} messages`, error);
     throw error;
   }
 }

@@ -18,7 +18,7 @@ type NetworkStripProps = {
 function NetworkStrip({ networks, isLoading }: NetworkStripProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const isFriendsActive = pathname === "/friends";
+  const isFriendsActive = pathname.startsWith("/friends");
   const [isTransitioning, startTransition] = useTransition();
   const [isCreateNetworkOpen, setIsCreateNetworkOpen] = useState(false);
 

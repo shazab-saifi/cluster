@@ -6,16 +6,14 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import React, { useState } from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
+import type { ChatRoom } from "../types";
 
 type MessageComposer = {
-  channelId: string;
+  room: ChatRoom;
   sendJsonMessage: SendJsonMessage;
 };
 
-export const MessageComposer = ({
-  channelId,
-  sendJsonMessage,
-}: MessageComposer) => {
+export const MessageComposer = ({ room, sendJsonMessage }: MessageComposer) => {
   const [message, setMessage] = useState("");
 
   const handleSendMessage = () => {
@@ -24,7 +22,9 @@ export const MessageComposer = ({
 
     sendJsonMessage({
       type: "NEW_MESSAGE",
-      channelId,
+      ...(room.kind === "channel"
+        ? { channelId: room.id }
+        : { friendshipId: room.id }),
       clientRequestId: crypto.randomUUID(),
       message: content,
     });
@@ -58,7 +58,7 @@ export const MessageComposer = ({
         </Button>
 
         <Input
-          aria-label={`Message channel ${channelId}`}
+          aria-label={`Message ${room.kind} ${room.id}`}
           placeholder="Write message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}

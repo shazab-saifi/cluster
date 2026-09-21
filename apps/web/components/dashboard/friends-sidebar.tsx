@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Search, UserPlus, Users } from "lucide-react";
 import {
@@ -21,7 +23,7 @@ type FriendsSidebarProps = {
   onAddFriendClick?: () => void;
 };
 
-function getFriend(friendship: Friendship, user?: DashboardUser) {
+export function getFriend(friendship: Friendship, user?: DashboardUser) {
   return friendship.senderId === user?.id
     ? friendship.receiver
     : friendship.sender;
@@ -31,6 +33,7 @@ export function FriendsSidebar({
   user,
   onAddFriendClick,
 }: FriendsSidebarProps) {
+  const pathname = usePathname();
   const { data: friends = [], isLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: getFriends,
@@ -103,11 +106,18 @@ export function FriendsSidebar({
             {filteredFriends.map((friendship) => {
               const friend = getFriend(friendship, user);
               const name = friend?.name ?? friend?.username ?? "Friend";
+              const href = `/friends/${friendship.id}`;
+              const active = pathname === href;
 
               return (
-                <div
+                <Link
                   key={friendship.id}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-4 py-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  href={href}
+                  aria-current="page"
+                  className={cn(
+                    "flex cursor-pointer items-center gap-3 rounded-lg px-4 py-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+                    active && "bg-secondary text-foreground hover:bg-secondary"
+                  )}
                 >
                   <Avatar className="shrink-0">
                     {friend?.image ? (
@@ -120,7 +130,7 @@ export function FriendsSidebar({
                   <span className="min-w-0 truncate text-sm font-medium">
                     {name}
                   </span>
-                </div>
+                </Link>
               );
             })}
           </div>

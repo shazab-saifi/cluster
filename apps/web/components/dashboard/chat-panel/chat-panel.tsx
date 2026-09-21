@@ -9,26 +9,38 @@ import {
 } from "@/lib/utils";
 import { type InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ServerEvent } from "../types";
+import { ChatRoom, ServerEvent } from "../types";
 import { MessageComposer } from "./message-composer";
 import { MessagesList } from "./messages-list";
 
-export const ChatPanel = ({ channelId }: { channelId: string }) => {
+type RoomEvent = { channelId?: string; friendshipId?: string };
+
+const targetsCurrentRoom = (event: RoomEvent, roomId: string) =>
+  event.channelId === roomId || event.friendshipId === roomId;
+
+export const ChatPanel = ({ room }: { room: ChatRoom }) => {
   const { sendJsonMessage, lastJsonMessage } =
     useWebSocket<ServerEvent>(SOCKET_URL);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    sendJsonMessage({ type: "JOIN_CHANNEL", channelId });
-  }, [channelId, sendJsonMessage]);
+    sendJsonMessage(
+      room.kind === "channel"
+        ? { type: "JOIN_CHANNEL", channelId: room.id }
+        : { type: "JOIN_FRIENDSHIP", friendshipId: room.id }
+    );
+  }, [room.kind, room.id, sendJsonMessage]);
 
   useEffect(() => {
     if (!lastJsonMessage) return;
 
+    const messagesQueryKey = getMessagesQueryKey(room.kind, room.id);
+
     switch (lastJsonMessage.type) {
       case "NEW_MESSAGE":
+        if (!targetsCurrentRoom(lastJsonMessage, room.id)) break;
         queryClient.setQueryData<InfiniteData<MessagesPage, string | null>>(
-          getMessagesQueryKey(lastJsonMessage.channelId),
+          messagesQueryKey,
           (oldData) =>
             oldData && {
               ...oldData,
@@ -44,8 +56,9 @@ export const ChatPanel = ({ channelId }: { channelId: string }) => {
         );
         break;
       case "EDIT_MESSAGE":
+        if (!targetsCurrentRoom(lastJsonMessage, room.id)) break;
         queryClient.setQueryData<InfiniteData<MessagesPage, string | null>>(
-          getMessagesQueryKey(lastJsonMessage.channelId),
+          messagesQueryKey,
           (oldData) =>
             oldData && {
               ...oldData,
@@ -65,8 +78,9 @@ export const ChatPanel = ({ channelId }: { channelId: string }) => {
         );
         break;
       case "DELETE_MESSAGE":
+        if (!targetsCurrentRoom(lastJsonMessage, room.id)) break;
         queryClient.setQueryData<InfiniteData<MessagesPage, string | null>>(
-          getMessagesQueryKey(lastJsonMessage.channelId),
+          messagesQueryKey,
           (oldData) =>
             oldData && {
               ...oldData,
@@ -92,15 +106,12 @@ export const ChatPanel = ({ channelId }: { channelId: string }) => {
       default:
         break;
     }
-  }, [lastJsonMessage, queryClient]);
+  }, [lastJsonMessage, queryClient, room.kind, room.id]);
 
   return (
     <div className="flex flex-1 flex-col">
-      <MessagesList channelId={channelId} sendJsonMessage={sendJsonMessage} />
-      <MessageComposer
-        channelId={channelId}
-        sendJsonMessage={sendJsonMessage}
-      />
+      <MessagesList room={room} sendJsonMessage={sendJsonMessage} />
+      <MessageComposer room={room} sendJsonMessage={sendJsonMessage} />
     </div>
   );
 };

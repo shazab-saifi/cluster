@@ -7,7 +7,7 @@ import {
   UnauthorizedError,
 } from "@workspace/core/errors";
 import { WebSocketServer, WebSocket } from "ws";
-import { InputPayloadUnion } from "./zod.schemas";
+import { InputPayload, InputPayloadUnion } from "./zod.schemas";
 import {
   assertHasFriendship,
   assertHasMembership,
@@ -78,6 +78,17 @@ type RequestType =
   | "EDIT_MESSAGE"
   | "DELETE_MESSAGE"
   | "UNKNOWN";
+
+type MessageRequest = Extract<
+  InputPayload,
+  { type: "NEW_MESSAGE" | "EDIT_MESSAGE" | "DELETE_MESSAGE" }
+>;
+
+function getMessageTarget(data: MessageRequest) {
+  return data.channelId
+    ? { channelId: data.channelId }
+    : { friendshipId: data.friendshipId };
+}
 
 function sendSuccess(
   ws: WebSocket,
@@ -161,6 +172,7 @@ wss.on("connection", async (ws, req) => {
 
       const parsed = InputPayloadUnion.safeParse(rawPayload);
       if (!parsed.success) {
+        console.log(parsed.error);
         throw new BadRequestError(
           "Invalid Inputs",
           parsed.error.issues[0]?.message ??
@@ -176,7 +188,7 @@ wss.on("connection", async (ws, req) => {
           : data.clientRequestId;
       const userId = req.userId as string;
       const roomId =
-        data.type === "JOIN_FRIENDSHIP" ? data.friendshipId : data.channelId;
+        "friendshipId" in data ? data.friendshipId : data.channelId;
 
       if (!roomId) {
         throw new BadRequestError(
@@ -200,9 +212,10 @@ wss.on("connection", async (ws, req) => {
           const user = await getMe(userId);
           const timestamp = new Date().toISOString();
           const messageId = crypto.randomUUID();
-          const target = data.channelId
-            ? { channelId: data.channelId }
-            : { friendshipId: data.friendshipId };
+          const target = getMessageTarget(data);
+          if (target.friendshipId) {
+            await assertHasFriendship(target.friendshipId, userId);
+          }
           const messagePayloadForPublisher = {
             type: "NEW_MESSAGE" as const,
             id: messageId,
@@ -239,9 +252,10 @@ wss.on("connection", async (ws, req) => {
           break;
         }
         case "EDIT_MESSAGE": {
-          const target = data.channelId
-            ? { channelId: data.channelId }
-            : { friendshipId: data.friendshipId };
+          const target = getMessageTarget(data);
+          if (target.friendshipId) {
+            await assertHasFriendship(target.friendshipId, userId);
+          }
           await messageServices.editMsgEvent({
             type: "EDIT_MESSAGE",
             messageId: data.messageId,
@@ -262,9 +276,10 @@ wss.on("connection", async (ws, req) => {
           break;
         }
         case "DELETE_MESSAGE": {
-          const target = data.channelId
-            ? { channelId: data.channelId }
-            : { friendshipId: data.friendshipId };
+          const target = getMessageTarget(data);
+          if (target.friendshipId) {
+            await assertHasFriendship(target.friendshipId, userId);
+          }
           await messageServices.deleteMsgEvent({
             type: "DELETE_MESSAGE",
             messageId: data.messageId,

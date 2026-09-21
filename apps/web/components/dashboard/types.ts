@@ -65,10 +65,16 @@ export type NetworkDetails = Network & {
   channels: Channel[];
 };
 
+export type ChatRoom = {
+  kind: "channel" | "friendship";
+  id: string;
+};
+
 export type MessageType = {
   type: "NEW_MESSAGE";
   id: string;
-  channelId: string;
+  channelId?: string;
+  friendshipId?: string;
   message: string;
   sender: {
     id?: string;
@@ -83,6 +89,7 @@ export type MessageType = {
 
 export type MessageRequestType =
   | "JOIN_CHANNEL"
+  | "JOIN_FRIENDSHIP"
   | "NEW_MESSAGE"
   | "EDIT_MESSAGE"
   | "DELETE_MESSAGE";
@@ -109,14 +116,16 @@ type SuccessEvent = {
 
 type EditMessageEvent = {
   type: "EDIT_MESSAGE";
-  channelId: string;
+  channelId?: string;
+  friendshipId?: string;
   messageId: string;
   editedMessage: string;
 };
 
 type DeleteMessageEvent = {
   type: "DELETE_MESSAGE";
-  channelId: string;
+  channelId?: string;
+  friendshipId?: string;
   messageId: string;
 };
 

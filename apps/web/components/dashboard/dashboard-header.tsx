@@ -1,16 +1,17 @@
 "use client";
 
-import { Bell, Hash, LogOut } from "lucide-react";
+import { ArrowLeft, Bell, Hash, LogOut, User } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { TabSelect } from "@workspace/ui/components/tab-select";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@workspace/ui/lib/utils";
 import { useHandleSignOut } from "@/lib/use-handle-sign-out";
+import Link from "next/link";
 import type { FriendsTab } from "./types";
 
 type DashboardHeaderProps = {
-  activeChannelName?: string | null;
-  variant?: "friends" | "network";
+  activeChatName?: string | null;
+  variant?: "friends" | "network" | "dm";
   activeFriendsTab?: FriendsTab;
   onFriendsTabChange?: (tab: FriendsTab) => void;
   onNotificationsClick?: () => void;
@@ -19,7 +20,7 @@ type DashboardHeaderProps = {
 };
 
 export function DashboardHeader({
-  activeChannelName,
+  activeChatName,
   variant = "friends",
   activeFriendsTab,
   onFriendsTabChange,
@@ -29,6 +30,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const handleSignOut = useHandleSignOut();
   const isNetworkHeader = variant === "network";
+  const isDmHeader = variant === "dm";
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b px-4">
@@ -37,7 +39,21 @@ export function DashboardHeader({
           <>
             <Hash className="size-5 shrink-0 text-muted-foreground" />
             <h1 className="truncate font-semibold">
-              {activeChannelName ?? "Channel"}
+              {activeChatName ?? "Channel"}
+            </h1>
+          </>
+        ) : isDmHeader ? (
+          <>
+            <Link
+              href="/friends"
+              aria-label="Back to friends"
+              className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+            >
+              <ArrowLeft className="size-5" />
+            </Link>
+            <User className="size-5 shrink-0 text-muted-foreground" />
+            <h1 className="truncate font-semibold">
+              {activeChatName ?? "Direct Message"}
             </h1>
           </>
         ) : (

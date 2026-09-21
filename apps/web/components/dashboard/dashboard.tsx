@@ -89,14 +89,14 @@ export function Dashboard({
       <section className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader
           variant="network"
-          activeChannelName={activeChannel?.name}
+          activeChatName={activeChannel?.name}
           onNotificationsClick={toggleNotifications}
           showNotifications={showNotifications}
           unreadCount={unreadCount}
         />
         <div className="relative flex min-h-0 flex-1">
           {activeChannel ? (
-            <ChatPanel channelId={activeChannel.id} />
+            <ChatPanel room={{ kind: "channel", id: activeChannel.id }} />
           ) : (
             <section className="flex min-w-0 flex-1 items-center justify-center p-6">
               <p className="text-center text-sm text-muted-foreground">

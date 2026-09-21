@@ -2,7 +2,7 @@
 
 import { MessageSkeleton } from "@workspace/ui/components/message-skeleton";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { MessageType } from "../types";
+import { ChatRoom, MessageType } from "../types";
 import Message from "@workspace/ui/components/message";
 import EditInput from "./edit-input";
 import { authClient } from "@/lib/auth-client";
@@ -32,14 +32,11 @@ const formatDatePill = (timestamp: MessageType["timestamp"]) => {
 };
 
 interface MessagesListProps {
-  channelId: string;
+  room: ChatRoom;
   sendJsonMessage: SendJsonMessage;
 }
 
-export const MessagesList = ({
-  channelId,
-  sendJsonMessage,
-}: MessagesListProps) => {
+export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
   const { data: session } = authClient.useSession();
   const loadMoreRef = useRef(null);
   const [isEditing, setIsEditing] = useState<{
@@ -55,7 +52,7 @@ export const MessagesList = ({
     isError,
     error,
   } = useInfiniteQuery({
-    queryKey: getMessagesQueryKey(channelId),
+    queryKey: getMessagesQueryKey(room.kind, room.id),
     queryFn: fetchMessages,
     initialPageParam: null,
     getNextPageParam: (lastPage) => {
@@ -124,7 +121,9 @@ export const MessagesList = ({
   const handleDeleteMessage = (messageId: string) => {
     sendJsonMessage({
       type: "DELETE_MESSAGE",
-      channelId,
+      ...(room.kind === "channel"
+        ? { channelId: room.id }
+        : { friendshipId: room.id }),
       messageId,
       clientRequestId: crypto.randomUUID(),
     });
@@ -133,7 +132,9 @@ export const MessagesList = ({
   const handleEditMessage = (messageId: string, editedMessage: string) => {
     sendJsonMessage({
       type: "EDIT_MESSAGE",
-      channelId,
+      ...(room.kind === "channel"
+        ? { channelId: room.id }
+        : { friendshipId: room.id }),
       messageId,
       editedMessage,
       clientRequestId: crypto.randomUUID(),
@@ -142,7 +143,7 @@ export const MessagesList = ({
   };
 
   return (
-    <div className="custom-scrollbar flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 pt-4">
+    <div className="custom-scrollbar relative flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 pt-4">
       {sortedMessages.length !== 0 ? (
         sortedMessages.map((message, idx) => {
           const next = sortedMessages[idx + 1];
