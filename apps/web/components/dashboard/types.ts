@@ -48,6 +48,17 @@ export type FriendUser = Pick<
   "id" | "name" | "username" | "image"
 >;
 
+export type MutualNetwork = {
+  id: string;
+  name: string;
+  image: string | null;
+};
+
+export type FriendProfile = {
+  user: FriendUser;
+  mutualNetworks: MutualNetwork[];
+};
+
 export type Friendship = {
   id: string;
   senderId: string;

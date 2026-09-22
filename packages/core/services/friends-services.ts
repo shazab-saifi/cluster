@@ -76,16 +76,92 @@ export async function removeFriendRequest(
     );
   }
 
-  if (friendship.status !== "PENDING") {
+  if (friendship.status !== "PENDING" && friendship.status !== "ACCEPTED") {
     throw new BadRequestError(
-      "This friend request is no longer pending.",
-      "The request has already been accepted or removed."
+      "This friendship is no longer active.",
+      "A friendship can only be removed while pending or accepted."
     );
   }
 
   await prisma.friendship.delete({ where: { id: friendshipId } });
 
-  return { msg: "Friend request removed." };
+  return {
+    msg:
+      friendship.status === "ACCEPTED"
+        ? "Friend removed."
+        : "Friend request removed.",
+  };
+}
+
+export async function getFriendProfile(friendshipId: string, userId: string) {
+  const friendship = await prisma.friendship.findUnique({
+    where: { id: friendshipId },
+  });
+
+  if (!friendship) {
+    throw new NotFoundError(
+      "Friendship not found.",
+      "This friendship may have been removed."
+    );
+  }
+
+  if (friendship.senderId !== userId && friendship.receiverId !== userId) {
+    throw new ForbiddenError(
+      "You can only view your own friendships.",
+      "Only the friends involved can see this conversation."
+    );
+  }
+
+  if (friendship.status !== "ACCEPTED") {
+    throw new BadRequestError(
+      "This friendship is not accepted yet.",
+      "Accept the friend request before viewing profiles."
+    );
+  }
+
+  const friendId =
+    friendship.senderId === userId
+      ? friendship.receiverId
+      : friendship.senderId;
+
+  const [friend, myMemberships, friendMemberships] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: friendId },
+      select: { id: true, name: true, username: true, image: true },
+    }),
+    prisma.networkMembers.findMany({
+      where: { userId },
+      select: { networkId: true },
+    }),
+    prisma.networkMembers.findMany({
+      where: { userId: friendId },
+      select: { networkId: true },
+    }),
+  ]);
+
+  if (!friend) {
+    throw new NotFoundError(
+      "User not found.",
+      "This user may no longer be active."
+    );
+  }
+
+  const myNetworkIds = new Set(
+    myMemberships.map((membership) => membership.networkId)
+  );
+  const mutualNetworkIds = friendMemberships
+    .map((membership) => membership.networkId)
+    .filter((networkId) => myNetworkIds.has(networkId));
+
+  const mutualNetworks =
+    mutualNetworkIds.length > 0
+      ? await prisma.network.findMany({
+          where: { id: { in: mutualNetworkIds } },
+          select: { id: true, name: true, image: true },
+        })
+      : [];
+
+  return { user: friend, mutualNetworks };
 }
 
 export async function createFriendShip(userId: string, friendId: string) {

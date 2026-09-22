@@ -1,5 +1,5 @@
 import { cn } from "@workspace/ui/lib/utils";
-import { Skeleton } from "./skeleton";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 
 function MessageSkeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (

@@ -3,6 +3,7 @@ import axios from "axios";
 import { API_BASE_URL, uploadAvatar } from "./utils";
 import type {
   Channel,
+  FriendProfile,
   Friendship,
   MeResponse,
   Network,
@@ -206,6 +207,38 @@ export async function acceptFriendRequest(friendshipId: string) {
     throw new Error(
       getApiErrorMessage(error, "Could not accept friend request.")
     );
+  }
+}
+
+export async function getFriendProfile(friendshipId: string) {
+  try {
+    const response = await axios.get<FriendProfile>(
+      `${API_BASE_URL}/friendships/${friendshipId}/profile`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "Could not load friend profile.")
+    );
+  }
+}
+
+export async function removeFriend(friendshipId: string) {
+  try {
+    const response = await axios.delete<{ msg: string }>(
+      `${API_BASE_URL}/friendships/${friendshipId}`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Could not remove friend."));
   }
 }
 

@@ -9,24 +9,11 @@ import {
 import { cn, getInitials } from "@workspace/ui/lib/utils";
 import { MessageActions } from "./message-actions";
 import EditInput from "./edit-input";
-
-type MessageSender = {
-  id?: string;
-  name: string;
-  image: string | null;
-};
-
-type MessageData = {
-  id: string;
-  message: string;
-  sender: MessageSender;
-  timestamp: Date | string;
-  edited?: boolean;
-};
+import { MessageType } from "../types";
+import { authClient } from "@/lib/auth-client";
 
 type MessageProps = {
-  message: MessageData;
-  isSender: boolean;
+  message: MessageType;
   className?: string;
   showHeader?: boolean;
   onDelete?: (messageId: string) => void;
@@ -56,7 +43,6 @@ const customDateTimeFormatter = (date: Date) => {
 
 function Message({
   message,
-  isSender,
   className,
   showHeader,
   onDelete,
@@ -64,11 +50,13 @@ function Message({
 }: MessageProps) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const { data: session } = authClient.useSession();
   const { id, sender, timestamp, edited = false } = message;
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
   const hasValidTimestamp =
     date instanceof Date && !Number.isNaN(date.getTime());
   const editingMsg = isEditing;
+  const isSender = session?.user.id === message.sender.id;
 
   const handleSaveEdit = (editedMessage: string) => {
     onEdit?.(id, editedMessage);
@@ -147,5 +135,4 @@ function Message({
   );
 }
 
-export type { MessageData, MessageProps };
 export default React.memo(Message);

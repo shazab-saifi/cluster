@@ -1,10 +1,10 @@
 "use client";
 
-import { MessageSkeleton } from "@workspace/ui/components/message-skeleton";
+import { MessageSkeleton } from "./message-skeleton";
 import React, { useEffect, useMemo, useRef } from "react";
 import { ChatRoom, MessageType } from "../types";
-import Message from "@workspace/ui/components/message";
-import { authClient } from "@/lib/auth-client";
+import Message from "./message";
+import { FriendProfileCard } from "./friend-profile-card";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchMessages, getMessagesQueryKey } from "@/lib/utils";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -34,7 +34,6 @@ interface MessagesListProps {
 }
 
 export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
-  const { data: session } = authClient.useSession();
   const loadMoreRef = useRef(null);
   const {
     data,
@@ -135,7 +134,8 @@ export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
   };
 
   return (
-    <div className="custom-scrollbar relative flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 pt-4">
+    <div className="custom-scrollbar relative flex flex-1 flex-col-reverse overflow-y-auto px-4 pt-4">
+      <div className="flex-1" aria-hidden />
       {sortedMessages.length !== 0 ? (
         sortedMessages.map((message, idx) => {
           const next = sortedMessages[idx + 1];
@@ -149,7 +149,6 @@ export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
             <React.Fragment key={message.id}>
               <Message
                 message={message}
-                isSender={session?.user.id === message.sender.id}
                 showHeader={startsNewDay || endsGroup}
                 onDelete={handleDeleteMessage}
                 onEdit={handleEditMessage}
@@ -166,12 +165,15 @@ export const MessagesList = ({ room, sendJsonMessage }: MessagesListProps) => {
             </React.Fragment>
           );
         })
-      ) : (
+      ) : room.kind === "channel" ? (
         <p className="absolute top-1/2 left-1/2 mx-auto -translate-x-1/2 -translate-y-1/2 text-sm text-muted-foreground">
           No message yet
         </p>
-      )}
+      ) : null}
       {isFetchingNextPage && <MessageSkeleton />}
+      {room.kind === "friendship" && !hasNextPage && (
+        <FriendProfileCard friendshipId={room.id} />
+      )}
       <div ref={loadMoreRef} />
     </div>
   );

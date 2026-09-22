@@ -113,6 +113,33 @@ friendshipRouter.patch(
   }
 );
 
+friendshipRouter.get(
+  "/:friendshipId/profile",
+  async (req: Request, res: Response) => {
+    const userId = req.user?.id as string;
+    const parsedFriendshipId = uuidSchema.safeParse(req.params.friendshipId);
+
+    if (!parsedFriendshipId.success) {
+      throw new ValidationError(
+        "Invalid friendship id",
+        parsedFriendshipId.error.issues[0]?.message ??
+          "Param friendshipId should be a valid uuid"
+      );
+    }
+
+    try {
+      const profile = await friendServices.getFriendProfile(
+        parsedFriendshipId.data,
+        userId
+      );
+
+      res.json(profile);
+    } catch (error) {
+      sendErrorResponse(res, error, { path: req.originalUrl });
+    }
+  }
+);
+
 friendshipRouter.delete(
   "/:friendshipId",
   async (req: Request, res: Response) => {

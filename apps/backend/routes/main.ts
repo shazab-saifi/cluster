@@ -3,7 +3,7 @@ import { meRouter } from "./me";
 import { authMiddleware } from "@lib/auth-middleware";
 import { messagesRouter } from "./messages";
 import { networksRouter } from "./networks";
-import { friendshipRouter } from "./friendships";
+import { friendServices, friendshipRouter } from "./friendships";
 import { getInvitePreview, invitesRouter } from "./invites";
 import { s3PresignedRouter } from "./get-presigned-urls";
 import { notifRouter } from "./notifications";
